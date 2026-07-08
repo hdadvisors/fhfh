@@ -132,8 +132,8 @@ Chapters ship with: takeaway chart titles, 2–5 bullet findings per section (pl
 | Geography | GEOID | Role |
 |---|---|---|
 | Fauquier County | `51061` | Primary unit of analysis |
-| Town of Warrenton | resolve via `tigris::places("VA")` in Session 1 — never hardcode from memory | Town breakout |
-| Bealeton CDP | resolve via `tigris::places("VA")` in Session 1 | Town breakout |
+| Town of Warrenton | `5183136` (resolved via `tigris::places("VA", year=2023)`, Session 1) | Town breakout |
+| Bealeton CDP | `5105336` (resolved via `tigris::places("VA", year=2023)`, Session 1) | Town breakout |
 | Culpeper `51047`, Prince William `51153`, Loudoun `51107` | | Commute-shed benchmarks (selective) |
 | Virginia `51` | | Statewide benchmark |
 
@@ -336,15 +336,15 @@ Twelve bounded sessions. Merge two only if the first finishes light; never split
 
 ### Session 1 — Scaffold
 Prereqs: Jonathan runs the posit-dev skills install (§ 3); confirms GitHub repo name.
-- [ ] `git init`; create GitHub repo (`hdadvisors/fhfh` suggested); first commit
-- [ ] Quarto book skeleton: `_quarto.yml` (adapted from faar: freeze auto, output-dir docs, chapter list per § 2), all chapter stubs with `{#sec-}` anchors, index.qmd
-- [ ] renv init; install tidyverse (dplyr ≥ 1.2), tidycensus, tigris, sf, janitor, kableExtra, formattable, ggtext, scales, fredr, lehdr, readxl, FinCal, hdatools (`renv::install("hdadvisors/hdatools")`); snapshot
-- [ ] `_common.R`: adapt from faar — global chunk opts, `hda_pal`, caption helpers (`acs_cap` + new variants), geography constants incl. GEOID resolution via `tigris::places("VA")` (Warrenton town, Bealeton CDP — record resolved GEOIDs here in § 4)
-- [ ] Copy-adapt `r/affordcalc.R` from faar
-- [ ] Verify `CENSUS_API_KEY`/`FRED_API_KEY` via a temp Rscript check
-- [ ] `CLAUDE.md`: condensed §§ 2–4 conventions + run commands + repo map; `README.md` (quick-start first); `.gitignore` (data/, .Rproj.user, .quarto; NOT r/ or docs/), `.renvignore`, `.nojekyll`
-- [ ] Render, publish to GitHub Pages, confirm live URL
-- [ ] Delete `STARTUP.md` (superseded by CLAUDE.md + this plan)
+- [x] `git init`; create GitHub repo (`hdadvisors/fhfh` suggested); first commit — **pre-done before Session 1**
+- [x] Quarto book skeleton: `_quarto.yml` (adapted from faar: freeze auto, output-dir docs, chapter list per § 2), all chapter stubs with `{#sec-}` anchors, index.qmd
+- [x] renv init; install tidyverse (dplyr ≥ 1.2), tidycensus, tigris, sf, janitor, kableExtra, formattable, ggtext, scales, fredr, lehdr, readxl, FinCal, hdatools (`renv::install("hdadvisors/hdatools")`); snapshot — dplyr 1.2.1, hdatools 0.1.7
+- [x] `_common.R`: adapt from faar — global chunk opts, `hda_pal`, caption helpers (`acs_cap` + new variants), geography constants incl. GEOID resolution via `tigris::places("VA")` (Warrenton town `5183136`, Bealeton CDP `5105336` — recorded in § 4)
+- [x] Copy-adapt `r/affordcalc.R` from faar
+- [x] Verify `CENSUS_API_KEY`/`FRED_API_KEY` via a temp Rscript check — keys present in `~/Documents/.Renviron`; R HOME mismatch logged in § 11 (fix: copy file to `~/.Renviron` or set `R_ENVIRON_USER`)
+- [x] `CLAUDE.md`: condensed §§ 2–4 conventions + run commands + repo map; `README.md` (quick-start first); `.gitignore` (data/, .Rproj.user, .quarto; NOT r/ or docs/), `.renvignore`, `.nojekyll`
+- [x] Render, publish to GitHub Pages — **render clean (docs/ + _freeze/ produced); Pages deferred (private repo + GitHub Free org — see § 11)**
+- [x] Delete `STARTUP.md` (superseded by CLAUDE.md + this plan)
 - DoD: skeleton site renders and is live on Pages.
 - Don't: pull any data yet; build any figures.
 
@@ -438,7 +438,7 @@ Rule of thumb: if it isn't needed to render a § 7 figure or satisfy a § 6 vali
 
 | # | Session | Status | Date | Model |
 |---|---|---|---|---|
-| 1 | Scaffold | not started | | |
+| 1 | Scaffold | complete | 2026-07-08 | Sonnet 4.6 |
 | 2 | Demographics data | not started | | |
 | 3 | Economy & workforce data | not started | | |
 | 4 | Housing stock & production | not started | | |
@@ -453,4 +453,6 @@ Rule of thumb: if it isn't needed to render a § 7 figure or satisfy a § 6 vali
 
 ### Log
 
-- **2026-07-08** — PLAN.md created (Fable planning session). Decisions locked per § 1. No code built yet. Open items for Jonathan before Session 3+: batch the § 5-B downloads; confirm GitHub repo name; run the posit-dev skills install; decide QCEW fetch-vs-download.
+- **2026-07-08** — PLAN.md created (Fable planning session). Decisions locked per § 1. No code built yet. Open items for Jonathan before Session 3+: batch the § 5-B downloads; run the posit-dev skills install; decide QCEW fetch-vs-download.
+- **2026-07-08** — Jonathan initialized the git repo and pushed to the hdadvisors org. Session 1 skips `git init`/repo creation; GitHub Pages still needs configuring.
+- **2026-07-08** — Session 1 (Scaffold) complete (Sonnet 4.6). Files created: `_quarto.yml`, `index.qmd`, `exec-sum.qmd`, 8 chapter stubs, `data-notes.qmd`, `_common.R`, `r/affordcalc.R`, `CLAUDE.md`, `README.md`, `.gitignore` (rewritten), `.renvignore`, `.Rprofile`, `.nojekyll`. renv initialized (bare), all 14 packages installed (dplyr 1.2.1, hdatools 0.1.7 from GitHub), snapshot written (`type = "all"`). GEOIDs resolved via `tigris::places("VA", year=2023)`: Warrenton town `5183136`, Bealeton CDP `5105336`. `quarto render` clean — 11 pages produced in `docs/`. **Deviations:** (1) `town_zips` stored as a named list not `c(...)` (flat vector would drop nested warrenton zips). (2) `.renvignore` omits `/r/` vs faar (deliberate — r/ is committed pipeline code; renv should track its deps). (3) `affordcalc.R` cleaned: side-effect code removed, `calc_affordable_sales` takes `dwn_opts` vector, `renter_income` returned numeric. (4) renv `type="all"` snapshot shows data-pull packages (tigris, sf, etc.) as `used=n` — expected since r/ scripts don't exist yet. **Pages deferred:** repo is private + hdadvisors org on GitHub Free (Pages requires public repo or paid plan). To enable later: `gh api -X POST repos/hdadvisors/fhfh/pages -f "source[branch]=main" -f "source[path]=/docs"` (after making repo public or upgrading org), or Settings → Pages → Deploy from branch → `main` `/docs`. URL will be `https://hdadvisors.github.io/fhfh/`. **API key path issue (action needed):** `CENSUS_API_KEY`/`FRED_API_KEY` exist in `~/Documents/.Renviron` but R's HOME = `C:\Users\JTK`, so R doesn't auto-load them at startup. Fix before Session 2: copy `~/Documents/.Renviron` to `C:\Users\JTK\.Renviron`, or set system env var `R_ENVIRON_USER=C:\Users\JTK\Documents\.Renviron`.

@@ -1,0 +1,15 @@
+{
+  "hash": "1f28ffb8792b188df5ef5dd8131ca21c",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Affordability Gaps {#sec-gaps}\n\n<!-- Purpose: affordability gaps by income band, tenure, and geography (PLAN.md §7 Ch 4). -->\n\n\n\n*Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

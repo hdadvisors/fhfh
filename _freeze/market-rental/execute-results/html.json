@@ -1,0 +1,15 @@
+{
+  "hash": "99c94d3fbcfbb4b9bca24af2ca92adee",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Rental Market Dynamics {#sec-market-rental}\n\n<!-- Purpose: rental market dynamics — rents, vacancy, and assisted stock (PLAN.md §7 Ch 3b). -->\n\n\n\n*Figures, tables, and findings are built in Session 9 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

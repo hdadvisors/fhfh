@@ -1,0 +1,15 @@
+{
+  "hash": "a8af80059002b4c79f8ff04d519d843b",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Ownership Market Dynamics {#sec-market-ownership}\n\n<!-- Purpose: ownership market dynamics — sales, prices, and affordability trends (PLAN.md §7 Ch 3a). -->\n\n\n\n*Figures, tables, and findings are built in Session 9 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

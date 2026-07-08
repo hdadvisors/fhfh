@@ -1,0 +1,11 @@
+# Ownership Market Dynamics {#sec-market-ownership}
+
+<!-- Purpose: ownership market dynamics — sales, prices, and affordability trends (PLAN.md §7 Ch 3a). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 9 (PLAN.md §7, §9).*

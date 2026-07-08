@@ -1,0 +1,11 @@
+# Vulnerable Populations {#sec-populations}
+
+<!-- Purpose: vulnerable and special-needs populations with housing implications (PLAN.md §7 Ch 5). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).*

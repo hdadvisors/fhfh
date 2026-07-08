@@ -1,0 +1,15 @@
+{
+  "hash": "11bff5ede428fa4e375f520a130bdb33",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Demographic Shifts & Socioeconomic Factors {#sec-demographics}\n\n<!-- Purpose: demographic shifts and socioeconomic context for housing demand (PLAN.md §7 Ch 2). -->\n\n\n\n*Figures, tables, and findings are built in Session 8 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

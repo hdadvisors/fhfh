@@ -1,0 +1,15 @@
+{
+  "hash": "3e8d2c7253a89075c4dbb4e18a395dc0",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Vulnerable Populations {#sec-populations}\n\n<!-- Purpose: vulnerable and special-needs populations with housing implications (PLAN.md §7 Ch 5). -->\n\n\n\n*Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

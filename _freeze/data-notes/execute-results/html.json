@@ -1,0 +1,15 @@
+{
+  "hash": "bb8cb291c58c8aec57192fb2f64d6872",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Data notes {#sec-data-notes}\n\n<!-- Purpose: data sources, vintages, methodology, and reliability notes (PLAN.md §7 Appendix; adapt from faar data-notes.qmd). -->\n\n\n\n*Content built in Session 11 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

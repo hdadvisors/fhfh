@@ -1,0 +1,11 @@
+# Data notes {#sec-data-notes}
+
+<!-- Purpose: data sources, vintages, methodology, and reliability notes (PLAN.md §7 Appendix; adapt from faar data-notes.qmd). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Content built in Session 11 (PLAN.md §7, §9).*

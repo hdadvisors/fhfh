@@ -1,0 +1,11 @@
+# Current Inventory & Recent Production Trends {#sec-inventory}
+
+<!-- Purpose: current housing stock + recent production trends for the study area (PLAN.md §7 Ch 1). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 8 (PLAN.md §7, §9).*

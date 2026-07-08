@@ -1,0 +1,11 @@
+# Rental Market Dynamics {#sec-market-rental}
+
+<!-- Purpose: rental market dynamics — rents, vacancy, and assisted stock (PLAN.md §7 Ch 3b). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 9 (PLAN.md §7, §9).*

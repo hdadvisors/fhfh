@@ -1,0 +1,11 @@
+# Projected Housing Needs {#sec-projections}
+
+<!-- Purpose: projected housing needs through 2050 from Weldon Cooper population projections (PLAN.md §7 Ch 6). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 11 (PLAN.md §7, §9).*

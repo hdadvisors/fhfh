@@ -1,0 +1,15 @@
+{
+  "hash": "35120b0feb3ead1cc972164cfa967792",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\nengine: knitr\n---\n\n# About this study {.unnumbered}\n\n\n\nThis technical report presents a comprehensive housing needs assessment for Fauquier County, Virginia, including the Town of Warrenton and Bealeton Community Development Program (CDP). The study was commissioned by Fauquier Habitat for Humanity (FHFH) with funding from the PATH Foundation and produced by HDAdvisors.\n\n**The assessment covers:**\n\n- Current housing inventory and recent production trends\n- Demographic shifts and socioeconomic factors shaping housing demand\n- Ownership and rental market dynamics\n- Affordability gaps by income level, tenure, and household type\n- Vulnerable and special-needs populations\n- Projected future housing needs through 2050\n\nA distinguishing feature of this study is its sub-county focus: where data permit, findings are disaggregated to the Town of Warrenton and Bealeton CDP — the county's two main population centers — to support targeted policy and program decisions.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

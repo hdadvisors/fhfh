@@ -1,0 +1,11 @@
+# Conclusions {#sec-conclusions}
+
+<!-- Purpose: bullet synthesis of key findings by income level, tenure, household type, and geography (PLAN.md §7 Ch 7). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 11 (PLAN.md §7, §9).*

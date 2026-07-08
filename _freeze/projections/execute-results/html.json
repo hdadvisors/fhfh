@@ -1,0 +1,15 @@
+{
+  "hash": "81fef898e1d1a2dd80ecba6ac5707ae1",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Projected Housing Needs {#sec-projections}\n\n<!-- Purpose: projected housing needs through 2050 from Weldon Cooper population projections (PLAN.md §7 Ch 6). -->\n\n\n\n*Figures, tables, and findings are built in Session 11 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

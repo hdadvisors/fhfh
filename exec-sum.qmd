@@ -1,0 +1,3 @@
+# Executive summary {#sec-exec-sum .unnumbered}
+
+*Built in Session 12 (PLAN.md §9).*

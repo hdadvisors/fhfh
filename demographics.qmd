@@ -1,0 +1,11 @@
+# Demographic Shifts & Socioeconomic Factors {#sec-demographics}
+
+<!-- Purpose: demographic shifts and socioeconomic context for housing demand (PLAN.md §7 Ch 2). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 8 (PLAN.md §7, §9).*

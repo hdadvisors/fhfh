@@ -1,0 +1,15 @@
+{
+  "hash": "62910bba83aeca5c9c92c29c52649404",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Conclusions {#sec-conclusions}\n\n<!-- Purpose: bullet synthesis of key findings by income level, tenure, household type, and geography (PLAN.md §7 Ch 7). -->\n\n\n\n*Figures, tables, and findings are built in Session 11 (PLAN.md §7, §9).*\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

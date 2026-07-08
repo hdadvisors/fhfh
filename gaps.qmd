@@ -1,0 +1,11 @@
+# Affordability Gaps {#sec-gaps}
+
+<!-- Purpose: affordability gaps by income band, tenure, and geography (PLAN.md §7 Ch 4). -->
+
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+```
+
+*Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).*

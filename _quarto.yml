@@ -1,0 +1,47 @@
+project:
+  type: book
+  execute-dir: project
+  output-dir: docs
+
+execute:
+  freeze: auto
+
+book:
+  title: "Fauquier Housing Needs Assessment"
+  subtitle: "Fauquier County, the Town of Warrenton, and Bealeton"
+  repo-url: https://github.com/hdadvisors/fhfh
+  output-file: "fhfh-housing-needs-assessment"
+  author:
+    - name: HDAdvisors
+      url: https://hdadvisors.net/
+  date: today
+  date-format: long
+  chapters:
+    - index.qmd
+    - exec-sum.qmd
+    - inventory.qmd
+    - demographics.qmd
+    - market-ownership.qmd
+    - market-rental.qmd
+    - gaps.qmd
+    - populations.qmd
+    - projections.qmd
+    - conclusions.qmd
+  appendices:
+    - data-notes.qmd
+
+format:
+  html:
+    theme:
+      - lumen
+    grid:
+      sidebar-width: 275px
+    fontsize: "100%"
+    toc-title: "On this page"
+    number-depth: 2
+    reference-location: margin
+    footnotes-hover: false
+    crossrefs-hover: false
+    html-table-processing: none
+
+# PDF route (format: typst vs. manual assembly) deferred to Session 12 — PLAN.md §9.
