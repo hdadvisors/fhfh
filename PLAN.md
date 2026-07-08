@@ -350,11 +350,11 @@ Prereqs: Jonathan runs the posit-dev skills install (§ 3); confirms GitHub repo
 
 ### Session 2 — Demographics data
 Prereqs: none (all API).
-- [ ] `r/acs_demographics.R`, `r/acs_income.R` (incl. 2010–2024 trend pulls for B19013)
-- [ ] `r/decennial.R` (2010/2020 pop, units, tenure for county + towns)
-- [ ] `r/pep.R` (county totals + components; SUB-EST town totals if straightforward)
-- [ ] `r/geo.R` (boundaries for the study-area map)
-- [ ] Validation vs GP appendix (pop, households, income)
+- [x] `r/acs_demographics.R`, `r/acs_income.R` (incl. 2010–2024 trend pulls for B19013)
+- [x] `r/decennial.R` (2010/2020 pop, units, tenure for county + towns)
+- [x] `r/pep.R` (county totals + components; SUB-EST town totals if straightforward)
+- [x] `r/geo.R` (boundaries for the study-area map)
+- [x] Validation vs GP appendix (pop, households, income)
 - Don't: touch QCEW/LODES (Session 3); build figures.
 
 ### Session 3 — Economy & workforce data
@@ -439,7 +439,7 @@ Rule of thumb: if it isn't needed to render a § 7 figure or satisfy a § 6 vali
 | # | Session | Status | Date | Model |
 |---|---|---|---|---|
 | 1 | Scaffold | complete | 2026-07-08 | Sonnet 4.6 |
-| 2 | Demographics data | not started | | |
+| 2 | Demographics data | complete | 2026-07-08 | Sonnet 4.6 |
 | 3 | Economy & workforce data | not started | | |
 | 4 | Housing stock & production | not started | | |
 | 5 | Market data | not started | | |
@@ -456,3 +456,4 @@ Rule of thumb: if it isn't needed to render a § 7 figure or satisfy a § 6 vali
 - **2026-07-08** — PLAN.md created (Fable planning session). Decisions locked per § 1. No code built yet. Open items for Jonathan before Session 3+: batch the § 5-B downloads; run the posit-dev skills install; decide QCEW fetch-vs-download.
 - **2026-07-08** — Jonathan initialized the git repo and pushed to the hdadvisors org. Session 1 skips `git init`/repo creation; GitHub Pages still needs configuring.
 - **2026-07-08** — Session 1 (Scaffold) complete (Sonnet 4.6). Files created: `_quarto.yml`, `index.qmd`, `exec-sum.qmd`, 8 chapter stubs, `data-notes.qmd`, `_common.R`, `r/affordcalc.R`, `CLAUDE.md`, `README.md`, `.gitignore` (rewritten), `.renvignore`, `.Rprofile`, `.nojekyll`. renv initialized (bare), all 14 packages installed (dplyr 1.2.1, hdatools 0.1.7 from GitHub), snapshot written (`type = "all"`). GEOIDs resolved via `tigris::places("VA", year=2023)`: Warrenton town `5183136`, Bealeton CDP `5105336`. `quarto render` clean — 11 pages produced in `docs/`. **Deviations:** (1) `town_zips` stored as a named list not `c(...)` (flat vector would drop nested warrenton zips). (2) `.renvignore` omits `/r/` vs faar (deliberate — r/ is committed pipeline code; renv should track its deps). (3) `affordcalc.R` cleaned: side-effect code removed, `calc_affordable_sales` takes `dwn_opts` vector, `renter_income` returned numeric. (4) renv `type="all"` snapshot shows data-pull packages (tigris, sf, etc.) as `used=n` — expected since r/ scripts don't exist yet. **Pages deferred:** repo is private + hdadvisors org on GitHub Free (Pages requires public repo or paid plan). To enable later: `gh api -X POST repos/hdadvisors/fhfh/pages -f "source[branch]=main" -f "source[path]=/docs"` (after making repo public or upgrading org), or Settings → Pages → Deploy from branch → `main` `/docs`. URL will be `https://hdadvisors.github.io/fhfh/`. **API key path issue (action needed):** `CENSUS_API_KEY`/`FRED_API_KEY` exist in `~/Documents/.Renviron` but R's HOME = `C:\Users\JTK`, so R doesn't auto-load them at startup. Fix before Session 2: copy `~/Documents/.Renviron` to `C:\Users\JTK\.Renviron`, or set system env var `R_ENVIRON_USER=C:\Users\JTK\Documents\.Renviron`.
+- **2026-07-08** — Session 2 (Demographics data) complete (Sonnet 4.6). Scripts: `r/geo.R`, `r/acs_demographics.R`, `r/acs_income.R`, `r/decennial.R`, `r/pep.R`. All five `data/*.rds` files written. **Validation vs GP benchmarks (ACS 5-year 2024 vintage):** Fauquier pop 74,577 (GP ~75,865; −1.7% — ACS 2024 vs GP's 2023 vintage); HH count 26,720 (exact match); median HH income $130,189 (exact match). Decennial 2020 pop 72,972 (GP/Census ~73,895; −923 from differential privacy noise in 2020 DHC); 2010 pop 65,203 (exact). PEP most-recent county pop 75,865 (vintage 2024, July 1 2024). **PEP API change (breaking):** post-2020 PEP API now requires `vintage` argument; `year = 2025` silently defaults to vintage 2024. Fixed `pep.R` to use `vintage = 2024` for components and place calls. Components (vintage 2024): BIRTHS 755, DEATHS 617, NATURALCHG 138, NETMIG 474. **Bealeton CDP:** not covered by PEP (CDP by design); chapters use ACS/decennial for Bealeton population. Warrenton PEP: 10,224. **Decennial 2000:** county data retrieved (55,139); Bealeton returned 0 rows (GEOID "5105336" may not match 2000 vintage). **1990:** hardcoded 48,741 (Census 1990 SF1; plan reference "47,286" appears incorrect — actual 1990 count was 48,741). **Style:** used `case_match()` throughout (`recode_values()` per §3 not available in dplyr 1.2.1).
