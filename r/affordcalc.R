@@ -6,12 +6,15 @@
 library(tidyverse)
 library(FinCal)
 
-## Mortgage assumption defaults (PLAN.md §8).
-## UPDATE in Session 6: feed current PMMS 30-yr weekly avg rate + Fauquier RE tax +
-## avg homeowner insurance; document rate + pull date in data-notes.qmd.
+## Mortgage assumption defaults (PLAN.md §8). Updated Session 6 (2026-07-10).
+## Authoritative rate/tax/ins are passed explicitly from r/gaps.R; these are library fallbacks.
+## GP-mirrored so the ownership gap reconciles with GP Figs 27-28 / the Fauquier fact sheet.
 
-.int_rate_default  <- 0.0694  # 30-yr PMMS weekly avg as of 2024-05-23 — update Session 6
-.tax_ins_monthly   <- 250     # combined monthly RE tax + insurance proxy — update Session 6
+.int_rate_default  <- 0.0649  # 30-yr PMMS monthly avg, 2026-06 (data/fred.rds, last non-NA) — was 0.0694 (2024-05-23)
+.tax_ins_monthly   <- 697     # combined RE tax + insurance proxy (GP-mirrored). Reverse-engineered to
+                              # reproduce GP's ~$183k income-needed on the $645,250 median home at 6.1%/
+                              # 10% down/28% via this engine (~1.3% of value/yr). GP published no itemized
+                              # tax rate or insurance figure (GP study pp.42,48 + Fauquier fact sheet). — was 250
 
 ## 1. calc_affordable_rent ----
 ## Returns max affordable monthly rent at 30% of annual income (PLAN.md §8).
