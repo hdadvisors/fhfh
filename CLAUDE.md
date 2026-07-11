@@ -101,6 +101,7 @@ fhfh/
 ├── projections.qmd       Ch 6  Projected Needs
 ├── conclusions.qmd       Ch 7  Conclusions
 ├── data-notes.qmd        Appendix: Data & Methodology
+├── LAPTOP-SETUP.md       one-time checklist for a new machine (new laptop, reinstall, etc.)
 ├── r/                    collection/prep scripts (committed)
 ├── data/                 .rds outputs + raw drops (gitignored — licensed sources)
 ├── docs/                 rendered site (committed; Pages-ready when repo goes public)

@@ -45,4 +45,5 @@ to reproduce them locally.
 
 - [PLAN.md](PLAN.md) — build plan, session log, and source of truth
 - [CLAUDE.md](CLAUDE.md) — session conventions and run commands
+- [LAPTOP-SETUP.md](LAPTOP-SETUP.md) — one-time checklist when starting on a new machine
 - Template: `R:\hda\faar` (Fredericksburg Area Housing Gap Analysis)
