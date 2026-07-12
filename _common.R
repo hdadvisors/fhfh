@@ -81,6 +81,39 @@ qcew_cap <- function(year_range = "2015-2025") {
   )
 }
 
+dec_cap <- function(years = "1990–2020")
+  paste0("**Source:** U.S. Census Bureau, Decennial Census, ", years, ".")
+
+pep_cap <- function(vintage = 2024)
+  paste0("**Source:** U.S. Census Bureau, Population Estimates Program, Vintage ", vintage, ".")
+
+bps_cap <- function(years = "2000–2025")
+  paste0("**Source:** U.S. Census Bureau, Building Permits Survey, ", years, " annual.")
+
+lodes_cap <- function(year = 2022)
+  paste0("**Source:** U.S. Census Bureau, LEHD Origin-Destination Employment Statistics (LODES), ",
+         year, ".")
+
+cpi_cap <- function()
+  "Inflation-adjusted to the latest period using BLS CPI-U via FRED."
+
+# easements rows carry chapter + page
+compplan_cap <- function(chapter, page)
+  paste0("**Source:** Fauquier County Comprehensive Plan, ", chapter, ", p. ", page, ".")
+
+# High/Medium/Low reliability tiers from a 0–100 CV column (PLAN.md §3 thresholds 15/30).
+# The .rds frames store `cv` on a 0–100 scale; hdatools::add_reliability() expects a *_cv
+# column on a 0–1 proportion scale, so a thin local wrapper avoids mislabeling town cells.
+flag_reliability <- function(df, cv_col = cv) {
+  df |>
+    mutate(reliability = case_when(
+      {{ cv_col }} <= 15 ~ "High",
+      {{ cv_col }} <= 30 ~ "Medium",
+      {{ cv_col }} >  30 ~ "Low",
+      TRUE               ~ NA_character_
+    ))
+}
+
 # Special function to apply str_wrap() to ordered factors
 
 fct_wrap <- function(f, width) {

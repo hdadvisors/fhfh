@@ -36,7 +36,10 @@ sales <- sales_raw |>
     list_price  = parse_number(as.character(list_price)),
     close_date  = mdy(sales_date),
     year        = year(close_date),
-    month       = month(close_date)
+    month       = month(close_date),
+    sq_ft_total = parse_number(as.character(sq_ft_total)),
+    acres       = parse_number(as.character(acres)),
+    year_built  = parse_number(as.character(year_built))
   ) |>
   filter(!is.na(close_date), !is.na(close_price), close_price > 0)
 
@@ -171,14 +174,36 @@ rentals <- rentals_raw |>
 message("  Rental records: ", nrow(rentals),
         " (", min(rentals$year), "–", max(rentals$year), ")")
 
-## 8. Write output ----
+## 8. New-construction vs resale attributes (2022+ transactions) ----
+# Supports Ch 1 Fig 6 ("large homes on large lots" / missing-middle validation).
+message("Building new-vs-resale attribute summary...")
+
+new_vs_resale <- sales |>
+  filter(year >= 2022) |>
+  mutate(construction = case_when(
+    str_detect(new_resale, regex("new",    ignore_case = TRUE)) ~ "New construction",
+    str_detect(new_resale, regex("resale", ignore_case = TRUE)) ~ "Resale",
+    TRUE ~ NA_character_)) |>
+  filter(!is.na(construction)) |>
+  summarize(n = n(),
+            median_price = median(close_price, na.rm = TRUE),
+            median_sqft  = median(sq_ft_total, na.rm = TRUE),
+            median_acres = median(acres,       na.rm = TRUE),
+            median_yrblt = median(year_built,  na.rm = TRUE),
+            .by = c(year, construction))
+
+message("  new_vs_resale rows: ", nrow(new_vs_resale),
+        " (", n_distinct(new_vs_resale$year), " years × 2 groups)")
+
+## 9. Write output ----
 write_rds(
-  list(monthly = monthly, annual = annual, active = active, rentals = rentals),
+  list(monthly = monthly, annual = annual, active = active, rentals = rentals,
+       new_vs_resale = new_vs_resale),
   "data/mls.rds"
 )
 message("Wrote data/mls.rds")
 
-## 9. Validate ----
+## 10. Validate ----
 out <- read_rds("data/mls.rds")
 
 stopifnot(
@@ -186,6 +211,24 @@ stopifnot(
   max(out$monthly$year) >= 2025,
   nrow(out$active) >= 100
 )
+
+# new_vs_resale: both groups present in recent years; New larger/pricier than Resale
+nvr <- out$new_vs_resale
+stopifnot(all(c("New construction", "Resale") %in% nvr$construction))
+nvr_recent <- nvr |> filter(year >= 2022) |>
+  summarize(median_price = weighted.mean(median_price, n),
+            median_sqft  = weighted.mean(median_sqft,  n),
+            .by = construction)
+new_row    <- nvr_recent |> filter(construction == "New construction")
+resale_row <- nvr_recent |> filter(construction == "Resale")
+if (!(new_row$median_price > resale_row$median_price))
+  warning("New median price not above resale — check new_vs_resale")
+if (!(new_row$median_sqft > resale_row$median_sqft))
+  warning("New median sqft not above resale — check new_vs_resale")
+message("  new_vs_resale: New $", format(round(new_row$median_price), big.mark = ","),
+        " / ", round(new_row$median_sqft), " sqft vs Resale $",
+        format(round(resale_row$median_price), big.mark = ","),
+        " / ", round(resale_row$median_sqft), " sqft (2022+ wtd)")
 
 ann_2025 <- out$annual |> filter(year == 2025) |> pull(median_price)
 if (length(ann_2025) > 0) {

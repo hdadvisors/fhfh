@@ -1,11 +1,389 @@
 # Current Inventory & Recent Production Trends {#sec-inventory}
 
-<!-- Purpose: current housing stock + recent production trends for the study area (PLAN.md §7 Ch 1). -->
+<!-- Purpose: current housing stock + recent production trends for the study area (PLAN.md §7 Ch 1).
+     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
 
 ```{r}
 #| label: setup
 #| include: false
 source("_common.R")
+library(sf)
+
+geo       <- read_rds("data/geo.rds")
+stock     <- read_rds("data/acs_stock.rds")
+bps       <- read_rds("data/bps.rds")
+mls       <- read_rds("data/mls.rds")
+easements <- read_rds("data/easements.rds")
+decennial <- read_rds("data/decennial.rds")
+
+# Palette anchors (match ggtext subtitle spans to fills)
+blue   <- hda_pal[1]
+green  <- hda_pal[2]
+yellow <- hda_pal[3]
+coral  <- hda_pal[4]
+
+# Collapse B25024's 11 categories to 6 structure types (used by F2 + the town caveat table)
+structure_cat <- function(v) case_when(
+  v == "B25024_002"                ~ "Single-family detached",
+  v == "B25024_003"                ~ "Single-family attached",
+  v %in% c("B25024_004","B25024_005") ~ "2–4 units",
+  v %in% c("B25024_006","B25024_007") ~ "5–19 units",
+  v %in% c("B25024_008","B25024_009") ~ "20+ units",
+  v %in% c("B25024_010","B25024_011") ~ "Mobile home / other"
+)
+struct_lvls <- c("Single-family detached","Single-family attached","2–4 units",
+                 "5–19 units","20+ units","Mobile home / other")
+
+geo_label <- function(GEOID, geo_type) case_when(
+  GEOID == fauquier      ~ "Fauquier County",
+  GEOID == "5183136"     ~ "Warrenton",
+  GEOID == "5105336"     ~ "Bealeton",
+  geo_type == "state"    ~ "Virginia"
+)
 ```
 
-*Figures, tables, and findings are built in Session 8 (PLAN.md §7, §9).*
+## Study area
+
+```{r}
+#| label: fig-studyarea
+#| fig-cap: "Two small places anchor a large, rural county"
+#| fig-alt: "Map of Fauquier County, Virginia shaded blue among its three benchmark neighbors — Loudoun, Prince William, and Culpeper counties, shown faint grey. The Town of Warrenton near the county's center and Bealeton to the south are marked in gold and labeled."
+#| fig-asp: 0.85
+
+county_sf <- geo$county |> mutate(is_fauq = GEOID == fauquier)
+place_sf  <- geo$place
+pc        <- suppressWarnings(st_coordinates(st_centroid(place_sf)))
+place_df  <- place_sf |>
+  st_drop_geometry() |>
+  mutate(lbl = str_remove(NAME, ",.*$"), X = pc[, 1], Y = pc[, 2])
+
+ggplot() +
+  geom_sf(data = county_sf, aes(fill = is_fauq), color = "white", linewidth = 0.4) +
+  geom_sf(data = place_sf, fill = yellow, color = "grey25", linewidth = 0.3) +
+  geom_sf_text(data = filter(county_sf, !is_fauq),
+               aes(label = str_remove(NAME, " County,.*$")),
+               color = "grey55", size = 3, fontface = "italic") +
+  geom_text(data = filter(place_df, str_detect(NAME, "Warrenton")),
+            aes(X, Y, label = lbl), nudge_y = 0.055, size = 3.3,
+            fontface = "bold", color = "grey15") +
+  geom_text(data = filter(place_df, str_detect(NAME, "Bealeton")),
+            aes(X, Y, label = lbl), nudge_y = -0.055, size = 3.3,
+            fontface = "bold", color = "grey15") +
+  scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "grey88"), guide = "none") +
+  coord_sf(datum = NA) +
+  labs(
+    title = "Two small places anchor a large, rural county",
+    subtitle = "Fauquier County (blue), its benchmark neighbors, and the two study places (gold)",
+    caption = "Source: U.S. Census Bureau TIGER/Line, 2023."
+  ) +
+  theme_void(base_family = "Lato") +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 11, color = "grey35"),
+    plot.caption = element_text(size = 9, color = "grey45", hjust = 0)
+  )
+```
+
+- Fauquier County covers roughly `r format(round(geo$county$ALAND[geo$county$GEOID == fauquier] / 2589988), big.mark = ",")` square miles — a large, predominantly rural jurisdiction between the Piedmont and the outer Washington, D.C. suburbs.
+- The study zooms in on the county's two population centers: the **Town of Warrenton** (the county seat, ~10,000 residents) near the center, and the unincorporated **Bealeton CDP** (~6,000) to the south along US-17.
+- Roughly **90% of the county's land lies outside its eight designated service districts**, where public water and sewer — and therefore most new housing — are concentrated (see the land-constraint callout below).
+
+## Housing stock composition
+
+```{r}
+#| label: fig-structure
+#| fig-cap: "Single-family detached homes dominate far more than statewide"
+#| fig-alt: "Horizontal 100% stacked bar chart of housing units by structure type for Fauquier County, Warrenton, Bealeton, and Virginia. Single-family detached homes make up about 85% of Fauquier's stock versus 61% statewide; the towns carry more multifamily units."
+
+struct <- stock$b25024 |>
+  filter(variable != "B25024_001") |>
+  mutate(cat = structure_cat(variable)) |>
+  summarize(estimate = sum(estimate), .by = c(GEOID, NAME, geo_type, cat)) |>
+  mutate(share = estimate / sum(estimate), .by = GEOID) |>
+  mutate(
+    cat = factor(cat, levels = struct_lvls),
+    geo = factor(geo_label(GEOID, geo_type),
+                 levels = c("Virginia", "Bealeton", "Warrenton", "Fauquier County"))
+  )
+
+ggplot(struct, aes(x = share, y = geo, fill = cat)) +
+  geom_col(width = 0.7) +
+  scale_x_continuous(labels = label_percent(), expand = c(0, 0)) +
+  scale_fill_hda() +
+  labs(
+    title = "Single-family detached homes dominate far more than statewide",
+    subtitle = "Share of all housing units by structure type, 2020–2024",
+    caption = acs_cap("B25024"), fill = NULL
+  ) +
+  theme_hda(flip_gridlines = TRUE) +
+  theme(legend.position = "top") +
+  guides(fill = guide_legend(nrow = 2))
+```
+
+- **Single-family detached homes are 85.1% of Fauquier's housing stock** — essentially matching the GP study's 84.8% and far above Virginia's 61.3%.
+- The county has proportionally **little multifamily**: units in 5+ structures are about 3% of the stock, versus roughly 18% statewide.
+- Both towns are more multifamily than the county overall — Warrenton in particular carries a larger share of attached and mid-size multifamily units — but the small place-level counts are statistically noisy (see the reliability caveat below).
+
+```{r}
+#| label: tbl-town-structure
+#| tbl-cap: "Town housing units by structure type, with reliability (counts, not rates)"
+
+town_struct <- stock$b25024 |>
+  filter(geo_type == "place", variable != "B25024_001") |>
+  mutate(cat = structure_cat(variable)) |>
+  summarize(estimate = sum(estimate), moe = sqrt(sum(moe^2)), .by = c(NAME, cat)) |>
+  mutate(cv = if_else(estimate > 0, (moe / 1.645) / estimate * 100, NA_real_)) |>
+  flag_reliability() |>
+  mutate(
+    town = str_remove(NAME, " (town|CDP),.*$"),
+    # Bealeton floor: suppress CV > 30% (Low) cells; show reliable counts only
+    shown = if_else(reliability %in% c("High", "Medium"),
+                    paste0(format(round(estimate), big.mark = ","), " (", reliability, ")"),
+                    "—"),
+    cat = factor(cat, levels = struct_lvls)
+  ) |>
+  select(town, cat, shown) |>
+  pivot_wider(names_from = town, values_from = shown) |>
+  arrange(cat)
+
+town_struct |>
+  kbl(col.names = c("Structure type", "Warrenton", "Bealeton"), align = "lrr") |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE) |>
+  footnote(
+    general = "Cells with a coefficient of variation above 30% (Low reliability) are suppressed (—). High = CV ≤ 15%, Medium = CV 15–30%.",
+    general_title = "", footnote_as_chunk = TRUE
+  )
+```
+
+- Only single-family detached counts are reliable (High) in both towns; most small-structure categories carry CV > 30% and are suppressed — the towns are too small for ACS to size their multifamily and manufactured stock precisely.
+
+## Age of the housing stock
+
+```{r}
+#| label: fig-yearbuilt
+#| fig-cap: "Owner-occupied homes skew newer; the rental stock is older"
+#| fig-alt: "Grouped bar chart of the share of occupied homes by decade built, split by tenure, for Fauquier County. Owner-occupied homes peak in the 1980s–1990s and 2000s; renter-occupied homes are concentrated before 1960 and in the 1980s–1990s, skewing older overall."
+
+era_lvls <- c("Before 1960", "1960–1979", "1980–1999", "2000–2009", "2010 or later")
+yb <- stock$b25036 |>
+  filter(geo_type == "county",
+         !variable %in% c("B25036_001", "B25036_002", "B25036_013")) |>
+  left_join(stock$vars$b25036 |> select(variable = name, ten = col3, yr = col4),
+            by = "variable") |>
+  mutate(
+    tenure = if_else(str_detect(ten, "Owner"), "Owner", "Renter"),
+    era = case_when(
+      str_detect(yr, "2020|2010") ~ "2010 or later",
+      str_detect(yr, "2000")      ~ "2000–2009",
+      str_detect(yr, "1990|1980") ~ "1980–1999",
+      str_detect(yr, "1970|1960") ~ "1960–1979",
+      TRUE                        ~ "Before 1960"
+    )
+  ) |>
+  summarize(est = sum(estimate), .by = c(tenure, era)) |>
+  mutate(share = est / sum(est), .by = tenure,
+         era = factor(era, levels = era_lvls))
+
+ggplot(yb, aes(x = era, y = share, fill = tenure)) +
+  geom_col(position = "dodge", width = 0.75) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.05))) +
+  scale_fill_manual(values = c(Owner = blue, Renter = coral)) +
+  labs(
+    title = "Owner-occupied homes skew newer; the rental stock is older",
+    subtitle = "Share of occupied homes by decade built — <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span>, 2020–2024",
+    caption = acs_cap("B25036"), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line() +
+  theme(legend.position = "none")
+```
+
+- The county's **median year built is 1987**, and **56% of all homes were built before 1980** — an aging stock overall.
+- **Owned homes skew newer:** 34% were built in 2000 or later, reflecting the county's for-sale subdivision growth.
+- **The rental stock skews older:** about 32% of renter-occupied homes predate 1960, versus 12% of owner-occupied homes — the opposite of a "newer rental" pattern.
+
+::: {.callout-note}
+## Median year built — the towns
+
+Warrenton's median year built (1987) matches the county, but **Bealeton's stock is meaningfully newer (median 1998)** — consistent with its role as a recent growth node along US-17. Both town medians are High-reliability estimates.
+:::
+
+## Tenure
+
+```{r}
+#| label: fig-tenure
+#| fig-cap: "Homeownership has held near four-in-five for two decades"
+#| fig-alt: "Line and point chart of the owner-occupied share of Fauquier County households from 2000 to 2024, combining decennial counts and ACS estimates. The share stays between about 76% and 80%. Town points for 2024 show Bealeton near 79% and Warrenton lower at 63%."
+
+acs_o <- stock$b25003_trend |>
+  filter(geo_type == "county") |>
+  summarize(total = estimate[variable == "B25003_001"],
+            owner = estimate[variable == "B25003_002"], .by = year) |>
+  transmute(year, owner_share = owner / total, src = "ACS 5-year estimate")
+
+dec_o <- decennial$tenure |>
+  filter(geo_type == "county") |>
+  summarize(
+    total  = value[variable %in% c("H4_001N", "H004001")],
+    renter = sum(value[variable %in% c("H4_004N", "H004004")],
+                 value[year == 2000 & variable == "H004003"], na.rm = TRUE),
+    .by = year
+  ) |>
+  transmute(year, owner_share = (total - renter) / total, src = "Decennial count")
+
+trend <- bind_rows(acs_o, dec_o)
+town_o <- tibble(year = 2024, owner_share = c(0.630, 0.787),
+                 town = c("Warrenton", "Bealeton"))
+
+ggplot(trend, aes(year, owner_share)) +
+  geom_line(data = ~ filter(.x, src == "ACS 5-year estimate"),
+            color = blue, linewidth = 1) +
+  geom_point(aes(color = src, shape = src), size = 2.6) +
+  geom_point(data = town_o, aes(year, owner_share), color = coral,
+             shape = 17, size = 3, inherit.aes = FALSE) +
+  geom_text(data = town_o, aes(year, owner_share, label = town), color = coral,
+            hjust = 1, nudge_x = -0.6, size = 3, inherit.aes = FALSE) +
+  scale_color_manual(values = c("ACS 5-year estimate" = blue, "Decennial count" = green)) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), limits = c(0.55, 0.85)) +
+  scale_x_continuous(limits = c(1999, 2026), breaks = seq(2000, 2024, 4)) +
+  labs(
+    title = "Homeownership has held near four-in-five for two decades",
+    subtitle = "Owner-occupied share of households — <span style='color:#445ca9'>**ACS estimates**</span>, <span style='color:#8baeaa'>**decennial counts**</span>, and <span style='color:#e76f52'>**2024 towns**</span>",
+    caption = paste0(acs_cap("B25003"), " ", dec_cap("2000–2020")),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  theme(legend.position = "none")
+```
+
+- Fauquier's **owner-occupied share has stayed between 76% and 80%** across both decennial counts (2000–2020) and ACS estimates (2013–2024) — remarkably stable.
+- The towns diverge sharply in 2024: **Bealeton is ~79% owner-occupied (High reliability), while Warrenton is only ~63%** — the county's clearest concentration of renters.
+
+::: {.callout-note}
+## Caveat: two different measures
+
+The decennial figures are 100% counts (2000, 2010, 2020); the ACS figures are 5-year rolling estimates (period-average). They measure the same concept on different universes and are kept visually distinct here — small level differences between the two series are expected, not real change. Documented in the data & methodology appendix.
+:::
+
+## Residential construction
+
+```{r}
+#| label: fig-permits
+#| fig-cap: "Virtually every home permitted since 2000 has been single-family"
+#| fig-alt: "Stacked column chart of Fauquier County residential building permits by structure type from 2000 to 2025. Single-family (1-unit) permits account for nearly all activity every year; missing-middle (2–4 unit) permits are essentially absent and multifamily (5+) permits appear only in a few years. A dashed line marks the 2020–2025 average of 266 permits per year."
+
+perm <- bps$bps_county |>
+  mutate(grp = case_when(
+    type == "1-unit"                     ~ "Single-family (1 unit)",
+    type %in% c("2-units", "3-4 units")  ~ "Missing middle (2–4 units)",
+    TRUE                                 ~ "Multifamily (5+ units)"
+  )) |>
+  summarize(units = sum(units), .by = c(year, grp)) |>
+  mutate(grp = factor(grp, levels = c("Single-family (1 unit)",
+                                       "Missing middle (2–4 units)",
+                                       "Multifamily (5+ units)")))
+
+ggplot(perm, aes(year, units, fill = grp)) +
+  geom_col(width = 0.8) +
+  geom_hline(yintercept = 266, linetype = "dashed", color = "grey35") +
+  annotate("text", x = 2006, y = 320, label = "2020–2025 average: 266 permits/year",
+           size = 3.2, color = "grey35", hjust = 0) +
+  scale_fill_manual(values = c("Single-family (1 unit)" = blue,
+                               "Missing middle (2–4 units)" = yellow,
+                               "Multifamily (5+ units)" = green)) +
+  scale_y_continuous(expand = expansion(c(0, 0.05))) +
+  scale_x_continuous(breaks = seq(2000, 2025, 5)) +
+  labs(
+    title = "Virtually every home permitted since 2000 has been single-family",
+    subtitle = "Residential building permits by structure type, Fauquier County, 2000–2025",
+    caption = bps_cap("2000–2025"), x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "top")
+```
+
+- **Missing middle is virtually nonexistent:** just 10 total 2–4-unit permits were issued across the entire 2000–2025 period.
+- **Multifamily (5+) is rare and episodic** — notable only in a few years (e.g. ~108 units in 2001, 48 in 2018).
+- Permitting has averaged **266 units/year over 2020–2025**, essentially all single-family (above the GP study's earlier 241/yr benchmark).
+- **Town-level permits are not separable:** the Census place-level BPS file timed out on retrieval (HTTP 524), so this figure is county-wide; Bealeton is unincorporated and issues through the county regardless.
+
+## New construction vs. resale
+
+```{r}
+#| label: fig-newresale
+#| fig-cap: "New homes are larger and pricier than resales — but on smaller lots"
+#| fig-alt: "Three-panel bar chart comparing 2025 median price, size, and lot area of new-construction versus resale home sales in Fauquier County. New homes have a higher median price (about $734,000 vs $635,000) and are larger (about 2,854 vs 2,484 square feet), but sit on much smaller lots (about 0.23 vs 1.0 acre)."
+#| fig-asp: 0.5
+
+nvr <- mls$new_vs_resale |>
+  filter(year == 2025) |>
+  transmute(construction,
+            `Median price` = median_price,
+            `Median size (sq ft)` = median_sqft,
+            `Median lot (acres)` = median_acres) |>
+  pivot_longer(-construction, names_to = "metric", values_to = "value") |>
+  mutate(
+    metric = factor(metric, levels = c("Median price", "Median size (sq ft)", "Median lot (acres)")),
+    lbl = case_when(
+      metric == "Median price"          ~ label_dollar(accuracy = 1000)(value),
+      metric == "Median size (sq ft)"   ~ label_comma(accuracy = 1)(value),
+      TRUE                              ~ number(value, accuracy = 0.01)
+    )
+  )
+
+ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
+  geom_col(width = 0.65) +
+  geom_text(aes(label = lbl), vjust = -0.4, size = 3.2, color = "grey20") +
+  facet_wrap(~ metric, scales = "free_y") +
+  scale_fill_manual(values = c("New construction" = blue, "Resale" = green)) +
+  scale_y_continuous(expand = expansion(c(0, 0.18))) +
+  labs(
+    title = "New homes are larger and pricier than resales — but on smaller lots",
+    subtitle = "Median attributes of <span style='color:#445ca9'>**new-construction**</span> vs <span style='color:#8baeaa'>**resale**</span> sales, Fauquier County, 2025",
+    caption = mls_cap("2025 closed sales"), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  theme(legend.position = "none",
+        axis.text.y = element_blank())
+```
+
+- **New construction sold for a higher median price** in 2025 (~$734,000 vs ~$635,000 for resales) and was **larger** (~2,854 vs ~2,484 sq ft).
+- But **new homes sat on far smaller lots** (~0.23 vs ~1.0 acre) — and new-construction lot sizes have shrunk sharply since 2022 (median ~1.68 acres then), as production has concentrated in service-district subdivisions.
+- The signal for the "missing middle" theme is not lot size but product type: new supply is **larger detached houses**, with no starter-scale or small-lot infill product entering the market.
+
+## Vacancy, manufactured housing & land constraints
+
+::: {.callout-note}
+## Vacancy: a very tight market
+
+Fauquier's overall vacancy rate is about **6.6%** (1,901 of 28,621 units), but most of that is not available housing: **550 units are seasonal/recreational and 883 are "other vacant"** (held off-market). Only about **1.2% of all units are actually available** — for rent (174) or for sale (178) — a sign of an extremely tight market. *Source: ACS 2020–2024, Table B25004.*
+:::
+
+::: {.callout-note}
+## Town spotlight — Bealeton and manufactured housing
+
+Interviews flagged manufactured housing as a Bealeton-area concern, but **the ACS place estimate cannot quantify it**: Bealeton's recorded mobile-home count is 0 with a coefficient of variation too high to use. County-wide, ACS records about **470 mobile homes (1.6% of the stock, Medium reliability)**. The manufactured-housing concentration described around Bealeton is real on the ground but falls below what ACS 5-year place estimates can reliably size — a data limitation, presented as counts, not rates. *Source: ACS 2020–2024, Table B25024.*
+:::
+
+::: {.callout-note}
+## Land constraint — where housing can go
+
+Fauquier's Comprehensive Plan channels growth into eight service districts:
+
+- **~`r easements$value[easements$stat_name == "rural_land_share_of_county"]`% of the county's land is rural**, outside those districts and largely unavailable for dense development.
+- About **`r format(easements$value[easements$stat_name == "units_unbuilt_capacity"], big.mark = ",")` units of unbuilt build-out capacity** remain within the service districts.
+- **`r easements$value[easements$stat_name == "permits_sfd_share_2001_2018"]`% of permits issued 2001–2018 were single-family detached**, reinforcing the low-density pattern.
+
+*Source: Fauquier County Comprehensive Plan (Ch. 1 p. 11, Ch. 3 pp. 7–11).*
+:::
+
+## What the interviews said vs. what the data shows
+
+::: {.callout-important}
+## Interview validation
+
+- **"Missing middle — only large homes on large lots, no starter product."** *Confirmed and nuanced.* Permits are ~all single-family (10 missing-middle permits in 25 years); new construction is larger and pricier than resale (@fig-newresale, @fig-permits). The lot-size story has flipped, though: new homes are now on *smaller* lots as growth concentrates in service districts — the constraint is product type (no small/attached/starter homes), not lot size.
+- **"Conservation easements and rural zoning constrain developable land."** *Confirmed.* ~90% of county land is rural; developable capacity is a finite ~8,381 units inside the service districts (land-constraint callout).
+- The interview claim that only 3 for-sale listings under $350k existed (April 2026) is a market-pricing signal carried in the ownership-market chapter (@sec-market-ownership).
+:::

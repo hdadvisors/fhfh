@@ -17,17 +17,18 @@ if (Sys.getenv("CENSUS_API_KEY") == "") {
 
 dir.create("data", showWarnings = FALSE, recursive = TRUE)
 
-fauquier <- "51061"
-towns    <- c(warrenton = "5183136", bealeton = "5105336")
+fauquier   <- "51061"
+towns      <- c(warrenton = "5183136", bealeton = "5105336")
+benchmarks <- c(culpeper = "51047", prince_william = "51153", loudoun = "51107")
 
 ## 2. B19013 – Median HH income trend 2010–2024 ----
-# Fauquier county + towns + VA (15 years × 3 geographies = 45 API calls, cached after first run)
+# Fauquier + 3 benchmark counties + towns + VA (chapter distinguishes county vs peers by GEOID).
 message("Pulling B19013 trend 2010-2024 (may take a few minutes first run)...")
 b19013_trend <- map_dfr(2010:2024, \(yr)
   bind_rows(
     get_acs(geography = "county", state = "VA", table = "B19013",
             year = yr, survey = "acs5", cache_table = TRUE) |>
-      filter(GEOID == fauquier) |>
+      filter(GEOID %in% c(fauquier, unname(benchmarks))) |>
       mutate(geo_type = "county"),
     get_acs(geography = "place", state = "VA", table = "B19013",
             year = yr, survey = "acs5", cache_table = TRUE) |>
@@ -126,5 +127,10 @@ inc_2024 <- inc$b19013_trend |>
   pull(estimate)
 stopifnot(between(inc_2024, 115000, 145000))   # GP benchmark: ~$130,189
 
+# All four counties (Fauquier + 3 benchmarks) present across the trend
+county_geoids <- inc$b19013_trend |> filter(geo_type == "county") |> distinct(GEOID) |> pull()
+stopifnot(all(c(fauquier, unname(benchmarks)) %in% county_geoids))
+
 message("acs_income.R validation passed.")
 message("  Fauquier 2024 median HH income: $", format(inc_2024, big.mark = ","))
+message("  Benchmark counties present: ", paste(sort(county_geoids), collapse = ", "))
