@@ -97,6 +97,18 @@ lodes_cap <- function(year = 2022)
 cpi_cap <- function()
   "Inflation-adjusted to the latest period using BLS CPI-U via FRED."
 
+costar_cap <- function()
+  "**Source:** CoStar multifamily market data, quarterly."
+
+fmr_cap <- function(year = "FY2026")
+  paste0("**Source:** HUD Fair Market Rents and Small Area FMRs, ", year, ".")
+
+nhpd_cap <- function()
+  "**Source:** National Housing Preservation Database (NHPD)."
+
+pmms_cap <- function()
+  "**Source:** Freddie Mac Primary Mortgage Market Survey (PMMS), 30-year fixed rate, via FRED."
+
 # easements rows carry chapter + page
 compplan_cap <- function(chapter, page)
   paste0("**Source:** Fauquier County Comprehensive Plan, ", chapter, ", p. ", page, ".")

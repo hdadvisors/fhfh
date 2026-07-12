@@ -38,7 +38,8 @@ Session 12.
 ## Chapter helpers
 
 `_common.R` provides caption helpers — `acs_cap()`, `chas_cap()`, `mls_cap()`, `qcew_cap()`,
-`dec_cap()`, `pep_cap()`, `bps_cap()`, `lodes_cap()`, `cpi_cap()`, `compplan_cap()` — and
+`dec_cap()`, `pep_cap()`, `bps_cap()`, `lodes_cap()`, `cpi_cap()`, `costar_cap()`, `fmr_cap()`,
+`nhpd_cap()`, `pmms_cap()`, `compplan_cap()` — and
 `flag_reliability()`, which tiers place-level ACS estimates High/Medium/Low from a 0–100 CV column
 (used instead of `hdatools::add_reliability()`, which assumes a 0–1 scale).
 

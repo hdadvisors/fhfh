@@ -202,11 +202,11 @@
   {
     "objectID": "market-ownership.html",
     "href": "market-ownership.html",
-    "title": "3  Ownership Market Dynamics",
+    "title": "3  The For-Sale Market",
     "section": "",
-    "text": "Figures, tables, and findings are built in Session 9 (PLAN.md §7, §9).",
+    "text": "3.1 Sales volume\nFigure 3.1: Home sales cooled sharply from the 2020–21 peak",
     "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Ownership Market Dynamics</span>"
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
     ]
   },
   {
@@ -268,6 +268,76 @@
     "crumbs": [
       "Appendices",
       "<span class='chapter-number'>A</span>  <span class='chapter-title'>Data notes</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#sales-volume",
+    "href": "market-ownership.html#sales-volume",
+    "title": "3  The For-Sale Market",
+    "section": "",
+    "text": "Sales peaked at 1,466 in 2021 and have since fallen to 938 in 2025 — down about 36% from the pandemic-era high.\nThe cooling reflects thin supply and higher financing costs, not falling demand — prices kept climbing through the slowdown (Figure 3.2).\nCounts through 2021 come from the GP/VAR annual series and 2022 onward from Bright MLS; 2026 is a partial year-to-date count and is not comparable to the full years.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#prices",
+    "href": "market-ownership.html#prices",
+    "title": "3  The For-Sale Market",
+    "section": "3.2 Prices",
+    "text": "3.2 Prices\n\n\n\n\n\n\n\n\nFigure 3.2: Prices climbed steeply — and kept rising even after inflation\n\n\n\n\n\n\nThe county’s median sold price nearly doubled in nominal terms — about $360k (2016) to $650k (2025), +81%.\nEven after inflation, real prices rose from roughly $465k to $650k in 2025 dollars (+40%) — genuine appreciation, not just inflation.\nThe town ZIPs track the county: Warrenton (~$690k in 2025) runs above Bealeton (~$570k). Town-ZIP series begin in 2022 because the county’s 2016–2021 monthly series is VAR (county-only).",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#prices-vs.-payments-vs.-incomes",
+    "href": "market-ownership.html#prices-vs.-payments-vs.-incomes",
+    "title": "3  The For-Sale Market",
+    "section": "3.3 Prices vs. payments vs. incomes",
+    "text": "3.3 Prices vs. payments vs. incomes\n\n\n\n\n\n\n\n\nFigure 3.3: Monthly mortgage payments have far outrun both prices and incomes\n\n\n\n\n\n\nOver 2016–2025 the median price rose +81%, but the monthly payment on that home rose +152% — the 30-year rate climbed from 2.9566667% (2021) to 6.5966667% (2025), compounding the price increase.\nMedian household income rose only +43% through 2024 — far behind both, so buying power has fallen sharply.\nThe pattern matches the GP study’s Figure 9 direction (GP: price +79%, payment +127%, income +35%); FHFH’s actuals run somewhat higher on all three but tell the same story — payments ≫ prices ≫ incomes.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#price-segments",
+    "href": "market-ownership.html#price-segments",
+    "title": "3  The For-Sale Market",
+    "section": "3.4 Price segments",
+    "text": "3.4 Price segments\n\n\n\n\n\n\n\n\nFigure 3.4: The entry-level segment has all but disappeared\n\n\n\n\n\n\nHomes under $250k fell from 3.8% of sales in 2022 to 1.6% in 2025; everything under $350k is now barely 6% of the market.\nThe $750k+ band has surged to 35% of sales (from 21% in 2022), and the modal band is now $500–750k (41%).\nThis is the tail end of a long collapse: the GP study found under-$250k sales fell from 27.8% (2016) to 3.0% (2021) — the MLS-only view here (2022+) shows the entry level eroding the rest of the way.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#days-on-market-supply",
+    "href": "market-ownership.html#days-on-market-supply",
+    "title": "3  The For-Sale Market",
+    "section": "3.5 Days on market & supply",
+    "text": "3.5 Days on market & supply\n\n\n\n\n\n\n\n\nFigure 3.5: Homes still sell fast in a thin-supply market\n\n\n\n\n\n\nMedian days on market stayed fast — around 7–8 days in 2022–2024, ticking up to 14 in 2025 as higher rates cooled demand, but still a matter of weeks, not months.\nWith only 218 active listings against 2025’s sales pace, the county holds about 2.8 months of supply — well inside the roughly six-month threshold that separates a buyer’s from a seller’s market.\n\n\n\n\n\n\n\nNoteCurrent inventory — a strong seller’s market\n\n\n\nAs of the July 2026 snapshot, 218 homes were listed for sale county-wide. Against the 2025 sales pace (~78 closings a month), that is roughly 2.8 months of supply — a strong seller’s market. Active inventory and months-of-supply are a single point-in-time snapshot, not a trend: a retroactive inventory time series cannot be reconstructed from the available data.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#what-it-takes-to-buy",
+    "href": "market-ownership.html#what-it-takes-to-buy",
+    "title": "3  The For-Sale Market",
+    "section": "3.6 What it takes to buy",
+    "text": "3.6 What it takes to buy\n\n\n\n\n\n\n\n\nFigure 3.6: Buying the median home takes about $60,000 more than the median household earns\n\n\n\n\n\n\nAffording the $650k median home requires about $190,586 in household income under standard underwriting — versus Fauquier’s actual $130,189 median, a gap of roughly $60,000.\nThe gap is driven by the same forces as Figure 3.3: high prices and a 6.49% mortgage rate.\nThis figure reuses the affordability parameters from the gaps analysis so Chapters 3 and 4 reconcile; the full owner/renter gap by income band is developed in Chapter 5.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
+    ]
+  },
+  {
+    "objectID": "market-ownership.html#what-the-interviews-said-vs.-what-the-data-shows",
+    "href": "market-ownership.html#what-the-interviews-said-vs.-what-the-data-shows",
+    "title": "3  The For-Sale Market",
+    "section": "3.7 What the interviews said vs. what the data shows",
+    "text": "3.7 What the interviews said vs. what the data shows\n\n\n\n\n\n\nImportantInterview validation\n\n\n\n\n“Only about 3 for-sale listings under $350,000 were on the market (April 2026).” Confirmed. The July 2026 snapshot shows exactly 3 of 218 active listings priced under $350,000 (Figure 3.4, Figure 3.5) — the entry-level for-sale segment has effectively vanished.\n“Homes are expensive relative to what local incomes can support.” Confirmed and nuanced. Median prices nearly doubled since 2016 and rose in real terms (Figure 3.2); the income needed to buy the median home now exceeds the actual median by ~$60k (Figure 3.6). The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (Figure 3.3).\n“Buyers face a quality-versus-price mismatch — what’s affordable isn’t desirable, and what’s desirable isn’t affordable.” Confirmed and nuanced. New construction skews larger and pricier (Chapter 1), the sub-$350k segment has all but disappeared (Figure 3.4), and the market still moves fast (Figure 3.5) — leaving entry-level buyers with few options at any quality level.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>The For-Sale Market</span>"
     ]
   }
 ]

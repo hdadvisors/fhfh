@@ -37,6 +37,8 @@ sales <- sales_raw |>
     close_date  = mdy(sales_date),
     year        = year(close_date),
     month       = month(close_date),
+    zip         = as.character(parse_number(as.character(zip))),  # 5-digit ZIP column
+    dom         = parse_number(as.character(days_on_market)),      # native Bright MLS DOM field
     sq_ft_total = parse_number(as.character(sq_ft_total)),
     acres       = parse_number(as.character(acres)),
     year_built  = parse_number(as.character(year_built))
@@ -195,10 +197,45 @@ new_vs_resale <- sales |>
 message("  new_vs_resale rows: ", nrow(new_vs_resale),
         " (", n_distinct(new_vs_resale$year), " years × 2 groups)")
 
+## 8b. Aggregate frames for Ch 3a (MLS 2022+) ----
+message("Building Ch 3a aggregate frames (annual_zip, dom_annual, sales_bands)...")
+
+# Town-zip annual median price (MLS 2022+). town_zips = c("20186","20187","22712").
+annual_zip <- sales |>
+  filter(year >= 2022, zip %in% town_zips) |>
+  mutate(town = case_when(
+    zip %in% c("20186", "20187") ~ "Warrenton",
+    zip == "22712"               ~ "Bealeton",
+    TRUE ~ NA_character_)) |>
+  filter(!is.na(town)) |>
+  summarize(median_price = median(close_price, na.rm = TRUE), n = n(),
+            .by = c(year, town))
+
+# Days-on-market summary (2022+) from the native MLS DOM field.
+dom_annual <- sales |>
+  filter(year >= 2022, !is.na(dom), dom >= 0) |>
+  summarize(median_dom = median(dom, na.rm = TRUE), n = n(), .by = year) |>
+  arrange(year)
+
+# Sales by price band (2022+). Bands aligned to the affordability narrative.
+band_brks <- c(-Inf, 250e3, 350e3, 500e3, 750e3, Inf)
+band_labs <- c("<$250k", "$250-350k", "$350-500k", "$500-750k", "$750k+")
+sales_bands <- sales |>
+  filter(year >= 2022) |>
+  mutate(band = cut(close_price, band_brks, band_labs, right = FALSE)) |>
+  summarize(n = n(), .by = c(year, band)) |>
+  mutate(share = n / sum(n), .by = year) |>
+  arrange(year, band)
+
+message("  annual_zip rows: ", nrow(annual_zip),
+        " | dom_annual rows: ", nrow(dom_annual),
+        " | sales_bands rows: ", nrow(sales_bands))
+
 ## 9. Write output ----
 write_rds(
   list(monthly = monthly, annual = annual, active = active, rentals = rentals,
-       new_vs_resale = new_vs_resale),
+       new_vs_resale = new_vs_resale,
+       annual_zip = annual_zip, dom_annual = dom_annual, sales_bands = sales_bands),
   "data/mls.rds"
 )
 message("Wrote data/mls.rds")
@@ -240,6 +277,24 @@ if (length(ann_2025) > 0) {
 }
 
 median_rent <- median(out$rentals$lease_price, na.rm = TRUE)
+
+# New Ch 3a aggregate frames: non-empty; price-bands sum to 1 per year.
+stopifnot(
+  nrow(out$annual_zip)  > 0,
+  nrow(out$dom_annual)  > 0,
+  nrow(out$sales_bands) > 0
+)
+band_sums <- out$sales_bands |> summarize(s = sum(share), .by = year)
+if (!all(abs(band_sums$s - 1) < 1e-9))
+  warning("sales_bands shares do not sum to 1 within every year")
+message("  annual_zip: ", nrow(out$annual_zip), " rows (",
+        paste(sort(unique(out$annual_zip$town)), collapse = "/"), "), ",
+        min(out$annual_zip$year), "–", max(out$annual_zip$year))
+message("  dom_annual: median DOM ", min(out$dom_annual$year), "=",
+        out$dom_annual$median_dom[out$dom_annual$year == min(out$dom_annual$year)],
+        " → ", max(out$dom_annual$year), "=",
+        out$dom_annual$median_dom[out$dom_annual$year == max(out$dom_annual$year)])
+message("  sales_bands: bands sum to 1 per year = ", all(abs(band_sums$s - 1) < 1e-9))
 
 message("mls.R validation passed.")
 message("  Monthly rows: ", nrow(out$monthly))

@@ -1,11 +1,307 @@
-# Ownership Market Dynamics {#sec-market-ownership}
+# The For-Sale Market {#sec-market-ownership}
 
-<!-- Purpose: ownership market dynamics — sales, prices, and affordability trends (PLAN.md §7 Ch 3a). -->
+<!-- Purpose: ownership-market dynamics — prices, payments, inventory, and buyer affordability for the study area (PLAN.md §7 Ch 3a).
+     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
 
 ```{r}
 #| label: setup
 #| include: false
 source("_common.R")
+
+mls  <- read_rds("data/mls.rds")
+fred <- read_rds("data/fred.rds")
+gaps <- read_rds("data/gaps.rds")
+inc  <- read_rds("data/acs_income.rds")
+
+# Palette anchors (match ggtext subtitle spans to line/fill colors)
+blue   <- hda_pal[1]
+green  <- hda_pal[2]
+yellow <- hda_pal[3]
+coral  <- hda_pal[4]
+
+# CPI deflator to the latest full year (2026 CPI is still NA) — real dollars = base-year dollars
+cpi_base_year <- max(fred$cpi$year[!is.na(fred$cpi$cpi_less_shelter)])
+cpi_base      <- fred$cpi$cpi_less_shelter[fred$cpi$year == cpi_base_year]
+
+# Monthly principal-and-interest on the median home (10% down, 30-yr fixed) — reused by F3
+mortgage_pi <- function(price, annual_rate_pct, down = 0.10, n = 360) {
+  loan <- price * (1 - down)
+  r <- annual_rate_pct / 100 / 12
+  loan * r * (1 + r)^n / ((1 + r)^n - 1)
+}
+
+# --- Inline scalars for bullet text -------------------------------------------
+ann <- mls$annual
+med_2025    <- ann$median_price[ann$year == 2025]                       # 650000
+peak_yr     <- ann$year[ann$year <= 2025][which.max(ann$sales_count[ann$year <= 2025])]  # 2021
+peak_sales  <- max(ann$sales_count[ann$year <= 2025])                   # 1466
+sales_2025  <- ann$sales_count[ann$year == 2025]                        # 938
+sales_decline <- 1 - sales_2025 / peak_sales                            # ~0.36
+
+# Real (base-year $) county price, 2016 vs 2025
+p16      <- ann$median_price[ann$year == 2016]
+cpi16    <- fred$cpi$cpi_less_shelter[fred$cpi$year == 2016]
+p16_real <- p16 * cpi_base / cpi16
+
+# Price / payment / income growth (2016 base) — indices built in F3 chunk
+idx_price_2025 <- med_2025 / p16 * 100
+pay16 <- mortgage_pi(p16, fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year == 2016])
+pay25 <- mortgage_pi(med_2025, fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year == 2025])
+idx_pay_2025 <- pay25 / pay16 * 100
+inc16 <- inc$b19013_trend$estimate[inc$b19013_trend$GEOID == fauquier & inc$b19013_trend$year == 2016]
+inc24 <- inc$b19013_trend$estimate[inc$b19013_trend$GEOID == fauquier & inc$b19013_trend$year == 2024]
+idx_inc_2024 <- inc24 / inc16 * 100
+
+# F6 affordability — reused from gaps.rds (NOT recomputed)
+buyer_income  <- gaps$income_needed$buyer_income   # 190586
+med_price     <- gaps$income_needed$med_price      # 650000
+actual_income <- inc24                             # 130189 (Fauquier 2024 median HH income)
+income_gap    <- buyer_income - actual_income      # ~60397
+
+# F5 / F7 snapshot scalars (single July-2026 active-listing snapshot)
+active_n    <- nrow(mls$active)                                   # 218
+active_u350 <- sum(mls$active$list_price < 350000, na.rm = TRUE)  # 3
+mos         <- active_n / (sales_2025 / 12)                       # ~2.8 months of supply
 ```
 
-*Figures, tables, and findings are built in Session 9 (PLAN.md §7, §9).*
+## Sales volume
+
+```{r}
+#| label: fig-sales-volume
+#| fig-cap: "Home sales cooled sharply from the 2020–21 peak"
+#| fig-alt: "Column chart of Fauquier County annual home sales from 2016 to 2026. Volume climbs from about 1,067 in 2016 to a 2020–21 peak near 1,450–1,470, then falls to roughly 850–940 sales a year in 2022–2025. Columns through 2021 come from the earlier GP/VAR series and 2022 onward from Bright MLS; the final 2026 column is a partial year-to-date count."
+
+vol <- ann |> mutate(partial = year == 2026)
+
+ggplot(vol, aes(year, sales_count, fill = source, alpha = partial)) +
+  geom_col(width = 0.78) +
+  geom_vline(xintercept = 2021.5, linetype = "dashed", color = "grey55") +
+  annotate("text", x = 2021.5, y = max(vol$sales_count) * 1.03,
+           label = "GP/VAR  |  Bright MLS", size = 3, color = "grey45", hjust = 0.5) +
+  annotate("text", x = 2026, y = ann$sales_count[ann$year == 2026] + 90,
+           label = "2026\nYTD", size = 2.7, color = "grey45", lineheight = 0.9) +
+  scale_fill_manual(values = c(GP = green, MLS = blue), guide = "none") +
+  scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = 0.45), guide = "none") +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.08))) +
+  scale_x_continuous(breaks = seq(2016, 2026, 2)) +
+  labs(
+    title = "Home sales cooled sharply from the 2020–21 peak",
+    subtitle = "Closed home sales per year, Fauquier County — <span style='color:#8baeaa'>**GP/VAR (2016–2021)**</span> spliced to <span style='color:#445ca9'>**Bright MLS (2022–2026)**</span>",
+    caption = mls_cap("2016–2026 (2026 partial-year)"), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
+```
+
+- Sales peaked at **`r format(peak_sales, big.mark = ",")` in `r peak_yr`** and have since fallen to **`r format(sales_2025, big.mark = ",")` in 2025 — down about `r label_percent(accuracy = 1)(sales_decline)`** from the pandemic-era high.
+- The cooling reflects **thin supply and higher financing costs**, not falling demand — prices kept climbing through the slowdown (@fig-price-trend).
+- Counts through 2021 come from the GP/VAR annual series and 2022 onward from Bright MLS; **2026 is a partial year-to-date count** and is not comparable to the full years.
+
+## Prices
+
+```{r}
+#| label: fig-price-trend
+#| fig-cap: "Prices climbed steeply — and kept rising even after inflation"
+#| fig-alt: "Line chart of Fauquier County median sold price from 2016 to 2025. The nominal monthly line rises from about $360,000 to $650,000; the inflation-adjusted line in 2025 dollars rises more gently from about $465,000 to $650,000. Two annual town-ZIP lines beginning in 2022 sit on either side of the county: Warrenton near $690,000 and Bealeton near $570,000 by 2025."
+
+cpi_j <- fred$cpi |> select(year, cpi_less_shelter)
+
+county_long <- mls$monthly |>
+  filter(year <= 2025) |>
+  left_join(cpi_j, by = "year") |>
+  transmute(date,
+            Nominal = median_price,
+            `Real`  = median_price * cpi_base / cpi_less_shelter) |>
+  pivot_longer(-date, names_to = "series", values_to = "price")
+
+town_a <- mls$annual_zip |>
+  filter(year <= 2025) |>
+  mutate(date = make_date(year, 7L, 1L))
+
+ggplot() +
+  geom_line(data = county_long, aes(date, price, color = series, linewidth = series)) +
+  geom_line(data = town_a, aes(date, median_price, group = town, color = town), linewidth = 0.8) +
+  geom_point(data = town_a, aes(date, median_price, color = town), size = 1.6) +
+  geom_text(data = filter(town_a, year == 2025), aes(date, median_price, label = town, color = town),
+            hjust = 0, nudge_x = 40, size = 3, fontface = "bold") +
+  scale_color_manual(values = c(Nominal = "grey70", `Real` = blue,
+                                Warrenton = coral, Bealeton = yellow), guide = "none") +
+  scale_linewidth_manual(values = c(Nominal = 0.7, `Real` = 1.1), guide = "none") +
+  scale_y_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
+                     expand = expansion(c(0.02, 0.05))) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y",
+               expand = expansion(c(0.02, 0.16))) +
+  labs(
+    title = "Prices climbed steeply — and kept rising even after inflation",
+    subtitle = "Median sold price — county <span style='color:#8a8a8a'>**nominal**</span> vs <span style='color:#445ca9'>**real (2025 $)**</span>; town ZIPs <span style='color:#e76f52'>**Warrenton**</span> / <span style='color:#e9ab3f'>**Bealeton**</span> (nominal, annual, 2022+)",
+    caption = paste0(mls_cap("2016–2025"), " ", cpi_cap()), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  theme(plot.subtitle = element_markdown())
+```
+
+- The county's **median sold price nearly doubled in nominal terms — about $`r round(p16/1e3)`k (2016) to $`r round(med_2025/1e3)`k (2025), +`r round(idx_price_2025 - 100)`%**.
+- Even after inflation, **real prices rose from roughly $`r round(p16_real/1e3)`k to $`r round(med_2025/1e3)`k in 2025 dollars (+`r round(med_2025/p16_real*100 - 100)`%)** — genuine appreciation, not just inflation.
+- The town ZIPs track the county: **Warrenton (~$`r round(town_a$median_price[town_a$town=="Warrenton" & town_a$year==2025]/1e3)`k in 2025) runs above Bealeton (~$`r round(town_a$median_price[town_a$town=="Bealeton" & town_a$year==2025]/1e3)`k)**. Town-ZIP series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only).
+
+## Prices vs. payments vs. incomes
+
+```{r}
+#| label: fig-price-payment-income
+#| fig-cap: "Monthly mortgage payments have far outrun both prices and incomes"
+#| fig-alt: "Indexed line chart set to 100 in 2016 for Fauquier County. The monthly mortgage payment line rises fastest, reaching about 250 by 2025; the median sold price line reaches about 180; and median household income rises most slowly to about 145 by 2024. The gap between payments and incomes widens sharply after 2021 as mortgage rates jump."
+
+idx <- ann |>
+  filter(year >= 2016, year <= 2025) |>
+  select(year, price = median_price) |>
+  left_join(fred$pmms_annual, by = "year") |>
+  mutate(payment = mortgage_pi(price, mortgage_rate_30yr)) |>
+  left_join(inc$b19013_trend |> filter(GEOID == fauquier) |> select(year, income = estimate),
+            by = "year") |>
+  transmute(year,
+            Price               = price   / price[year == 2016]   * 100,
+            `Monthly payment`   = payment / payment[year == 2016] * 100,
+            Income              = income  / income[year == 2016]  * 100) |>
+  pivot_longer(-year, names_to = "series", values_to = "index") |>
+  filter(!is.na(index))
+
+lab_pts <- idx |> slice_max(year, by = series)
+
+ggplot(idx, aes(year, index, color = series)) +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "grey60") +
+  geom_line(linewidth = 1) +
+  geom_text(data = lab_pts, aes(label = series), hjust = 0, nudge_x = 0.15,
+            size = 3, fontface = "bold") +
+  scale_color_manual(values = c(Price = blue, `Monthly payment` = coral, Income = green),
+                     guide = "none") +
+  scale_y_continuous(expand = expansion(c(0.02, 0.05))) +
+  scale_x_continuous(breaks = seq(2016, 2025, 3), expand = expansion(c(0.02, 0.22))) +
+  labs(
+    title = "Monthly mortgage payments have far outrun both prices and incomes",
+    subtitle = "Indexed to 2016 = 100 — median <span style='color:#445ca9'>**price**</span>, <span style='color:#e76f52'>**monthly payment**</span> (10% down, 30-yr), and median household <span style='color:#8baeaa'>**income**</span>",
+    caption = paste0(mls_cap(), " ", pmms_cap(), " ", acs_cap("B19013")), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
+```
+
+- Over 2016–2025 the **median price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)`%** — the 30-year rate climbed from `r fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021]`% (2021) to `r fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025]`% (2025), compounding the price increase.
+- **Median household income rose only +`r round(idx_inc_2024 - 100)`% through 2024** — far behind both, so buying power has fallen sharply.
+- The pattern matches the GP study's Figure 9 direction (GP: price +79%, payment +127%, income +35%); FHFH's actuals run somewhat higher on all three but tell the same story — **payments ≫ prices ≫ incomes**.
+
+## Price segments
+
+```{r}
+#| label: fig-price-bands
+#| fig-cap: "The entry-level segment has all but disappeared"
+#| fig-alt: "Hundred-percent stacked column chart of Fauquier County home sales by price band from 2022 to 2026. The under-$250,000 band shrinks from about 4% to under 2%, and the $250,000–$350,000 band from about 10% to 4%, while the $500,000–$750,000 and $750,000-plus bands together grow to roughly three-quarters of all sales."
+
+band_lvls <- c("<$250k", "$250-350k", "$350-500k", "$500-750k", "$750k+")
+bands <- mls$sales_bands |>
+  mutate(band = factor(band, levels = band_lvls))
+
+sh <- \(y, b) bands$share[bands$year == y & bands$band == b]
+
+ggplot(bands, aes(factor(year), share, fill = band)) +
+  geom_col(width = 0.74) +
+  scale_y_continuous(labels = label_percent(), expand = c(0, 0)) +
+  scale_fill_hda() +
+  labs(
+    title = "The entry-level segment has all but disappeared",
+    subtitle = "Share of closed home sales by price band, Fauquier County, 2022–2026 (2026 partial-year)",
+    caption = paste0(mls_cap("2022–2026"),
+                     " Earlier GP data show the under-$250k share falling from 27.8% (2016) to 3.0% (2021)."),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda(flip_gridlines = FALSE) +
+  theme(legend.position = "top") +
+  guides(fill = guide_legend(nrow = 1))
+```
+
+- **Homes under $250k fell from `r label_percent(accuracy = 0.1)(sh(2022, "<$250k"))` of sales in 2022 to `r label_percent(accuracy = 0.1)(sh(2025, "<$250k"))` in 2025**; everything under $350k is now barely `r label_percent(accuracy = 1)(sh(2025, "<$250k") + sh(2025, "$250-350k"))` of the market.
+- The **$750k+ band has surged to `r label_percent(accuracy = 1)(sh(2025, "$750k+"))` of sales** (from `r label_percent(accuracy = 1)(sh(2022, "$750k+"))` in 2022), and the modal band is now **$500–750k** (`r label_percent(accuracy = 1)(sh(2025, "$500-750k"))`).
+- This is the tail end of a long collapse: the GP study found under-$250k sales fell from **27.8% (2016) to 3.0% (2021)** — the MLS-only view here (2022+) shows the entry level eroding the rest of the way.
+
+## Days on market & supply
+
+```{r}
+#| label: fig-days-on-market
+#| fig-cap: "Homes still sell fast in a thin-supply market"
+#| fig-alt: "Line chart of median days on market for Fauquier County home sales from 2022 to 2026. The median hovers around 7 to 9 days in 2022–2024, rises to about 15 days in 2025, then reads 8 in the partial 2026 year — all well within a fast-moving market."
+
+dom <- mls$dom_annual |> mutate(partial = year == 2026)
+
+ggplot(dom, aes(year, median_dom)) +
+  geom_line(data = ~ filter(.x, year <= 2025), color = blue, linewidth = 1) +
+  geom_point(aes(shape = partial), color = blue, size = 2.8) +
+  geom_text(aes(label = round(median_dom)), vjust = -1, size = 3, color = "grey25") +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1), guide = "none") +
+  scale_y_continuous(limits = c(0, max(dom$median_dom) * 1.25), expand = c(0, 0)) +
+  scale_x_continuous(breaks = 2022:2026) +
+  labs(
+    title = "Homes still sell fast in a thin-supply market",
+    subtitle = "Median days on market, Fauquier County closed sales, 2022–2026 (2026 partial-year, open point)",
+    caption = mls_cap("2022–2026"), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- Median days on market stayed **fast — around `r round(dom$median_dom[dom$year==2022])`–`r round(dom$median_dom[dom$year==2024])` days in 2022–2024, ticking up to `r round(dom$median_dom[dom$year==2025])` in 2025** as higher rates cooled demand, but still a matter of weeks, not months.
+- With only **`r active_n` active listings** against 2025's sales pace, the county holds about **`r round(mos, 1)` months of supply** — well inside the roughly six-month threshold that separates a buyer's from a seller's market.
+
+::: {.callout-note}
+## Current inventory — a strong seller's market
+As of the July 2026 snapshot, **`r active_n` homes were listed for sale** county-wide. Against the 2025 sales pace (~`r round(sales_2025/12)` closings a month), that is roughly **`r round(mos, 1)` months of supply** — a strong seller's market. Active inventory and months-of-supply are a **single point-in-time snapshot**, not a trend: a retroactive inventory time series cannot be reconstructed from the available data.
+:::
+
+## What it takes to buy
+
+```{r}
+#| label: fig-income-to-buy
+#| fig-cap: "Buying the median home takes about $60,000 more than the median household earns"
+#| fig-alt: "Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $190,600, well above the actual median household income of about $130,200 — a gap of roughly $60,000."
+
+f6 <- tibble(
+  what  = factor(c("Income needed to buy\nthe median home", "Actual median\nhousehold income"),
+                 levels = c("Actual median\nhousehold income", "Income needed to buy\nthe median home")),
+  value = c(buyer_income, actual_income),
+  grp   = c("needed", "actual")
+)
+
+ggplot(f6, aes(value, what, fill = grp)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = label_dollar(accuracy = 1000)(value)), hjust = -0.1,
+            size = 3.4, color = "grey20") +
+  scale_fill_manual(values = c(needed = coral, actual = blue), guide = "none") +
+  scale_x_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
+                     expand = expansion(c(0, 0.18))) +
+  labs(
+    title = "Buying the median home takes about $60,000 more than the median household earns",
+    subtitle = "Income required for the $650k median home vs. Fauquier's actual median household income",
+    caption = paste0("**Assumptions:** ", label_percent(accuracy = 0.01)(gaps$assumptions$mortgage_rate),
+                     " 30-yr rate (PMMS, ", format(gaps$assumptions$rate_pull_date, "%b %Y"), "), ",
+                     label_percent(accuracy = 1)(gaps$assumptions$down_payment), " down, ",
+                     label_percent(accuracy = 1)(gaps$assumptions$front_end_ratio), " front-end ratio, $",
+                     gaps$assumptions$tax_ins_monthly, "/mo taxes + insurance. ", acs_cap("B19013"),
+                     " Parameters shared with the affordability-gaps analysis."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda(flip_gridlines = TRUE)
+```
+
+- Affording the **$`r round(med_price/1e3)`k median home requires about $`r format(round(buyer_income), big.mark = ",")`** in household income under standard underwriting — versus Fauquier's actual **$`r format(round(actual_income), big.mark = ",")`** median, a gap of roughly **$`r format(round(income_gap/1e3)*1e3, big.mark = ",")`**.
+- The gap is driven by the same forces as @fig-price-payment-income: high prices *and* a `r label_percent(accuracy = 0.01)(gaps$assumptions$mortgage_rate)` mortgage rate.
+- This figure reuses the affordability parameters from the gaps analysis so Chapters 3 and 4 reconcile; the full owner/renter gap by income band is developed in @sec-gaps.
+
+## What the interviews said vs. what the data shows
+
+::: {.callout-important}
+## Interview validation
+
+- **"Only about 3 for-sale listings under $350,000 were on the market (April 2026)."** *Confirmed.* The July 2026 snapshot shows **exactly `r active_u350` of `r active_n` active listings priced under $350,000** (@fig-price-bands, @fig-days-on-market) — the entry-level for-sale segment has effectively vanished.
+- **"Homes are expensive relative to what local incomes can support."** *Confirmed and nuanced.* Median prices nearly doubled since 2016 and rose in real terms (@fig-price-trend); the income needed to buy the median home now exceeds the actual median by ~$60k (@fig-income-to-buy). The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (@fig-price-payment-income).
+- **"Buyers face a quality-versus-price mismatch — what's affordable isn't desirable, and what's desirable isn't affordable."** *Confirmed and nuanced.* New construction skews larger and pricier (@sec-inventory), the sub-$350k segment has all but disappeared (@fig-price-bands), and the market still moves fast (@fig-days-on-market) — leaving entry-level buyers with few options at any quality level.
+:::
