@@ -378,18 +378,19 @@ Warrenton/Bealeton town callout (e.g. the Bealeton income-distribution spotlight
 Flip the §9 status row for Session 8 to `complete 2026-07-XX | Opus`. Note the two approved upstream
 edits (`mls.R` new_vs_resale, `acs_income.R` benchmarks) since they extend the literal chapter-only DoD.
 
-### PLAN.md §11 log entry (fill placeholders)
-```
-- **2026-07-XX** — Session 8 (Inventory + Demographics chapters) complete (Opus). Built inventory.qmd
-  (7 figs) + demographics.qmd (11 figs). Added _common.R caption helpers (dec/pep/bps/lodes/cpi/compplan)
-  + flag_reliability() wrapper (fixes hdatools add_reliability cv-scale/name mismatch). Upstream edits
-  (Jonathan-approved): r/mls.R now persists new_vs_resale (median price/sqft/acres by group) → Ch1 Fig6;
-  r/acs_income.R B19013 now includes Culpeper/PW/Loudoun → Ch2 Fig5 benchmarks. Key numbers: SFD 85.1%;
-  permits 266/yr (county-only, Warrenton NULL); components +474 migration vs +138 natural (1-yr flow);
-  income $130,189; residency share 35.4%. Bealeton suppressed where CV>30% (counts-not-rates). Deviations:
-  easement "land share" reframed as 90% rural + 8,381 unbuilt cap + 97% SFD (no % -under-easement stat);
-  NHPD deferred to Ch3b per §7. Open: <any deferred figs>.
-```
+### PLAN.md §11 log entry — DONE
+The canonical combined entry (both chapters, both sittings) lives in `PLAN.md` §11 under **2026-07-12**.
+It records, beyond the original template, the part-1/part-2 findings that only surfaced at build time:
+- **Ch1:** rental stock *older* / owner *newer* (not "newer rental"); new construction on *smaller* lots
+  (~0.23 ac), so the missing-middle signal is product-type not lot size; Bealeton mobile-home = unreliable
+  0 → reframed to the county count; land-constraint = 90% rural + 8,381 unbuilt + 97% SFD; BPS Warrenton
+  NULL (524) → county-only.
+- **Ch2:** PEP ends 2024 (not 2025) → F1 titled 1990–2024; the lower-income town is **Warrenton**
+  (not Bealeton); all-jobs wage *growth* is comparable across counties, so F9's story is wage *level* vs
+  Loudoun; Fauquier only marginally older than VA → F3 leads with the young-adult deficit; F7 poverty as a
+  callout (town rates CV>30% → counts).
+- **Upstream (Jonathan-approved):** `r/mls.R` `new_vs_resale`; `r/acs_income.R` B19013 benchmarks.
+- **Deferrals:** none — all 18 §7 items built.
 
 ### Commit
 ```bash
@@ -408,17 +409,17 @@ convention). **This was the only action for the planning session — no chapter 
 
 ## Verification (Definition of Done)
 
-- [ ] Phase 0: `_common.R` has the 6 caption helpers + `flag_reliability()`; `CLAUDE.md`/`README.md`
+- [x] Phase 0: `_common.R` has the 6 caption helpers + `flag_reliability()`; `CLAUDE.md`/`README.md`
       updated. `r/mls.R` + `r/acs_income.R` edited and re-run clean; `mls.rds$new_vs_resale` and the
       4-county `b19013_trend` present and validated.
-- [ ] `quarto render inventory.qmd` clean; all 7 §7 items present (map, structure type, year built,
+- [x] `quarto render inventory.qmd` clean; all 7 §7 items present (map, structure type, year built,
       tenure trend, permits, new-vs-resale, callouts); ≥1 Warrenton/Bealeton callout; §6 interview
       callout present.
-- [ ] `quarto render demographics.qmd` clean; all 11 §7 items present; town callout + §6 interview
+- [x] `quarto render demographics.qmd` clean; all 11 §7 items present; town callout + §6 interview
       callout present.
-- [ ] Every figure has a takeaway-sentence title, geo/units/year subtitle, `*_cap()` caption, and
+- [x] Every figure has a takeaway-sentence title, geo/units/year subtitle, `*_cap()` caption, and
       `#| fig-alt:`. No prose paragraphs (bullets + callouts only).
-- [ ] Town figures show a High/Medium/Low **mix** (not all "Low"); CV>30% cells suppressed/aggregated;
+- [x] Town figures show a High/Medium/Low **mix** (not all "Low"); CV>30% cells suppressed/aggregated;
       Medium cells footnoted in the margin. Bealeton uses counts where rates are unreliable.
-- [ ] Book still renders end-to-end (`quarto render`); `_freeze/` refreshed; §9/§11 updated; committed.
-- [ ] Any figure that couldn't be built is logged as deferred in §11 (none expected).
+- [x] Book still renders end-to-end (`quarto render`); `_freeze/` refreshed; §9/§11 updated; committed.
+- [x] Any figure that couldn't be built is logged as deferred in §11 (none deferred — all 18 built).
