@@ -14,7 +14,6 @@ stock     <- read_rds("data/acs_stock.rds")
 bps       <- read_rds("data/bps.rds")
 mls       <- read_rds("data/mls.rds")
 easements <- read_rds("data/easements.rds")
-decennial <- read_rds("data/decennial.rds")
 
 # Palette anchors (match ggtext subtitle spans to fills)
 blue   <- hda_pal[1]
@@ -59,21 +58,21 @@ place_df  <- place_sf |>
 
 ggplot() +
   geom_sf(data = county_sf, aes(fill = is_fauq), color = "white", linewidth = 0.4) +
-  geom_sf(data = place_sf, fill = yellow, color = "grey25", linewidth = 0.3) +
+  geom_sf(data = place_sf, fill = yellow, color = "white", linewidth = 0.3) +
   geom_sf_text(data = filter(county_sf, !is_fauq),
-               aes(label = str_remove(NAME, " County,.*$")),
+               aes(label = str_remove(NAME, " County,.*$")), nudge_y = -0.05,
                color = "grey55", size = 3, fontface = "italic") +
   geom_text(data = filter(place_df, str_detect(NAME, "Warrenton")),
             aes(X, Y, label = lbl), nudge_y = 0.055, size = 3.3,
-            fontface = "bold", color = "grey15") +
+            fontface = "bold", color = "white") +
   geom_text(data = filter(place_df, str_detect(NAME, "Bealeton")),
-            aes(X, Y, label = lbl), nudge_y = -0.055, size = 3.3,
-            fontface = "bold", color = "grey15") +
+            aes(X, Y, label = lbl), nudge_y = 0.055, size = 3.3,
+            fontface = "bold", color = "white") +
   scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "grey88"), guide = "none") +
   coord_sf(datum = NA) +
   labs(
     title = "Two small places anchor a large, rural county",
-    subtitle = "Fauquier County (blue), its benchmark neighbors, and the two study places (gold)",
+    subtitle = "Fauquier County (blue), the two study places (gold), and its benchmark neighbors",
     caption = "Source: U.S. Census Bureau TIGER/Line, 2023."
   ) +
   theme_void(base_family = "Lato") +
@@ -92,7 +91,7 @@ ggplot() +
 
 ```{r}
 #| label: fig-structure
-#| fig-cap: "Single-family detached homes dominate far more than statewide"
+#| fig-cap: "Fauquier County much more suburban than rest of Virginia"
 #| fig-alt: "Horizontal 100% stacked bar chart of housing units by structure type for Fauquier County, Warrenton, Bealeton, and Virginia. Single-family detached homes make up about 85% of Fauquier's stock versus 61% statewide; the towns carry more multifamily units."
 
 struct <- stock$b25024 |>
@@ -106,18 +105,23 @@ struct <- stock$b25024 |>
                  levels = c("Virginia", "Bealeton", "Warrenton", "Fauquier County"))
   )
 
-ggplot(struct, aes(x = share, y = geo, fill = cat)) +
+ggplot(struct, aes(x = share, y = geo, fill = cat, alpha = geo_type)) +
   geom_col(width = 0.7) +
-  scale_x_continuous(labels = label_percent(), expand = c(0, 0)) +
+  scale_x_continuous(labels = label_percent(), limits = c(0, 1.05), expand = c(0, 0)) +
+  scale_alpha_manual(
+    values = c("county" = 1, "place" = 1, "state" = 0.7),
+    guide = NULL
+  ) +
   scale_fill_hda() +
   labs(
-    title = "Single-family detached homes dominate far more than statewide",
-    subtitle = "Share of all housing units by structure type, 2020–2024",
+    title = "Fauquier County much more suburban than rest of Virginia",
+    subtitle = "Share of all housing units by structure type",
     caption = acs_cap("B25024"), fill = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
   theme(legend.position = "top") +
   guides(fill = guide_legend(nrow = 2))
+
 ```
 
 - **Single-family detached homes are 85.1% of Fauquier's housing stock** — essentially matching the GP study's 84.8% and far above Virginia's 61.3%.
@@ -186,11 +190,16 @@ yb <- stock$b25036 |>
 
 ggplot(yb, aes(x = era, y = share, fill = tenure)) +
   geom_col(position = "dodge", width = 0.75) +
+  geom_text(
+    aes(label = label_percent(accuracy = 1)(share)),
+    position = position_dodge(width = 0.72),
+    vjust = 2.5, size = 3, color = "white"
+  ) +
   scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.05))) +
   scale_fill_manual(values = c(Owner = blue, Renter = coral)) +
   labs(
     title = "Owner-occupied homes skew newer; the rental stock is older",
-    subtitle = "Share of occupied homes by decade built — <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span>, 2020–2024",
+    subtitle = "Share of occupied homes by decade built — <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span>",
     caption = acs_cap("B25036"), x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -212,64 +221,53 @@ Warrenton's median year built (1987) matches the county, but **Bealeton's stock 
 
 ```{r}
 #| label: fig-tenure
-#| fig-cap: "Homeownership has held near four-in-five for two decades"
-#| fig-alt: "Line and point chart of the owner-occupied share of Fauquier County households from 2000 to 2024, combining decennial counts and ACS estimates. The share stays between about 76% and 80%. Town points for 2024 show Bealeton near 79% and Warrenton lower at 63%."
+#| fig-cap: "Warrenton's homeownership rate consistently trails the county and Bealeton"
+#| fig-alt: "Three side-by-side line charts of the owner-occupied share of households from 2013 to 2024 (ACS 5-year estimates), one panel each for Fauquier County, Warrenton, and Bealeton, sharing a common y-axis. The county line, in blue, and the Bealeton line, in coral, both hover between about 71% and 80% across all four years. The Warrenton line, also coral, sits well below the other two, holding steady between about 61% and 63% in every year."
 
-acs_o <- stock$b25003_trend |>
-  filter(geo_type == "county") |>
+tenure_geo_lvls <- c("Fauquier County", "Warrenton", "Bealeton")
+trend_years <- c(2013, 2017, 2021, 2024)
+
+trend <- stock$b25003_trend |>
+  filter(geo_type %in% c("county", "place")) |>
   summarize(total = estimate[variable == "B25003_001"],
-            owner = estimate[variable == "B25003_002"], .by = year) |>
-  transmute(year, owner_share = owner / total, src = "ACS 5-year estimate")
+            owner = estimate[variable == "B25003_002"],
+            .by = c(GEOID, geo_type, year)) |>
+  transmute(
+    geo_type, year, owner_share = owner / total,
+    geo = factor(geo_label(GEOID, geo_type), levels = tenure_geo_lvls)
+  )
 
-dec_o <- decennial$tenure |>
-  filter(geo_type == "county") |>
-  summarize(
-    total  = value[variable %in% c("H4_001N", "H004001")],
-    renter = sum(value[variable %in% c("H4_004N", "H004004")],
-                 value[year == 2000 & variable == "H004003"], na.rm = TRUE),
-    .by = year
-  ) |>
-  transmute(year, owner_share = (total - renter) / total, src = "Decennial count")
+endpoints <- trend |> filter(year %in% range(year))
 
-trend <- bind_rows(acs_o, dec_o)
-town_o <- tibble(year = 2024, owner_share = c(0.630, 0.787),
-                 town = c("Warrenton", "Bealeton"))
-
-ggplot(trend, aes(year, owner_share)) +
-  geom_line(data = ~ filter(.x, src == "ACS 5-year estimate"),
-            color = blue, linewidth = 1) +
-  geom_point(aes(color = src, shape = src), size = 2.6) +
-  geom_point(data = town_o, aes(year, owner_share), color = coral,
-             shape = 17, size = 3, inherit.aes = FALSE) +
-  geom_text(data = town_o, aes(year, owner_share, label = town), color = coral,
-            hjust = 1, nudge_x = -0.6, size = 3, inherit.aes = FALSE) +
-  scale_color_manual(values = c("ACS 5-year estimate" = blue, "Decennial count" = green)) +
-  scale_y_continuous(labels = label_percent(accuracy = 1), limits = c(0.55, 0.85)) +
-  scale_x_continuous(limits = c(1999, 2026), breaks = seq(2000, 2024, 4)) +
+ggplot(trend, aes(year, owner_share, color = geo_type)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2.6) +
+  geom_text(
+    data = endpoints,
+    aes(label = label_percent(accuracy = 1)(owner_share)),
+    nudge_y = 0.02, vjust = 0, size = 3.2, show.legend = FALSE
+  ) +
+  facet_wrap(~ geo, nrow = 1) +
+  scale_color_manual(values = c(county = blue, place = coral), guide = "none") +
+  scale_y_continuous(labels = label_percent(accuracy = 1), limits = c(0.4, 0.92)) +
+  scale_x_continuous(breaks = trend_years, expand = expansion(mult = 0.12)) +
   labs(
-    title = "Homeownership has held near four-in-five for two decades",
-    subtitle = "Owner-occupied share of households — <span style='color:#445ca9'>**ACS estimates**</span>, <span style='color:#8baeaa'>**decennial counts**</span>, and <span style='color:#e76f52'>**2024 towns**</span>",
-    caption = paste0(acs_cap("B25003"), " ", dec_cap("2000–2020")),
-    x = NULL, y = NULL
+    title = "Warrenton's homeownership rate consistently trails the county and Bealeton",
+    subtitle = "Owner-occupied share of all households",
+    caption = "**Source:** U.S. Census Bureau, American Community Survey 5-year estimates, Table B25003."
   ) +
   theme_hda() +
   theme(legend.position = "none")
 ```
 
-- Fauquier's **owner-occupied share has stayed between 76% and 80%** across both decennial counts (2000–2020) and ACS estimates (2013–2024) — remarkably stable.
-- The towns diverge sharply in 2024: **Bealeton is ~79% owner-occupied (High reliability), while Warrenton is only ~63%** — the county's clearest concentration of renters.
-
-::: {.callout-note}
-## Caveat: two different measures
-
-The decennial figures are 100% counts (2000, 2010, 2020); the ACS figures are 5-year rolling estimates (period-average). They measure the same concept on different universes and are kept visually distinct here — small level differences between the two series are expected, not real change. Documented in the data & methodology appendix.
-:::
+- Fauquier's **owner-occupied share has held in the high-70s to 80%** across all four ACS estimates (80.1% in 2013 to 78.8% in 2024), and **Bealeton tracks closely behind** (77.8% to 78.7%, dipping to 71.1% in 2017).
+- **Warrenton is a consistent outlier**, not just a 2024 snapshot: its owner-occupied share has held in a narrow 61–63% band across all four estimates — roughly 15 to 17 points below the county and Bealeton in every single year.
 
 ## Residential construction
 
 ```{r}
 #| label: fig-permits
-#| fig-cap: "Virtually every home permitted since 2000 has been single-family"
+#| fig-cap: "Nearly every home permitted since 2000 has been single-family"
 #| fig-alt: "Stacked column chart of Fauquier County residential building permits by structure type from 2000 to 2025. Single-family (1-unit) permits account for nearly all activity every year; missing-middle (2–4 unit) permits are essentially absent and multifamily (5+) permits appear only in a few years. A dashed line marks the 2020–2025 average of 266 permits per year."
 
 perm <- bps$bps_county |>
@@ -283,19 +281,33 @@ perm <- bps$bps_county |>
                                        "Missing middle (2–4 units)",
                                        "Multifamily (5+ units)")))
 
+avg <- data.frame(
+  x = 2011, y = 390,
+  label = "2020–2025 average: **266 permits/year**"
+)
+
 ggplot(perm, aes(year, units, fill = grp)) +
   geom_col(width = 0.8) +
   geom_hline(yintercept = 266, linetype = "dashed", color = "grey35") +
-  annotate("text", x = 2006, y = 320, label = "2020–2025 average: 266 permits/year",
-           size = 3.2, color = "grey35", hjust = 0) +
+  geom_textbox(
+    data = avg,
+    aes(x, y, label = label),
+    inherit.aes = FALSE,
+    color = "grey35",
+    lineheight = 1,
+    width = 0.25,
+    halign = 0.5 # centered text
+  ) +
+  # annotate("text", x = 2006, y = 320, label = "2020–2025 average: 266 permits/year",
+  #          size = 3.2, color = "grey35", hjust = 0) +
   scale_fill_manual(values = c("Single-family (1 unit)" = blue,
                                "Missing middle (2–4 units)" = yellow,
                                "Multifamily (5+ units)" = green)) +
   scale_y_continuous(expand = expansion(c(0, 0.05))) +
   scale_x_continuous(breaks = seq(2000, 2025, 5)) +
   labs(
-    title = "Virtually every home permitted since 2000 has been single-family",
-    subtitle = "Residential building permits by structure type, Fauquier County, 2000–2025",
+    title = "Nearly every home permitted since 2000 has been single-family",
+    subtitle = "Residential building permits by structure type in Fauquier County",
     caption = bps_cap("2000–2025"), x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
@@ -334,16 +346,17 @@ nvr <- mls$new_vs_resale |>
 
 ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
   geom_col(width = 0.65) +
-  geom_text(aes(label = lbl), vjust = -0.4, size = 3.2, color = "grey20") +
+  geom_text(aes(label = lbl), vjust = 2, size = 3.2, color = "white") +
   facet_wrap(~ metric, scales = "free_y") +
   scale_fill_manual(values = c("New construction" = blue, "Resale" = green)) +
   scale_y_continuous(expand = expansion(c(0, 0.18))) +
   labs(
     title = "New homes are larger and pricier than resales — but on smaller lots",
-    subtitle = "Median attributes of <span style='color:#445ca9'>**new-construction**</span> vs <span style='color:#8baeaa'>**resale**</span> sales, Fauquier County, 2025",
-    caption = mls_cap("2025 closed sales"), x = NULL, y = NULL
+    subtitle = "Median attributes of <span style='color:#445ca9'>**new-construction**</span> vs <span style='color:#8baeaa'>**resale**</span> sales in Fauquier County",
+    caption = mls_cap("938 total sales from 2025"), x = NULL, y = NULL
   ) +
   theme_hda() +
+  add_zero_line("y") +
   theme(legend.position = "none",
         axis.text.y = element_blank())
 ```
