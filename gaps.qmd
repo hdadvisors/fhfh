@@ -1,11 +1,435 @@
 # Affordability Gaps {#sec-gaps}
 
-<!-- Purpose: affordability gaps by income band, tenure, and geography (PLAN.md §7 Ch 4). -->
+<!-- Purpose: affordability by income band, tenure, and geography — what each AMI band can
+     afford, who is cost-burdened, and how the supply of affordable rentals and for-sale
+     listings measures against need (PLAN.md §7 Ch 4).
+     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
 
 ```{r}
 #| label: setup
 #| include: false
 source("_common.R")
+
+gaps    <- read_rds("data/gaps.rds")
+chas    <- read_rds("data/chas.rds")
+costs   <- read_rds("data/acs_costs.rds")
+hud_ami <- read_rds("data/hud_ami.rds")
+
+# Palette anchors (match ggtext subtitle spans to fill/line colors)
+blue   <- hda_pal[1]
+green  <- hda_pal[2]
+yellow <- hda_pal[3]
+coral  <- hda_pal[4]
+
+geo_label <- function(code, geo_type = NA) case_when(
+  code == fauquier   ~ "Fauquier County",
+  code == "5183136"  ~ "Warrenton",
+  code == "5105336"  ~ "Bealeton",
+  code == virginia   ~ "Virginia",
+  TRUE               ~ NA_character_
+)
+
+# AMI income-band factor (short ordered labels; CHAS T7/T8 already use these strings)
+band_lvls <- c("≤30% AMI", "30-50% AMI", "50-80% AMI", "80-100% AMI", ">100% AMI")
+
+# --- Inline scalars for bullet text ----------------------------------------
+
+# HUD AMI (4-person reference column)
+mfi <- hud_ami$mfi
+ami4 <- hud_ami$ami |> filter(hh_size == "4-person")
+ami80_4  <- ami4$income[ami4$level == "ami80"]
+ami100_4 <- ami4$income[ami4$level == "ami100"]
+
+# What a 50% AMI household can afford (gaps$afford_by_band, precomputed — no recompute)
+ab <- gaps$afford_by_band
+afford50_rent  <- ab$max_rent[ab$band == "ami50"]
+afford50_price <- ab$max_price[ab$band == "ami50"]
+med_price <- gaps$income_needed$med_price   # 650,000
+med_rent  <- gaps$income_needed$med_rent    # 2,450
+
+# ACS burden (multi-year trend frame; county 2024 = 40.2% / 21.5%)
+bt <- costs$burden_trend
+bt_c <- bt |> filter(GEOID == fauquier)
+acs_rent_24  <- bt_c$share[bt_c$tenure == "Renter" & bt_c$year == 2024]   # 0.402
+acs_rent_13  <- bt_c$share[bt_c$tenure == "Renter" & bt_c$year == 2013]   # 0.440
+acs_own_24   <- bt_c$share[bt_c$tenure == "Owner"  & bt_c$year == 2024]   # 0.215
+acs_own_13   <- bt_c$share[bt_c$tenure == "Owner"  & bt_c$year == 2013]   # 0.287
+
+# CHAS T8 burden (county) — burdened = cost-burdened + severely; drop "No or negative income"
+t8_burden <- chas$t8 |>
+  filter(cost_burden != "No or negative income") |>
+  summarize(
+    share = sum(estimate[cost_burden != "Not cost-burdened"]) / sum(estimate),
+    .by = c(geo_code, tenure)
+  )
+chas_rent <- t8_burden$share[t8_burden$geo_code == fauquier & t8_burden$tenure == "Renter"]  # .329
+chas_own  <- t8_burden$share[t8_burden$geo_code == fauquier & t8_burden$tenure == "Homeowner"] # .201
+
+# Rental gap (gaps$rental_gap — precomputed; 4 bands)
+rg <- gaps$rental_gap
+rg_deficit_30  <- rg$surplus_deficit[rg$band == "≤30% AMI"]   # -625
+rg_deficit_tot <- sum(rg$surplus_deficit)
+
+# Ownership gap (gaps$ownership_gap — precomputed; 5 bands, listings incremental → sum = 218)
+og <- gaps$ownership_gap
+og_total_listings <- sum(og$listings_affordable)                                   # 218
+og_below_100 <- sum(og$listings_affordable[og$band %in% c("ami30","ami50","ami80","ami100")]) # 8
+og_top_band  <- og$listings_affordable[og$band == "ami120"]                        # 210
+
+# Wages vs costs (gaps$wages_costs — precomputed)
+wc <- gaps$wages_costs
+wage_all    <- wc$avg_wage[wc$category == "All Jobs"]
+wage_retail <- wc$avg_wage[wc$category == "Retail Trade"]
+wage_health <- wc$avg_wage[wc$category == "Health Care"]
+wage_gov    <- wc$avg_wage[wc$category == "Local Government"]
+inc_rent <- gaps$income_needed$renter_income   # 98,000
+inc_buy  <- gaps$income_needed$buyer_income    # 190,586
+
+# T7 total occupied households (detail-sum benchmark ≈ 25,944)
+t7_total_hh <- chas$t7 |> filter(geo_code == fauquier) |> pull(estimate) |> sum()
 ```
 
-*Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).*
+## What sets the standard: Area Median Income
+
+```{r}
+#| label: tbl-ami
+#| tbl-cap: "Fauquier's income limits are set by the high-cost Washington, D.C. metro area"
+#| fig-alt: "Table of HUD income limits for Fauquier County by AMI level (30%, 50%, 80%, 100%, 120%) and household size from 1 to 8 persons. Dollar limits rise with household size and with AMI level; the 80% limit is close to the 50% limit because it is capped to the national median, while the jump from 80% to 100% is large."
+
+ami_wide <- hud_ami$ami |>
+  mutate(
+    level = factor(level, levels = c("ami30","ami50","ami80","ami100","ami120"),
+                   labels = c("30% AMI","50% AMI","80% AMI","100% AMI","120% AMI")),
+    hh = str_remove(hh_size, "-person")
+  ) |>
+  select(level, hh, income) |>
+  pivot_wider(names_from = hh, values_from = income) |>
+  arrange(level)
+
+ami_wide |>
+  kbl(align = "lrrrrrrrr",
+      col.names = c("Income limit", paste0(1:8, "-person"))) |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE) |>
+  add_header_above(c(" " = 1, "Household size" = 8)) |>
+  footnote(
+    general = paste0(
+      ami_cap(),
+      " Limits for the ", hud_ami$area_name,
+      " (published median family income ", label_dollar()(mfi), "). ",
+      hud_ami$cap_note, "."
+    ),
+    general_title = "", footnote_as_chunk = TRUE
+  )
+```
+
+- Fauquier is part of the **Washington, D.C. metro income-limit area**, whose published median family income is **`r label_dollar()(mfi)`** — far above what local wages (@fig-wages-costs) would suggest.
+- The **80% limit sits just below the 50% limit's usual spacing** because HUD caps the 80% figure to the national median; the large jump from 80% to 100% AMI is an artifact of that cap, not a data error.
+- For a **4-person household**, 80% AMI is `r label_dollar()(ami80_4)` and 100% AMI is `r label_dollar()(ami100_4)` — the reference points behind the affordability thresholds used throughout this chapter.
+
+## What each income band can afford
+
+```{r}
+#| label: tbl-afford-band
+#| tbl-cap: "Even a middle-income household is priced well below the county's median home"
+#| fig-alt: "Table showing, for each AMI band from 30% to 120%, the household income, the maximum affordable monthly rent, and the maximum affordable home purchase price. A 50% AMI household can afford about $1,869 in rent and a $149,000 home; only the 120% AMI band approaches the county's median sale price."
+
+ab_tbl <- gaps$afford_by_band |>
+  mutate(band = factor(band, levels = c("ami30","ami50","ami80","ami100","ami120"),
+                        labels = c("30% AMI","50% AMI","80% AMI","100% AMI","120% AMI"))) |>
+  transmute(
+    Band = band,
+    `Household income` = label_dollar()(income),
+    `Max affordable rent` = label_dollar()(max_rent),
+    `Max affordable purchase price` = label_dollar()(max_price)
+  )
+
+asm <- gaps$assumptions
+ab_tbl |>
+  kbl(align = "lrrr") |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE) |>
+  footnote(
+    general = paste0(
+      "**Source:** HDAdvisors affordability calculation. ",
+      "Rent affordability at 30% of gross income. Purchase price assumes a ",
+      label_percent(accuracy = 0.01)(asm$mortgage_rate), " 30-year fixed rate, ",
+      label_percent(accuracy = 1)(asm$down_payment), " down, a ",
+      label_percent(accuracy = 1)(asm$front_end_ratio), " front-end ratio, and ",
+      label_dollar()(asm$tax_ins_monthly), "/month taxes and insurance, for a ",
+      asm$representative_hh_size, " household."
+    ),
+    general_title = "", footnote_as_chunk = TRUE
+  )
+```
+
+- A **50% AMI household can afford about `r label_dollar()(afford50_rent)` in rent** — below the county's median asking rent of `r label_dollar()(med_rent)` — and a home of roughly **`r label_dollar()(afford50_price)`**, a fraction of the `r label_dollar()(med_price)` median sale price.
+- Affordability rises steeply with income: only at **100–120% AMI** does the affordable purchase price clear a quarter-million dollars, and even 120% AMI (`r label_dollar()(ab$max_price[ab$band=="ami120"])`) stops short of the median home.
+- These thresholds — not local wages — define who the market can and cannot serve; the gaps that follow measure the distance between them.
+
+## Who bears the cost: households by income and tenure
+
+```{r}
+#| label: fig-hh-band-tenure
+#| fig-cap: "Renters cluster at the lowest incomes; owners dominate the top bands"
+#| fig-alt: "Stacked bar chart of households by AMI income band and tenure for Fauquier County, Warrenton, and Bealeton. In the county, renters make up a large share of households in the two lowest income bands but a small share above 80% AMI, where owners dominate. Warrenton has a higher renter share across bands; Bealeton's town cells are small and footnoted for reliability."
+
+hh_bt <- chas$t7 |>
+  summarize(estimate = sum(estimate), moe = sqrt(sum(moe^2)),
+            .by = c(geo_code, sumlev, household_income, tenure)) |>
+  mutate(
+    cv = if_else(estimate > 0, (moe / 1.645) / estimate * 100, NA_real_),
+    band = factor(household_income, levels = band_lvls),
+    tenure = factor(if_else(tenure == "Homeowner", "Owner", "Renter"),
+                    levels = c("Renter", "Owner")),
+    geo = factor(geo_label(geo_code),
+                 levels = c("Fauquier County", "Warrenton", "Bealeton"))
+  ) |>
+  flag_reliability()
+
+ggplot(hh_bt, aes(band, estimate, fill = tenure)) +
+  geom_col(width = 0.72) +
+  facet_wrap(~ geo, scales = "free_y") +
+  scale_fill_manual(values = c(Renter = coral, Owner = blue)) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.05))) +
+  labs(
+    title = "Renters cluster at the lowest incomes; owners dominate the top bands",
+    subtitle = "Households by income band and tenure — <span style='color:#e76f52'>**renters**</span> vs <span style='color:#445ca9'>**owners**</span>",
+    caption = paste0(chas_cap("T7"),
+                     " Town cells reflect small samples; read as counts, not precise rates."),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none", plot.subtitle = element_markdown(),
+        axis.text.x = element_text(size = 7, angle = 30, hjust = 1))
+```
+
+- **Low-income households skew heavily toward renting:** in the county's **≤30% and 30-50% AMI** bands renters are a large share of all households, while above **80% AMI** owners dominate — the tenure divide is an income divide.
+- **Warrenton carries a higher renter share across every band**, consistent with its role as the county's principal rental submarket; **Bealeton's** cells are small and are read as counts, not precise rates.
+- CHAS detail sums to roughly **`r format(round(t7_total_hh/100)*100, big.mark=",")` occupied households** county-wide, the denominator behind the burden and gap figures that follow.
+
+## Cost burden over time (ACS)
+
+```{r}
+#| label: fig-burden-trend
+#| fig-cap: "Cost burden has eased since 2013, but renters remain far more burdened"
+#| fig-alt: "Line chart of the share of cost-burdened households in Fauquier County from 2013 to 2024, split by tenure, with 2024 town points. The renter burden line declines gently from about 44% to 40%, staying well above the owner line, which falls from about 29% to 22%. In 2024, Warrenton and Bealeton renter points sit above the county renter line at roughly 55% and 59%."
+
+trend_c <- bt_c |>
+  mutate(date = make_date(year, 7L, 1L),
+         tenure = factor(tenure, levels = c("Renter", "Owner")))
+
+town_pts <- bt |>
+  filter(geo_type == "place", year == 2024) |>
+  flag_reliability() |>
+  mutate(
+    share = if_else(reliability == "Low", NA_real_, share),
+    date  = make_date(year, 7L, 1L),
+    town  = geo_label(GEOID),
+    tenure = factor(tenure, levels = c("Renter", "Owner")),
+    lbl = paste0(town, if_else(reliability == "Medium", "*", ""))
+  )
+
+ggplot() +
+  geom_line(data = trend_c, aes(date, share, color = tenure), linewidth = 1.1) +
+  geom_point(data = trend_c, aes(date, share, color = tenure), size = 1.8) +
+  geom_point(data = town_pts, aes(date, share, color = tenure),
+             shape = 21, fill = "white", size = 2.4, stroke = 1) +
+  geom_text(data = town_pts, aes(date, share, label = lbl, color = tenure),
+            hjust = 0, nudge_x = 60, size = 2.7, show.legend = FALSE) +
+  scale_color_manual(values = c(Renter = coral, Owner = blue), guide = "none") +
+  scale_y_continuous(labels = label_percent(accuracy = 1),
+                     limits = c(0, NA), expand = expansion(c(0, 0.08))) +
+  scale_x_date(date_breaks = "3 years", date_labels = "%Y",
+               expand = expansion(c(0.02, 0.18))) +
+  labs(
+    title = "Cost burden has eased since 2013, but renters remain far more burdened",
+    subtitle = "Share of cost-burdened households — <span style='color:#e76f52'>**renters**</span> vs <span style='color:#445ca9'>**owners**</span>; open points = 2024 towns",
+    caption = paste0(
+      acs_cap("B25070"), " ", acs_cap("B25091"),
+      " Burden excludes households whose income-to-cost ratio is not computed (~700 renters), ",
+      "so ACS burden exceeds the CHAS estimate (renter ",
+      label_percent(accuracy = 0.1)(chas_rent), "); see Data & Methodology. ",
+      "*2024 town cell is Medium reliability (CV 15-30%)."
+    ),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  theme(plot.subtitle = element_markdown())
+```
+
+- **Renters are consistently the more burdened group:** about **`r label_percent(accuracy = 1)(acs_rent_24)` of renters** were cost-burdened in 2024 versus **`r label_percent(accuracy = 1)(acs_own_24)` of owners** — a gap of nearly 20 points that has held across the decade.
+- Burden has **edged down, not up**, since 2013 (renters `r label_percent(accuracy = 1)(acs_rent_13)` → `r label_percent(accuracy = 1)(acs_rent_24)`; owners `r label_percent(accuracy = 1)(acs_own_13)` → `r label_percent(accuracy = 1)(acs_own_24)`), reflecting income growth and refinancing during a low-rate decade — but the levels remain high and the recent rate environment (@sec-market-ownership) points the other way.
+- **Both towns run hotter than the county on renter burden:** Warrenton (~55%) and Bealeton (~59%) 2024 renter points sit well above the county line, with Bealeton's cell footnoted for reliability.
+
+## The core picture: burden is concentrated at the lowest incomes (CHAS)
+
+```{r}
+#| label: fig-burden-band
+#| fig-cap: "Cost burden is overwhelmingly a low-income problem"
+#| fig-alt: "Stacked bar chart of cost burden by AMI income band and tenure for Fauquier County, faceted into renter and owner panels. At 30% AMI and below, the large majority of both renters and owners are cost-burdened, most of them severely; the burdened share falls sharply as income rises, and above 80% AMI almost no households are burdened. Renters are more burdened than owners within every band."
+
+t8_band <- chas$t8 |>
+  filter(geo_code == fauquier, cost_burden != "No or negative income") |>
+  summarize(estimate = sum(estimate),
+            .by = c(household_income, tenure, cost_burden)) |>
+  mutate(
+    band = factor(household_income, levels = band_lvls),
+    tenure = factor(if_else(tenure == "Homeowner", "Owner", "Renter"),
+                    levels = c("Renter", "Owner")),
+    cost_burden = factor(cost_burden,
+                         levels = c("Severely cost-burdened", "Cost-burdened", "Not cost-burdened"))
+  ) |>
+  mutate(share = estimate / sum(estimate), .by = c(band, tenure))
+
+ggplot(t8_band, aes(band, share, fill = cost_burden)) +
+  geom_col(width = 0.74) +
+  facet_wrap(~ tenure) +
+  scale_fill_manual(values = cb_pal) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.03))) +
+  labs(
+    title = "Cost burden is overwhelmingly a low-income problem",
+    subtitle = "Share of households by cost-burden status, income band, and tenure, Fauquier County",
+    caption = chas_cap("T8"),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "top", plot.subtitle = element_markdown(),
+        axis.text.x = element_text(size = 7, angle = 30, hjust = 1))
+```
+
+- **Burden collapses onto the bottom of the income ladder:** at **≤30% AMI** the vast majority of both renters and owners are cost-burdened — most of them *severely* — while above **80% AMI** burden all but disappears.
+- **Renters are more burdened than owners within every band**, and severe burden is especially concentrated among the lowest-income renters, the households with the least room to absorb a rent increase.
+- Measured on the CHAS universe, county burden is **`r label_percent(accuracy = 1)(chas_rent)` for renters and `r label_percent(accuracy = 1)(chas_own)` for owners** — lower than the ACS headline (@fig-burden-trend) because CHAS uses a different denominator; the two are reconciled in the Data & Methodology appendix.
+
+## The rental gap: too few homes for the lowest incomes
+
+```{r}
+#| label: fig-rental-gap
+#| fig-cap: "The county is short about 625 rentals affordable to its lowest-income renters"
+#| fig-alt: "Diverging horizontal bar chart of the surplus or deficit of affordable and available rental units by AMI band in Fauquier County. Every band shows a deficit. The largest single-band shortfall relative to renter households is at 30% AMI and below (about negative 625 units); the deficit widens further in aggregate above 80% AMI."
+
+rg_plot <- gaps$rental_gap |>
+  mutate(band = factor(band, levels = rev(c("≤30% AMI","30-50% AMI","50-80% AMI",">80% AMI"))))
+
+ggplot(rg_plot, aes(surplus_deficit, band)) +
+  geom_col(fill = coral, width = 0.68) +
+  geom_text(aes(label = label_comma()(surplus_deficit),
+                hjust = if_else(surplus_deficit < 0, 1.1, -0.1)),
+            size = 3.2, color = "grey20") +
+  scale_x_continuous(labels = label_comma(),
+                     expand = expansion(c(0.16, 0.08))) +
+  labs(
+    title = "The county is short about 625 rentals affordable to its lowest-income renters",
+    subtitle = "Affordable and available rental units minus renter households, by income band, Fauquier County",
+    caption = paste0(chas_cap("T14B/T15C"),
+                     " Affordable-and-available reflects units both priced for and occupied at or below the band. ",
+                     "The >80% AMI band combines the 100% and 120% AMI groups."),
+    x = "Surplus / deficit (units)", y = NULL
+  ) +
+  theme_hda(flip_gridlines = TRUE) +
+  add_zero_line("x")
+```
+
+- The **deepest shortfall is at the very bottom:** the county has about **`r format(abs(rg_deficit_30), big.mark=",")` fewer rentals affordable *and available* to ≤30% AMI renters** than there are such renter households — the households with essentially no market alternative.
+- **Every band runs a deficit**, for a net shortfall of roughly **`r format(abs(rg_deficit_tot), big.mark=",")` units** — higher-income renters occupy units that would otherwise be affordable to lower-income households, a competition-down-the-ladder dynamic.
+- The gap is a supply problem, not a targeting problem: even where units are nominally affordable, they are already occupied, leaving the lowest-income renters with the fewest options.
+
+## The ownership gap: almost nothing for sale below 100% AMI
+
+```{r}
+#| label: fig-ownership-gap
+#| fig-cap: "Only 8 of 218 active listings are affordable below 100% AMI"
+#| fig-alt: "Bar chart comparing, for each AMI band, the number of active for-sale listings affordable in that price range against the number of owner households in the band, Fauquier County. Listings affordable below 100% AMI are almost nonexistent (0, 0, 1, and 7 across the four lower bands), while 210 of the 218 listings fall only in the 120% AMI price range at the top."
+
+og_plot <- gaps$ownership_gap |>
+  mutate(band = factor(band, levels = c("ami30","ami50","ami80","ami100","ami120"),
+                        labels = c("30% AMI","50% AMI","80% AMI","100% AMI","120% AMI"))) |>
+  select(band, `Listings affordable` = listings_affordable, `Owner households` = households) |>
+  pivot_longer(-band, names_to = "measure", values_to = "n")
+
+ggplot(og_plot, aes(band, n, fill = measure)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.66) +
+  geom_text(aes(label = label_comma()(n)),
+            position = position_dodge(width = 0.72), vjust = -0.4, size = 2.8, color = "grey25") +
+  scale_fill_manual(values = c(`Listings affordable` = coral, `Owner households` = blue)) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.1))) +
+  labs(
+    title = "Only 8 of 218 active listings are affordable below 100% AMI",
+    subtitle = "<span style='color:#e76f52'>**Active for-sale listings**</span> affordable in each price range vs <span style='color:#445ca9'>**owner households**</span> in the band",
+    caption = paste0(mls_cap(),
+                     " Listings placed in the AMI price range they fall within; affordability per the assumptions in the income-band table."),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none", plot.subtitle = element_markdown(),
+        axis.text.x = element_text(size = 8))
+```
+
+- Below the 100% AMI price ceiling there is **almost nothing for sale:** just **`r og_below_100` of `r format(og_total_listings, big.mark=",")` active listings** (0, 0, 1, and 7 across the 30%, 50%, 80%, and 100% AMI bands) — the for-sale market effectively excludes moderate-income buyers.
+- The overwhelming majority — **`r og_top_band` of `r format(og_total_listings, big.mark=",")` listings** — are priced only within reach of the **120% AMI** band or above, mirroring the median-price gap in @tbl-afford-band.
+- Owner-household counts far exceed affordable listings in every band below the top, so first-time and lower-income buyers face a market with essentially no entry point.
+
+## The bottom line: wages don't reach the cost of housing
+
+```{r}
+#| label: fig-wages-costs
+#| fig-cap: "Most local jobs don't pay enough to rent, let alone buy"
+#| fig-alt: "Lollipop chart of average annual wages for major Fauquier employment sectors, shown for a single earner and a two-earner household, against two reference lines: the income needed to afford the median rent (about $98,000) and the income needed to buy the median home (about $190,586). A single all-jobs wage of $68,000 falls short of the rent line; only a two-earner all-jobs household ($136,000) clears the rent line, and no configuration reaches the purchase line. Retail wages are far below both."
+
+wc_plot <- gaps$wages_costs |>
+  filter(category != "2-worker household") |>
+  select(category, one_earner, two_earner) |>
+  pivot_longer(-category, names_to = "earners", values_to = "wage") |>
+  mutate(
+    earners = if_else(earners == "one_earner", "One earner", "Two earners"),
+    category = fct_reorder(category, wage, .fun = max)
+  )
+
+ggplot(wc_plot, aes(wage, category)) +
+  geom_vline(xintercept = inc_rent, color = green, linewidth = 0.8, linetype = "22") +
+  geom_vline(xintercept = inc_buy,  color = yellow, linewidth = 0.8, linetype = "22") +
+  geom_line(aes(group = category), color = "grey75", linewidth = 1) +
+  geom_point(aes(color = earners), size = 3) +
+  annotate("text", x = inc_rent, y = 4.9, label = "Income needed\nto rent",
+           color = green, size = 2.7, hjust = 1.08, vjust = 1, lineheight = 0.9) +
+  annotate("text", x = inc_buy, y = 4.9, label = "Income needed\nto buy",
+           color = "#c98f22", size = 2.7, hjust = 1.08, vjust = 1, lineheight = 0.9) +
+  scale_color_manual(values = c(`One earner` = coral, `Two earners` = blue)) +
+  scale_y_discrete(expand = expansion(add = c(0.6, 1.2))) +
+  scale_x_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
+                     expand = expansion(c(0.02, 0.08)),
+                     limits = c(0, NA)) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "Most local jobs don't pay enough to rent, let alone buy",
+    subtitle = "Average annual wage by sector — <span style='color:#e76f52'>**one earner**</span> vs <span style='color:#445ca9'>**two earners**</span> — against income needed to <span style='color:#8baeaa'>**rent**</span> and <span style='color:#c98f22'>**buy**</span>",
+    caption = paste0(qcew_cap(),
+                     " Income-needed figures from the affordability assumptions in the income-band table."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda(flip_gridlines = TRUE) +
+  add_zero_line("x") +
+  theme(legend.position = "none", plot.subtitle = element_markdown())
+```
+
+- **A single average local wage doesn't cover the rent:** all-jobs average pay is about **`r label_dollar()(wage_all)`**, short of the **`r label_dollar()(inc_rent)`** needed to afford the median rent — and sector wages like Retail Trade (`r label_dollar()(wage_retail)`) fall far further behind.
+- **Only a two-earner household clears the rent bar:** two average local jobs (`r label_dollar()(wage_all*2)`) exceed the `r label_dollar()(inc_rent)` rent threshold — but **no configuration reaches the `r label_dollar()(inc_buy)` needed to buy** the median home.
+- The message is structural: the county's wage base and its housing costs have decoupled, so even dual-income working households are priced out of ownership and the lowest-wage sectors are priced out of the market entirely.
+
+## Town spotlight & interview validation
+
+::: {.callout-note}
+## Town spotlight — Warrenton and Bealeton carry the county's highest renter burden
+
+Both towns run **hotter than the county on renter cost burden**: in 2024 roughly **55% of Warrenton renters and 59% of Bealeton renters** were cost-burdened (@fig-burden-trend), versus `r label_percent(accuracy = 1)(acs_rent_24)` countywide. Warrenton's cell is High reliability; Bealeton's is Medium (CV 15–30%) and is read as a count-based signal, not a precise rate. As the county's principal rental submarket (@fig-hh-band-tenure), Warrenton concentrates both the renters and the burden — the same submarket where the affordable-rental deficit (@fig-rental-gap) bites hardest.
+:::
+
+## What the interviews said vs. what the data shows
+
+::: {.callout-important}
+## Interview validation
+
+- **"Workers can't afford to both work and live here."** *Confirmed.* A single average local wage (`r label_dollar()(wage_all)`) falls short of the **`r label_dollar()(inc_rent)`** needed to afford the median rent, and even a two-earner household (`r label_dollar()(wage_all*2)`) cannot reach the **`r label_dollar()(inc_buy)`** needed to buy the median home (@fig-wages-costs). Lower-wage sectors — Retail Trade at `r label_dollar()(wage_retail)`, Local Government at `r label_dollar()(wage_gov)` — fall further behind, and the for-sale market offers **`r og_below_100` of `r format(og_total_listings, big.mark=",")`** listings below 100% AMI (@fig-ownership-gap). The wage-to-housing-cost gap is not a perception; it is the defining structural feature of Fauquier's housing market.
+:::

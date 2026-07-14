@@ -374,7 +374,107 @@
     "href": "gaps.html",
     "title": "5  Affordability Gaps",
     "section": "",
-    "text": "Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).",
+    "text": "5.1 What sets the standard: Area Median Income\nTable 5.1: Fauquier’s income limits are set by the high-cost Washington, D.C. metro area\n\n\n\n\n \n\n\nHousehold size\n\n  \n    Income limit \n    1-person \n    2-person \n    3-person \n    4-person \n    5-person \n    6-person \n    7-person \n    8-person \n  \n \n\n  \n    30% AMI \n    34900 \n    39900 \n    44900 \n    49850 \n    53850 \n    57850 \n    61850 \n    65850 \n  \n  \n    50% AMI \n    58150 \n    66450 \n    74750 \n    83050 \n    89700 \n    96350 \n    103000 \n    109650 \n  \n  \n    80% AMI \n    74800 \n    85450 \n    96150 \n    106800 \n    115350 \n    123900 \n    132450 \n    141000 \n  \n  \n    100% AMI \n    116250 \n    132900 \n    149500 \n    166100 \n    179400 \n    192700 \n    205950 \n    219250 \n  \n  \n    120% AMI \n    139500 \n    159450 \n    179350 \n    199300 \n    215250 \n    231200 \n    247150 \n    263100 \n  \n\n\n **Source:** HUD Section 8 Income Limits, FY2026; 100/120% AMI derived from published MFI. Limits for the Washington-Arlington-Alexandria, DC-VA-MD HUD Metro FMR Area (published median family income $166,100). DC-metro 80% limit is HUD-capped to the US median; 100/120% derived from published MFI.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#what-sets-the-standard-area-median-income",
+    "href": "gaps.html#what-sets-the-standard-area-median-income",
+    "title": "5  Affordability Gaps",
+    "section": "",
+    "text": "Fauquier is part of the Washington, D.C. metro income-limit area, whose published median family income is $166,100 — far above what local wages (Figure 5.6) would suggest.\nThe 80% limit sits just below the 50% limit’s usual spacing because HUD caps the 80% figure to the national median; the large jump from 80% to 100% AMI is an artifact of that cap, not a data error.\nFor a 4-person household, 80% AMI is $106,800 and 100% AMI is $166,100 — the reference points behind the affordability thresholds used throughout this chapter.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#what-each-income-band-can-afford",
+    "href": "gaps.html#what-each-income-band-can-afford",
+    "title": "5  Affordability Gaps",
+    "section": "5.2 What each income band can afford",
+    "text": "5.2 What each income band can afford\n\n\n\n\nTable 5.2: Even a middle-income household is priced well below the county’s median home\n\n\n\n\n \n  \n    Band \n    Household income \n    Max affordable rent \n    Max affordable purchase price \n  \n \n\n  \n    30% AMI \n    $44,900 \n    $1,122 \n    $49,983 \n  \n  \n    50% AMI \n    $74,750 \n    $1,869 \n    $149,261 \n  \n  \n    80% AMI \n    $96,150 \n    $2,404 \n    $220,435 \n  \n  \n    100% AMI \n    $149,500 \n    $3,738 \n    $397,871 \n  \n  \n    120% AMI \n    $179,350 \n    $4,484 \n    $497,149 \n  \n\n\n **Source:** HDAdvisors affordability calculation. Rent affordability at 30% of gross income. Purchase price assumes a 6.49% 30-year fixed rate, 10% down, a 28% front-end ratio, and $697/month taxes and insurance, for a 3-person household.\n\n\n\n\n\n\n\n\nA 50% AMI household can afford about $1,869 in rent — below the county’s median asking rent of $2,450 — and a home of roughly $149,261, a fraction of the $650,000 median sale price.\nAffordability rises steeply with income: only at 100–120% AMI does the affordable purchase price clear a quarter-million dollars, and even 120% AMI ($497,149) stops short of the median home.\nThese thresholds — not local wages — define who the market can and cannot serve; the gaps that follow measure the distance between them.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#who-bears-the-cost-households-by-income-and-tenure",
+    "href": "gaps.html#who-bears-the-cost-households-by-income-and-tenure",
+    "title": "5  Affordability Gaps",
+    "section": "5.3 Who bears the cost: households by income and tenure",
+    "text": "5.3 Who bears the cost: households by income and tenure\n\n\n\n\n\n\n\n\nFigure 5.1: Renters cluster at the lowest incomes; owners dominate the top bands\n\n\n\n\n\n\nLow-income households skew heavily toward renting: in the county’s ≤30% and 30-50% AMI bands renters are a large share of all households, while above 80% AMI owners dominate — the tenure divide is an income divide.\nWarrenton carries a higher renter share across every band, consistent with its role as the county’s principal rental submarket; Bealeton’s cells are small and are read as counts, not precise rates.\nCHAS detail sums to roughly 25,900 occupied households county-wide, the denominator behind the burden and gap figures that follow.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#cost-burden-over-time-acs",
+    "href": "gaps.html#cost-burden-over-time-acs",
+    "title": "5  Affordability Gaps",
+    "section": "5.4 Cost burden over time (ACS)",
+    "text": "5.4 Cost burden over time (ACS)\n\n\n\n\n\n\n\n\nFigure 5.2: Cost burden has eased since 2013, but renters remain far more burdened\n\n\n\n\n\n\nRenters are consistently the more burdened group: about 40% of renters were cost-burdened in 2024 versus 21% of owners — a gap of nearly 20 points that has held across the decade.\nBurden has edged down, not up, since 2013 (renters 44% → 40%; owners 29% → 21%), reflecting income growth and refinancing during a low-rate decade — but the levels remain high and the recent rate environment (Chapter 3) points the other way.\nBoth towns run hotter than the county on renter burden: Warrenton (~55%) and Bealeton (~59%) 2024 renter points sit well above the county line, with Bealeton’s cell footnoted for reliability.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#the-core-picture-burden-is-concentrated-at-the-lowest-incomes-chas",
+    "href": "gaps.html#the-core-picture-burden-is-concentrated-at-the-lowest-incomes-chas",
+    "title": "5  Affordability Gaps",
+    "section": "5.5 The core picture: burden is concentrated at the lowest incomes (CHAS)",
+    "text": "5.5 The core picture: burden is concentrated at the lowest incomes (CHAS)\n\n\n\n\n\n\n\n\nFigure 5.3: Cost burden is overwhelmingly a low-income problem\n\n\n\n\n\n\nBurden collapses onto the bottom of the income ladder: at ≤30% AMI the vast majority of both renters and owners are cost-burdened — most of them severely — while above 80% AMI burden all but disappears.\nRenters are more burdened than owners within every band, and severe burden is especially concentrated among the lowest-income renters, the households with the least room to absorb a rent increase.\nMeasured on the CHAS universe, county burden is 33% for renters and 20% for owners — lower than the ACS headline (Figure 5.2) because CHAS uses a different denominator; the two are reconciled in the Data & Methodology appendix.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#the-rental-gap-too-few-homes-for-the-lowest-incomes",
+    "href": "gaps.html#the-rental-gap-too-few-homes-for-the-lowest-incomes",
+    "title": "5  Affordability Gaps",
+    "section": "5.6 The rental gap: too few homes for the lowest incomes",
+    "text": "5.6 The rental gap: too few homes for the lowest incomes\n\n\n\n\n\n\n\n\nFigure 5.4: The county is short about 625 rentals affordable to its lowest-income renters\n\n\n\n\n\n\nThe deepest shortfall is at the very bottom: the county has about 625 fewer rentals affordable and available to ≤30% AMI renters than there are such renter households — the households with essentially no market alternative.\nEvery band runs a deficit, for a net shortfall of roughly 3,315 units — higher-income renters occupy units that would otherwise be affordable to lower-income households, a competition-down-the-ladder dynamic.\nThe gap is a supply problem, not a targeting problem: even where units are nominally affordable, they are already occupied, leaving the lowest-income renters with the fewest options.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#the-ownership-gap-almost-nothing-for-sale-below-100-ami",
+    "href": "gaps.html#the-ownership-gap-almost-nothing-for-sale-below-100-ami",
+    "title": "5  Affordability Gaps",
+    "section": "5.7 The ownership gap: almost nothing for sale below 100% AMI",
+    "text": "5.7 The ownership gap: almost nothing for sale below 100% AMI\n\n\n\n\n\n\n\n\nFigure 5.5: Only 8 of 218 active listings are affordable below 100% AMI\n\n\n\n\n\n\nBelow the 100% AMI price ceiling there is almost nothing for sale: just 8 of 218 active listings (0, 0, 1, and 7 across the 30%, 50%, 80%, and 100% AMI bands) — the for-sale market effectively excludes moderate-income buyers.\nThe overwhelming majority — 210 of 218 listings — are priced only within reach of the 120% AMI band or above, mirroring the median-price gap in Table 5.2.\nOwner-household counts far exceed affordable listings in every band below the top, so first-time and lower-income buyers face a market with essentially no entry point.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#the-bottom-line-wages-dont-reach-the-cost-of-housing",
+    "href": "gaps.html#the-bottom-line-wages-dont-reach-the-cost-of-housing",
+    "title": "5  Affordability Gaps",
+    "section": "5.8 The bottom line: wages don’t reach the cost of housing",
+    "text": "5.8 The bottom line: wages don’t reach the cost of housing\n\n\n\n\n\n\n\n\nFigure 5.6: Most local jobs don’t pay enough to rent, let alone buy\n\n\n\n\n\n\nA single average local wage doesn’t cover the rent: all-jobs average pay is about $68,000, short of the $98,000 needed to afford the median rent — and sector wages like Retail Trade ($41,934) fall far further behind.\nOnly a two-earner household clears the rent bar: two average local jobs ($136,000) exceed the $98,000 rent threshold — but no configuration reaches the $190,586 needed to buy the median home.\nThe message is structural: the county’s wage base and its housing costs have decoupled, so even dual-income working households are priced out of ownership and the lowest-wage sectors are priced out of the market entirely.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#town-spotlight-interview-validation",
+    "href": "gaps.html#town-spotlight-interview-validation",
+    "title": "5  Affordability Gaps",
+    "section": "5.9 Town spotlight & interview validation",
+    "text": "5.9 Town spotlight & interview validation\n\n\n\n\n\n\nNoteTown spotlight — Warrenton and Bealeton carry the county’s highest renter burden\n\n\n\nBoth towns run hotter than the county on renter cost burden: in 2024 roughly 55% of Warrenton renters and 59% of Bealeton renters were cost-burdened (Figure 5.2), versus 40% countywide. Warrenton’s cell is High reliability; Bealeton’s is Medium (CV 15–30%) and is read as a count-based signal, not a precise rate. As the county’s principal rental submarket (Figure 5.1), Warrenton concentrates both the renters and the burden — the same submarket where the affordable-rental deficit (Figure 5.4) bites hardest.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
+    ]
+  },
+  {
+    "objectID": "gaps.html#what-the-interviews-said-vs.-what-the-data-shows",
+    "href": "gaps.html#what-the-interviews-said-vs.-what-the-data-shows",
+    "title": "5  Affordability Gaps",
+    "section": "5.10 What the interviews said vs. what the data shows",
+    "text": "5.10 What the interviews said vs. what the data shows\n\n\n\n\n\n\nImportantInterview validation\n\n\n\n\n“Workers can’t afford to both work and live here.” Confirmed. A single average local wage ($68,000) falls short of the $98,000 needed to afford the median rent, and even a two-earner household ($136,000) cannot reach the $190,586 needed to buy the median home (Figure 5.6). Lower-wage sectors — Retail Trade at $41,934, Local Government at $58,079 — fall further behind, and the for-sale market offers 8 of 218 listings below 100% AMI (Figure 5.5). The wage-to-housing-cost gap is not a perception; it is the defining structural feature of Fauquier’s housing market.",
     "crumbs": [
       "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affordability Gaps</span>"
     ]

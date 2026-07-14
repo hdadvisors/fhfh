@@ -113,6 +113,18 @@ pmms_cap <- function()
 compplan_cap <- function(chapter, page)
   paste0("**Source:** Fauquier County Comprehensive Plan, ", chapter, ", p. ", page, ".")
 
+ami_cap <- function(year = "FY2026")
+  paste0("**Source:** HUD Section 8 Income Limits, ", year,
+         "; 100/120% AMI derived from published MFI.")
+
+pit_cap <- function()
+  paste0("**Source:** Foothills Housing Network Point-in-Time Count ",
+         "(5-county FHN region; single-night counts).")
+
+vdoe_cap <- function()
+  paste0("**Source:** VDOE Project HOPE-Virginia, McKinney-Vento ",
+         "homeless student counts.")
+
 # High/Medium/Low reliability tiers from a 0–100 CV column (PLAN.md §3 thresholds 15/30).
 # The .rds frames store `cv` on a 0–100 scale; hdatools::add_reliability() expects a *_cv
 # column on a 0–1 proportion scale, so a thin local wrapper avoids mislabeling town cells.
