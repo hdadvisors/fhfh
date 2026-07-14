@@ -186,9 +186,9 @@ Title: `# Vulnerable Populations {#sec-populations}` (keep `#sec-populations`). 
 
 ### PLAN.md §9 checkboxes (tick for both chapters)
 ```
-[ ] Setup chunk (_common.R, read_rds only), figures/tables per §7 with takeaway titles, alt text, captions
-[ ] Bullet findings per section (§3 narrative rule); town callout box(es); §6 interview-validation callout
-[ ] quarto render <chapter>.qmd clean; spot-check reliability flags on town figures
+[x] Setup chunk (_common.R, read_rds only), figures/tables per §7 with takeaway titles, alt text, captions
+[x] Bullet findings per section (§3 narrative rule); town callout box(es); §6 interview-validation callout
+[x] quarto render <chapter>.qmd clean; spot-check reliability flags on town figures
 ```
 
 ### PLAN.md §11 log entry
@@ -206,11 +206,11 @@ git commit -m "Session 10: gaps & populations chapters"
 
 ## Verification (Definition of Done)
 
-- [ ] `Rscript r/acs_costs.R` re-runs clean; `acs_costs.rds` now has a multi-year burden frame (2013/2017/2021/2024); 2024 validations green (renter 40.2%, owner 21.5%); `trend_rent`/`trend_value` unchanged.
-- [ ] Three new caption helpers (`ami_cap`/`pit_cap`/`vdoe_cap`) in `_common.R`; `CLAUDE.md` + `README.md` updated.
-- [ ] `quarto render gaps.qmd` clean — F1–F9 present with takeaway titles, `#| fig-alt:`, caption helpers; F2/F6/F7 reuse `gaps.rds` (no recompute); **Fig 4 (ACS 40.2/21.5) and Fig 5 (CHAS 32.9/20.1) both present with the reconciliation footnote**; F8 signature chart closes into the §6 wages interview callout.
-- [ ] `quarto render populations.qmd` clean — F1–F6 present; senior WC growth is a context stat only (no projection chart); PIT/VDOE carry the region-vs-Fauquier + counts-not-rates caveat callout; F6 Bealeton spotlight; chapter closes with the §6 seniors interview callout.
-- [ ] Both chapters carry ≥1 Warrenton/Bealeton callout; town ACS/CHAS figures show reliability treatment (Low suppressed, Medium footnoted); spot-check confirms tiers span (not uniformly "Low").
-- [ ] `quarto render` (full book) clean; both chapters appear in report order between `market-rental` and `projections`.
-- [ ] `@sec-gaps` / `@sec-populations` and all `@fig-*` / `@tbl-*` cross-refs resolve; no broken refs.
-- [ ] PLAN.md §9 ticked, §11 logged (incl. both Jonathan decisions + any direction flips), committed.
+- [x] `Rscript r/acs_costs.R` re-runs clean; `acs_costs.rds` now has a multi-year burden frame (2013/2017/2021/2024); 2024 validations green (renter 40.2%, owner 21.5%); `trend_rent`/`trend_value` unchanged. *(Part 1)*
+- [x] Three new caption helpers (`ami_cap`/`pit_cap`/`vdoe_cap`) in `_common.R`; `CLAUDE.md` + `README.md` updated. *(Part 1)*
+- [x] `quarto render gaps.qmd` clean — F1–F9 present with takeaway titles, `#| fig-alt:`, caption helpers; F2/F6/F7 reuse `gaps.rds` (no recompute); **Fig 4 (ACS 40.2/21.5) and Fig 5 (CHAS 32.9/20.1) both present with the reconciliation footnote**; F8 signature chart closes into the §6 wages interview callout. *(Part 1)*
+- [x] `quarto render populations.qmd` clean — F1–F6 present; senior WC growth is a context stat only (no projection chart); PIT/VDOE carry the region-vs-Fauquier + counts-not-rates caveat callout; F6 Bealeton spotlight; chapter closes with the §6 seniors interview callout. *(Part 2)*
+- [x] Both chapters carry ≥1 Warrenton/Bealeton callout; town ACS/CHAS figures show reliability treatment (Low suppressed, Medium footnoted); spot-check confirms tiers span (not uniformly "Low").
+- [x] `quarto render` (full book) clean; both chapters appear in report order between `market-rental` and `projections`.
+- [x] `@sec-gaps` / `@sec-populations` and all `@fig-*` / `@tbl-*` cross-refs resolve; no broken refs.
+- [x] PLAN.md §9 ticked, §11 logged (incl. both Jonathan decisions + any direction flips); commit pending Jonathan's confirmation.

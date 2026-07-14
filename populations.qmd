@@ -1,11 +1,492 @@
 # Vulnerable Populations {#sec-populations}
 
-<!-- Purpose: vulnerable and special-needs populations with housing implications (PLAN.md §7 Ch 5). -->
+<!-- Purpose: household groups with heightened housing vulnerability — older adults,
+     people with disabilities, single-parent families, those experiencing homelessness,
+     households in inadequate housing, and manufactured-home residents (PLAN.md §7 Ch 5).
+     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
 
 ```{r}
 #| label: setup
 #| include: false
 source("_common.R")
+
+sp   <- read_rds("data/acs_specialpop.rds")
+pit  <- read_rds("data/pit.rds")
+vdoe <- read_rds("data/vdoe.rds")
+wc   <- read_rds("data/wcoop.rds")
+dem  <- read_rds("data/acs_demographics.rds")
+stk  <- read_rds("data/acs_stock.rds")
+chas <- read_rds("data/chas.rds")
+
+# Palette anchors (match ggtext subtitle spans to fill/line colors)
+blue   <- hda_pal[1]
+green  <- hda_pal[2]
+yellow <- hda_pal[3]
+coral  <- hda_pal[4]
+
+geo_label <- function(code) case_when(
+  code == fauquier  ~ "Fauquier County",
+  code == "5183136" ~ "Warrenton",
+  code == "5105336" ~ "Bealeton",
+  code == virginia  ~ "Virginia",
+  TRUE              ~ NA_character_
+)
+geo_lvls <- c("Fauquier County", "Warrenton", "Bealeton")
+
+# CV from an aggregated estimate + combined MOE (0–100 scale for flag_reliability)
+agg_cv <- function(est, moe) if_else(est > 0, (moe / 1.645) / est * 100, NA_real_)
+
+# --- F1a. Seniors living alone (B11007, county) ----------------------------
+b11_v <- function(df, v) df$estimate[df$variable == v]
+b11_c <- dem$b11007 |> filter(GEOID == fauquier)
+sr_hh       <- b11_v(b11_c, "B11007_002")   # households with someone 65+
+sr_alone    <- b11_v(b11_c, "B11007_003")   # 65+ living alone
+ns_hh       <- b11_v(b11_c, "B11007_007")   # households with no one 65+
+ns_alone    <- b11_v(b11_c, "B11007_008")   # non-senior living alone
+sr_alone_sh <- sr_alone / sr_hh             # ~0.32
+ns_alone_sh <- ns_alone / ns_hh             # ~0.17
+
+# --- F1 context: Weldon Cooper 2050 senior projection (context stat only) --
+wc_65_2050 <- wc$age_county |> filter(geoid == fauquier, year == 2050) |>
+  pull(senior_65plus) |> unique()          # 18,208
+wc_75_2050 <- wc$age_county |> filter(geoid == fauquier, year == 2050) |>
+  pull(senior_75plus) |> unique()          # 9,844
+
+# --- F1b. Older-householder tenure (B25007 → 65+ owner/renter) -------------
+own65  <- c("B25007_009","B25007_010","B25007_011")
+rent65 <- c("B25007_019","B25007_020","B25007_021")
+sr_ten <- sp$b25007 |>
+  filter(variable %in% c(own65, rent65)) |>
+  mutate(tenure = if_else(variable %in% own65, "Owner", "Renter")) |>
+  summarize(estimate = sum(estimate), moe = sqrt(sum(moe^2)),
+            .by = c(GEOID, tenure)) |>
+  mutate(cv = agg_cv(estimate, moe),
+         geo = factor(geo_label(GEOID), levels = geo_lvls)) |>
+  filter(!is.na(geo)) |>
+  flag_reliability()
+sr_own_sh <- {
+  x <- sr_ten |> filter(GEOID == fauquier)
+  x$estimate[x$tenure == "Owner"] / sum(x$estimate)
+}
+
+# --- F1c. Elderly cost burden (CHAS T7, elderly HH types) ------------------
+eld_burden <- chas$t7 |>
+  filter(str_detect(household_type, "elderly")) |>
+  summarize(estimate = sum(estimate), moe = sqrt(sum(moe^2)),
+            .by = c(geo_code, tenure, cost_burden)) |>
+  mutate(
+    tenure = if_else(tenure == "Homeowner", "Owner", "Renter"),
+    cost_burden = factor(cost_burden,
+      levels = c("Severely cost-burdened","Cost-burdened","Not cost-burdened")),
+    geo = factor(geo_label(geo_code), levels = geo_lvls)
+  )
+eld_share <- eld_burden |>
+  mutate(share = estimate / sum(estimate), .by = c(geo_code, tenure))
+eld_burdened_own <- eld_share |>
+  filter(geo_code == fauquier, tenure == "Owner", cost_burden != "Not cost-burdened") |>
+  pull(share) |> sum()
+eld_burdened_rent <- eld_share |>
+  filter(geo_code == fauquier, tenure == "Renter", cost_burden != "Not cost-burdened") |>
+  pull(share) |> sum()
+
+# --- F2. Disability by age (B18101, county) --------------------------------
+dis_map <- sp$vars$b18101 |>
+  transmute(variable = name, age = col4,
+            is_dis = str_detect(coalesce(col5, ""), "^With"),
+            is_sub = !is.na(col4) & is.na(col5))
+age_lvls_raw <- c("Under 5 years:","5 to 17 years:","18 to 34 years:",
+                  "35 to 64 years:","65 to 74 years:","75 years and over:")
+age_lbl <- c("Under 5","5–17","18–34","35–64","65–74","75+")
+dis_all <- sp$b18101 |>
+  left_join(dis_map, by = "variable") |>
+  filter(!is.na(age)) |>
+  summarize(
+    total = sum(estimate[is_sub]),
+    dis   = sum(estimate[is_dis]),
+    .by = c(GEOID, age)
+  ) |>
+  mutate(share = dis / total,
+         age = factor(age, levels = age_lvls_raw, labels = age_lbl))
+dis_c <- dis_all |> filter(GEOID == fauquier)
+dis_tot_c   <- sum(dis_c$dis)                      # 7,134
+dis_share_c <- dis_tot_c / sum(dis_c$total)        # ~0.096
+dis_75_sh   <- dis_c$share[dis_c$age == "75+"]
+
+# --- F3a. Family type among families with children (B11003, county) --------
+#   Town single-parent cells are both Low reliability (CV > 39%) → reported county-only.
+b11003_kids <- c(married = "B11003_003", father = "B11003_010", mother = "B11003_016")
+sp_fam <- sp$b11003 |>
+  filter(variable %in% b11003_kids) |>
+  mutate(type = names(b11003_kids)[match(variable, b11003_kids)]) |>
+  select(GEOID, type, estimate, moe)
+spf_c <- function(t) sp_fam$estimate[sp_fam$GEOID == fauquier & sp_fam$type == t]
+sp_married_c <- spf_c("married"); sp_father_c <- spf_c("father"); sp_mother_c <- spf_c("mother")
+sp_single_c   <- sp_father_c + sp_mother_c
+sp_kids_tot_c <- sp_married_c + sp_father_c + sp_mother_c
+sp_single_sh  <- sp_single_c / sp_kids_tot_c
+
+# --- F3b. Family poverty by type (S1702 C02/C04/C06 = % below poverty) -----
+pov_c <- sp$s1702 |> filter(GEOID == fauquier)
+pov_v <- function(v) pov_c$estimate[pov_c$variable == v]
+pov_all    <- pov_v("S1702_C02_001") / 100   # all families
+pov_married<- pov_v("S1702_C04_001") / 100   # married-couple families
+pov_female <- pov_v("S1702_C06_001") / 100   # female-householder families
+n_female   <- pov_v("S1702_C05_001")         # 2,450 female-hh families
+
+# --- F4. Homelessness (PIT region trend; VDOE Fauquier) --------------------
+pit_2025      <- pit$trend$individuals[pit$trend$year == 2025]     # 191
+pit_fauq_2025 <- pit$location_2025$total[pit$location_2025$county == "Fauquier"]  # 96
+pit_fauq_sh   <- pit_fauq_2025 / pit_2025                          # 0.503
+vdoe_first <- vdoe$fauquier$students[vdoe$fauquier$school_year == "2020-21"]  # 191
+vdoe_last  <- vdoe$fauquier$students[vdoe$fauquier$school_year == "2024-25"]  # 92
+
+# --- F5. Housing quality (B25047 plumbing / B25051 kitchen / B25014 crowd) -
+q_plumb_c   <- stk$b25047 |> filter(GEOID == fauquier, variable == "B25047_003") |> pull(estimate)
+q_kitchen_c <- stk$b25051 |> filter(GEOID == fauquier, variable == "B25051_003") |> pull(estimate)
+crowd_vars  <- c("B25014_005","B25014_006","B25014_007",   # owner >1.00/room
+                 "B25014_011","B25014_012","B25014_013")   # renter >1.00/room
+q_crowd_c   <- stk$b25014 |> filter(GEOID == fauquier, variable %in% crowd_vars) |> pull(estimate) |> sum()
+
+# --- F6. Manufactured housing (B25024 structure; B25032 tenure) ------------
+mh_units_c <- stk$b25024 |> filter(GEOID == fauquier, variable == "B25024_010") |> pull(estimate)  # 470
+all_units_c<- stk$b25024 |> filter(GEOID == fauquier, variable == "B25024_001") |> pull(estimate)
+mh_share_c <- mh_units_c / all_units_c
+mh_own_c   <- stk$b25032 |> filter(GEOID == fauquier, variable == "B25032_011") |> pull(estimate)  # 394
+mh_rent_c  <- stk$b25032 |> filter(GEOID == fauquier, variable == "B25032_022") |> pull(estimate)  # 76
 ```
 
-*Figures, tables, and findings are built in Session 10 (PLAN.md §7, §9).*
+## Older adults: a growing, largely aging-in-place population
+
+```{r}
+#| label: fig-senior-alone
+#| fig-cap: "Older adults are nearly twice as likely to live alone"
+#| fig-alt: "Bar chart comparing the share of one-person households among Fauquier households with a resident age 65 and over versus households with no one 65 and over. About 32 percent of senior households are one-person households, compared with about 17 percent of non-senior households — older adults are close to twice as likely to live alone."
+
+alone_df <- tibble(
+  grp   = factor(c("Households with\nsomeone 65+", "Households with\nno one 65+"),
+                 levels = c("Households with\nsomeone 65+", "Households with\nno one 65+")),
+  share = c(sr_alone_sh, ns_alone_sh),
+  n     = c(sr_alone, ns_alone)
+)
+
+ggplot(alone_df, aes(grp, share, fill = grp)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = paste0(label_percent(accuracy = 1)(share),
+                               "\n(", label_comma()(n), " households)")),
+            vjust = -0.3, size = 3, color = "grey20", lineheight = 0.9) +
+  scale_fill_manual(values = c(blue, "grey70")) +
+  scale_y_continuous(labels = label_percent(accuracy = 1),
+                     limits = c(0, 0.4), expand = expansion(c(0, 0.05))) +
+  labs(
+    title = "Older adults are nearly twice as likely to live alone",
+    subtitle = "One-person-household share by presence of a resident age 65+, Fauquier County",
+    caption = acs_cap("B11007"),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none")
+```
+
+- Of the county's **`r label_comma()(sr_hh)` households with a resident age 65 or older**, about **`r label_percent(accuracy = 1)(sr_alone_sh)` — `r label_comma()(sr_alone)` households — are older adults living alone**, versus `r label_percent(accuracy = 1)(ns_alone_sh)` of younger households.
+- Living alone in later life raises housing vulnerability: a single fixed income to cover rising costs, and a home to maintain without a second adult — the profile behind aging-in-place and downsizing pressures.
+- The population most affected is set to grow: Weldon Cooper projects roughly **`r label_comma()(wc_65_2050)` residents age 65+** and **`r label_comma()(wc_75_2050)` age 75+** by 2050 (@sec-projections, Ch 6) — the oldest, highest-need group expanding fastest.
+
+```{r}
+#| label: fig-senior-tenure
+#| fig-cap: "Senior households are overwhelmingly homeowners"
+#| fig-alt: "Grouped bar chart of householders age 65 and over by tenure — owner versus renter — for Fauquier County and Warrenton. In the county, roughly five of six senior householders own their homes (about 6,400 owners versus 1,200 renters); Warrenton has a larger senior-renter share. Bealeton's cells are suppressed for low reliability and appear as an empty category."
+
+sr_ten_plot <- sr_ten |>
+  mutate(est_p = if_else(reliability == "Low", NA_real_, estimate),
+         lbl = if_else(is.na(est_p), "",
+                       paste0(label_comma()(est_p), if_else(reliability == "Medium", "*", ""))))
+
+ggplot(sr_ten_plot, aes(geo, est_p, fill = tenure)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.66) +
+  geom_text(aes(label = lbl),
+            position = position_dodge(width = 0.72), vjust = -0.4,
+            size = 2.8, color = "grey25") +
+  scale_fill_manual(values = c(Owner = blue, Renter = coral)) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "Senior households are overwhelmingly homeowners",
+    subtitle = "Householders age 65+ by tenure — <span style='color:#445ca9'>**owners**</span> vs <span style='color:#e76f52'>**renters**</span>",
+    caption = paste0(acs_cap("B25007"),
+                     " *Medium reliability (CV 15–30%). Bealeton cells suppressed (CV > 30%)."),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none", plot.subtitle = element_markdown())
+```
+
+- **About `r label_percent(accuracy = 1)(sr_own_sh)` of the county's senior householders own their homes** — aging in place overwhelmingly means aging in an owned single-family house, with the maintenance and accessibility burdens that implies.
+- The small senior-renter population is the group with the fewest local options: little purpose-built senior rental stock (@sec-market-rental) and the county's tightest affordable-rental deficit falls on the lowest incomes (@fig-rental-gap).
+- **Warrenton** carries a larger senior-renter share than the county, consistent with its role as the principal rental submarket (its renter cell is Medium reliability); **Bealeton's** senior counts are too small to report reliably (CV > 30%) and are suppressed.
+
+```{r}
+#| label: fig-senior-burden
+#| fig-cap: "Two in five senior renters are cost-burdened"
+#| fig-alt: "Stacked bar chart of cost-burden status among Fauquier County elderly households, split into owner and renter columns. About 41 percent of senior renters are cost-burdened or severely cost-burdened, versus about 26 percent of senior owners — the burdened share is markedly higher for renters."
+
+eld_c <- eld_share |> filter(geo_code == fauquier)
+
+ggplot(eld_c, aes(tenure, share, fill = cost_burden)) +
+  geom_col(width = 0.58) +
+  scale_fill_manual(values = cb_pal) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.03))) +
+  labs(
+    title = "Two in five senior renters are cost-burdened",
+    subtitle = "Cost-burden status among elderly households, by tenure, Fauquier County",
+    caption = paste0(chas_cap("T7"),
+                     " Elderly = households with a member age 62 or older."),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "top", plot.subtitle = element_markdown())
+```
+
+- **Senior renters carry the heavier burden:** about **`r label_percent(accuracy = 1)(eld_burdened_rent)` of the county's elderly renter households are cost-burdened**, versus `r label_percent(accuracy = 1)(eld_burdened_own)` of elderly owners — the mirror of the tenure pattern seen county-wide (@fig-burden-band).
+- Because seniors are overwhelmingly owners (@fig-senior-tenure), owner burden reaches more households in absolute terms, but the renter *rate* is higher and concentrated among those least able to move.
+- The towns show the same renter-heavier pattern — senior renters in both Warrenton and Bealeton are burdened at roughly 60% — but those cells rest on very small CHAS samples, so only the county figures are charted here.
+
+## People with disabilities
+
+```{r}
+#| label: fig-disability-age
+#| fig-cap: "Disability rises steeply with age, reaching two in five of those 75 and over"
+#| fig-alt: "Bar chart of the share of Fauquier County residents reporting a disability, by age band from under 5 to 75 and over. The share is very low for children and young adults, rises through the 35-to-64 band, and climbs sharply among older adults — reaching roughly a fifth of the 65-to-74 group and about 40 percent of those 75 and over."
+
+ggplot(dis_c, aes(age, share)) +
+  geom_col(fill = blue, width = 0.72) +
+  geom_text(aes(label = label_percent(accuracy = 1)(share)),
+            vjust = -0.4, size = 3, color = "grey25") +
+  scale_y_continuous(labels = label_percent(accuracy = 1),
+                     limits = c(0, NA), expand = expansion(c(0, 0.08))) +
+  labs(
+    title = "Disability rises steeply with age, reaching two in five of those 75 and over",
+    subtitle = "Share of residents reporting a disability, by age, Fauquier County",
+    caption = acs_cap("B18101"),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- **`r label_comma()(dis_tot_c)` county residents — about `r label_percent(accuracy = 1)(dis_share_c)` of the population — report a disability**, but prevalence is highly age-graded: minimal among children, then rising sharply after 65.
+- Roughly **`r label_percent(accuracy = 1)(dis_75_sh)` of residents age 75 and over** report a disability — the same cohort projected to grow most by 2050 (@fig-senior-alone), pointing to rising demand for **accessible and single-level housing and home modifications**.
+- The overlap of disability, advanced age, and homeownership (@fig-senior-tenure) is a direct hook for home-repair and accessibility-retrofit programs — households that own but cannot easily adapt or maintain their homes.
+
+## Single-parent families and family poverty
+
+```{r}
+#| label: fig-single-parent
+#| fig-cap: "One in five families with children is headed by a single parent"
+#| fig-alt: "Bar chart of Fauquier County families with own children under 18 by family type: married-couple families, single-father families, and single-mother families. Married-couple families are the large majority at roughly 6,200; single-mother families number about 1,100 and single-father families about 630, together making up roughly a fifth of all families with children."
+
+comp_df <- tibble(
+  type = factor(c("Married-couple", "Single father", "Single mother"),
+                levels = c("Married-couple", "Single father", "Single mother")),
+  n    = c(sp_married_c, sp_father_c, sp_mother_c),
+  grp  = c("Married-couple", "Single parent", "Single parent")
+)
+
+ggplot(comp_df, aes(type, n, fill = grp)) +
+  geom_col(width = 0.62) +
+  geom_text(aes(label = label_comma()(n)),
+            vjust = -0.4, size = 3, color = "grey25") +
+  scale_fill_manual(values = c(`Married-couple` = "grey70", `Single parent` = coral)) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "One in five families with children is headed by a single parent",
+    subtitle = "Families with children by type — <span style='color:#e76f52'>**single-parent**</span> vs <span style='color:#8a8a8a'>**married-couple**</span>, Fauquier County",
+    caption = acs_cap("B11003"),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none", plot.subtitle = element_markdown())
+```
+
+- Of the county's **`r label_comma()(sp_kids_tot_c)` families with own children under 18, about `r label_percent(accuracy = 1)(sp_single_sh)` — `r label_comma()(sp_single_c)` families — are headed by a single parent**, the large majority of them mothers (`r label_comma()(sp_mother_c)` single-mother vs `r label_comma()(sp_father_c)` single-father families).
+- Single-parent families depend on **one income** in a market where even two average local wages fall short of the median home (@fig-wages-costs), leaving them heavily exposed to the county's affordable-rental deficit.
+- Town-level single-parent counts are small and both fall below the reliability threshold (CV > 30%), so the figure is reported county-only.
+
+```{r}
+#| label: fig-family-poverty
+#| fig-cap: "Single-mother families are far likelier to live in poverty"
+#| fig-alt: "Bar chart of the share of families below the poverty level in Fauquier County by family type: all families, married-couple families, and female-householder families. The poverty rate for female-householder families is several times that of married-couple families and well above the all-families rate."
+
+pov_df <- tibble(
+  type  = factor(c("All families", "Married-couple\nfamilies", "Female-householder\nfamilies"),
+                 levels = c("All families", "Married-couple\nfamilies", "Female-householder\nfamilies")),
+  rate  = c(pov_all, pov_married, pov_female)
+)
+
+ggplot(pov_df, aes(type, rate, fill = type)) +
+  geom_col(width = 0.62) +
+  geom_text(aes(label = label_percent(accuracy = 0.1)(rate)),
+            vjust = -0.4, size = 3, color = "grey25") +
+  scale_fill_manual(values = c("grey70", blue, coral)) +
+  scale_y_continuous(labels = label_percent(accuracy = 1),
+                     limits = c(0, NA), expand = expansion(c(0, 0.1))) +
+  labs(
+    title = "Single-mother families are far likelier to live in poverty",
+    subtitle = "Families below the poverty level, by family type, Fauquier County",
+    caption = acs_cap("S1702"),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none")
+```
+
+- **Female-householder families face a poverty rate of `r label_percent(accuracy = 1)(pov_female)`** — nearly three times the `r label_percent(accuracy = 1)(pov_married)` rate for married-couple families and roughly double the `r label_percent(accuracy = 1)(pov_all)` all-family rate.
+- With roughly **`r label_comma()(n_female)` female-householder families** county-wide, this is a sizeable group combining low income, single earnership, and (often) children — a high-priority segment for deeply affordable rental and ownership assistance.
+- Family poverty and single parenthood compound the housing-cost pressures documented in Ch 4: the households with the least income are those competing hardest for the county's scarcest affordable units.
+
+## Homelessness
+
+::: {.callout-warning}
+## Read these counts carefully
+
+The two homelessness series measure **different geographies** and are **counts, not rates** — small single-night or point-in-time tallies that swing year to year.
+
+- The **Point-in-Time (PIT) trend covers the full five-county Foothills Housing Network region** (Culpeper, Fauquier, Madison, Orange, Rappahannock), *not* Fauquier alone. Only the **2025** count is broken out by county — Fauquier accounted for **`r pit_fauq_2025` of the region's `r pit_2025` people** (Orange and Rappahannock reported zero).
+- The **VDOE McKinney-Vento series is Fauquier-specific** (students in Fauquier County Public Schools who lacked stable housing at some point in the year) and uses a broader federal definition than PIT, so the two are **not additive** and not directly comparable.
+:::
+
+```{r}
+#| label: fig-pit-trend
+#| fig-cap: "Regional homelessness rose through the early 2020s, then fell sharply in 2025"
+#| fig-alt: "Column chart of the number of people counted in the five-county Foothills Housing Network Point-in-Time count each January from 2018 to 2025. Counts rise from about 146 in 2018 to a peak near 280 in 2022, hold around 275 through 2024, then drop to 191 in 2025. An annotation marks that Fauquier accounted for 96 of the 191 people counted region-wide in 2025."
+
+pit_df <- pit$trend |> mutate(is25 = year == 2025)
+
+ggplot(pit_df, aes(factor(year), individuals)) +
+  geom_col(aes(fill = is25), width = 0.7) +
+  geom_text(aes(label = individuals), vjust = -0.4, size = 3, color = "grey25") +
+  annotate("text", x = 8, y = pit_2025, hjust = 1.05, vjust = -1.4, size = 2.7,
+           color = "grey30", label = paste0("Fauquier:\n", pit_fauq_2025, " of ", pit_2025)) +
+  scale_fill_manual(values = c(`FALSE` = "grey70", `TRUE` = blue), guide = "none") +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.14))) +
+  labs(
+    title = "Regional homelessness rose through the early 2020s, then fell sharply in 2025",
+    subtitle = "January Point-in-Time count, five-county Foothills Housing Network region",
+    caption = pit_cap(),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- The regional PIT count climbed from **146 people in 2018 to a peak near 280 in 2022**, held through 2024, then fell to **`r pit_2025` in 2025** — a single year's drop that, on small counts, should be read cautiously rather than as an established trend.
+- In 2025, **Fauquier accounted for `r pit_fauq_2025` of the `r pit_2025` people counted region-wide (`r label_percent(accuracy = 1)(pit_fauq_sh)`)** — the largest single-county share, though the county-level split exists only for that one year.
+- Point-in-time counts capture only people literally homeless on the count night; they understate housing instability, which the school-based McKinney-Vento data below captures more broadly.
+
+```{r}
+#| label: fig-vdoe-mv
+#| fig-cap: "Housing-unstable students in Fauquier schools have fallen by half since 2020–21"
+#| fig-alt: "Column chart of the number of McKinney-Vento (housing-unstable) students identified in Fauquier County Public Schools by school year from 2020-21 to 2024-25. The count declines steadily from 191 students to 92 — a drop of roughly half over five years."
+
+vdoe_df <- vdoe$fauquier |>
+  mutate(school_year = factor(school_year, levels = school_year))
+
+ggplot(vdoe_df, aes(school_year, students)) +
+  geom_col(fill = green, width = 0.68) +
+  geom_text(aes(label = students), vjust = -0.4, size = 3, color = "grey25") +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "Housing-unstable students in Fauquier schools have fallen by half since 2020–21",
+    subtitle = "McKinney-Vento students in Fauquier County Public Schools, by school year",
+    caption = vdoe_cap(),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- McKinney-Vento counts — students who lacked fixed, adequate housing at any point in the year — fell from **`r vdoe_first` in 2020–21 to `r vdoe_last` in 2024–25**, roughly halving over five years.
+- The decline tracks the post-pandemic recovery and expanded rental assistance; on counts this small, year-to-year movement is volatile and a single school year should not be over-read.
+- Even at `r vdoe_last`, the school-based count exceeds the county's point-in-time homeless tally — a reminder that most housing instability is doubled-up or precariously housed, not literally unsheltered.
+
+## Housing quality and manufactured housing
+
+```{r}
+#| label: fig-housing-quality
+#| fig-cap: "Inadequate-housing counts are small but real — a direct home-repair hook"
+#| fig-alt: "Bar chart of the number of Fauquier County housing units with each of three quality problems: incomplete plumbing facilities, incomplete kitchen facilities, and overcrowding (more than one occupant per room). Each count is in the low hundreds, with incomplete kitchens and overcrowding somewhat more common than incomplete plumbing."
+
+quality_df <- tibble(
+  measure = factor(c("Incomplete\nplumbing", "Incomplete\nkitchen", "Overcrowded\n(>1 per room)"),
+                   levels = c("Incomplete\nplumbing", "Incomplete\nkitchen", "Overcrowded\n(>1 per room)")),
+  n = c(q_plumb_c, q_kitchen_c, q_crowd_c)
+)
+
+ggplot(quality_df, aes(measure, n)) +
+  geom_col(fill = yellow, width = 0.62) +
+  geom_text(aes(label = label_comma()(n)), vjust = -0.4, size = 3, color = "grey25") +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "Inadequate-housing counts are small but real — a direct home-repair hook",
+    subtitle = "Occupied housing units with each condition, Fauquier County",
+    caption = paste0("**Source:** U.S. Census Bureau, 2020-2024 American Community Survey ",
+                     "5-year estimates, Tables B25047, B25051, B25014. ",
+                     "Counts are small; reported as counts, not rates."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- A small but real slice of the stock is physically inadequate: about **`r label_comma()(q_plumb_c)` units lack complete plumbing, `r label_comma()(q_kitchen_c)` lack a complete kitchen, and `r label_comma()(q_crowd_c)` are overcrowded** (more than one occupant per room).
+- These are **counts, not rates** — each represents a fraction of a percent of the county's `r label_comma()(all_units_c)` units — but they map directly onto Habitat's home-repair and critical-repair mission.
+- Town-level counts are too small to report reliably; the county figures are the dependable signal, and inadequate units concentrate in the oldest segments of the stock (@sec-inventory).
+
+```{r}
+#| label: fig-manufactured
+#| fig-cap: "Manufactured homes are few but overwhelmingly owner-occupied"
+#| fig-alt: "Bar chart of Fauquier County manufactured (mobile) homes by tenure — owner-occupied versus renter-occupied. The large majority of the county's roughly 470 manufactured homes are owner-occupied, with a much smaller renter-occupied count."
+
+mh_df <- tibble(
+  tenure = factor(c("Owner-occupied", "Renter-occupied"),
+                  levels = c("Owner-occupied", "Renter-occupied")),
+  n = c(mh_own_c, mh_rent_c)
+)
+
+ggplot(mh_df, aes(tenure, n, fill = tenure)) +
+  geom_col(width = 0.58) +
+  geom_text(aes(label = label_comma()(n)), vjust = -0.4, size = 3, color = "grey25") +
+  scale_fill_manual(values = c(`Owner-occupied` = blue, `Renter-occupied` = coral)) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "Manufactured homes are few but overwhelmingly owner-occupied",
+    subtitle = "Occupied manufactured (mobile) homes by tenure, Fauquier County",
+    caption = paste0("**Source:** U.S. Census Bureau, 2020-2024 American Community Survey ",
+                     "5-year estimates, Tables B25024, B25032. ",
+                     "Counts are small; reported as counts, not rates."),
+    x = NULL, y = NULL, fill = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none")
+```
+
+- Manufactured homes are about **`r label_comma()(mh_units_c)` units — `r label_percent(accuracy = 0.1)(mh_share_c)` of the county's housing stock** — and **`r label_percent(accuracy = 1)(mh_own_c/(mh_own_c+mh_rent_c))` are owner-occupied**, making them one of the county's few remaining sources of lower-cost ownership.
+- As unsubsidized, naturally-occurring affordable housing, this stock is worth preserving; manufactured homes are also more exposed to age, condition, and (for those on rented lots) land-tenure risk.
+
+::: {.callout-note}
+## Town spotlight — Bealeton's manufactured housing is undercounted by ACS
+
+Manufactured-home and mobile-home communities are a known feature of the **Bealeton–Remington** area, but the ACS place-level estimate for **Bealeton CDP records zero manufactured units** — a small-sample artifact of the CDP boundary and survey noise, not an accurate count (the same limitation flagged for Bealeton in @sec-inventory). The dependable figure is therefore the **county total of `r label_comma()(mh_units_c)` manufactured homes**; Bealeton's actual share is understated in the place-level data and should be treated as a known gap rather than a true absence.
+:::
+
+## What the interviews said vs. what the data shows
+
+::: {.callout-important}
+## Interview validation
+
+- **"Aging-in-place and downsizing seniors, and returning young people, have no options."** *Confirmed for the current state; the forward-looking pressure is quantified in Ch 6.* The county's older adults are overwhelmingly **homeowners** — about `r label_percent(accuracy = 1)(sr_own_sh)` of senior householders own (@fig-senior-tenure) — and nearly a third of senior households are **older adults living alone** (@fig-senior-alone), the profile most likely to want to downsize. Yet the options they would move *into* are exactly what the market lacks: few small or purpose-built senior rentals (@sec-market-rental), the county's deepest affordable-rental deficit at the lowest incomes (@fig-rental-gap), and a for-sale market with almost nothing below 100% AMI (@fig-ownership-gap) — the same wall facing returning young adults. Meanwhile **`r label_percent(accuracy = 1)(eld_burdened_rent)` of senior renters are cost-burdened** (@fig-senior-burden) and disability climbs to roughly `r label_percent(accuracy = 1)(dis_75_sh)` among those 75+ (@fig-disability-age), so the need is not only for *more* homes but for *accessible, smaller, lower-cost* ones. The projected surge to `r label_comma()(wc_65_2050)` residents 65+ by 2050 (@sec-projections) turns a current mismatch into a structural one.
+:::
