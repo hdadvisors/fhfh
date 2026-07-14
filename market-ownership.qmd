@@ -58,10 +58,25 @@ med_price     <- gaps$income_needed$med_price      # 650000
 actual_income <- inc24                             # 130189 (Fauquier 2024 median HH income)
 income_gap    <- buyer_income - actual_income      # ~60397
 
-# F5 / F7 snapshot scalars (single July-2026 active-listing snapshot)
-active_n    <- nrow(mls$active)                                   # 218
+# F5 / F7 snapshot scalars (single July-2026 active-listing snapshot, transaction export)
+active_n    <- nrow(mls$active)                                   # 218 (export subset)
 active_u350 <- sum(mls$active$list_price < 350000, na.rm = TRUE)  # 3
-mos         <- active_n / (sales_2025 / 12)                       # ~2.8 months of supply
+
+# --- Monthly Bright MLS published summary (2022+, by geography) — F5 supply & DOM ------
+ms     <- mls$monthly_summary
+ms_fau <- ms |> filter(geography == "Fauquier")
+sup_yr <- ms_fau |> summarize(active = mean(active_listings), mos = mean(months_supply), .by = year)
+active_avg_2022 <- round(sup_yr$active[sup_yr$year == 2022])      # ~315
+active_avg_2025 <- round(sup_yr$active[sup_yr$year == 2025])      # ~392
+mos_avg_2022    <- sup_yr$mos[sup_yr$year == 2022]               # ~3.4
+mos_avg_2025    <- sup_yr$mos[sup_yr$year == 2025]               # ~4.3
+active_pub_now  <- ms_fau$active_listings[ms_fau$date == max(ms_fau$date)]  # Jun 2026 published
+
+# Reconciliation: Bright MLS published sales counts run consistently above the
+# transaction-export counts that drive the annual series (systematic ~+18% level offset;
+# median price agrees to ~0.1%). Same filter affects the active-listing snapshot. See callout.
+sales_pub_2025 <- sum(ms_fau$sales_n[ms_fau$year == 2025])       # ~1,127
+sales_gap_pct  <- sales_pub_2025 / sales_2025 - 1               # ~0.20
 ```
 
 ## Sales volume
@@ -97,6 +112,11 @@ ggplot(vol, aes(year, sales_count, fill = source, alpha = partial)) +
 - Sales peaked at **`r format(peak_sales, big.mark = ",")` in `r peak_yr`** and have since fallen to **`r format(sales_2025, big.mark = ",")` in 2025 — down about `r label_percent(accuracy = 1)(sales_decline)`** from the pandemic-era high.
 - The cooling reflects **thin supply and higher financing costs**, not falling demand — prices kept climbing through the slowdown (@fig-price-trend).
 - Counts through 2021 come from the GP/VAR annual series and 2022 onward from Bright MLS; **2026 is a partial year-to-date count** and is not comparable to the full years.
+
+::: {.callout-note}
+## A note on sales counts
+Bright MLS's **published monthly summary** reports roughly **`r label_percent(accuracy = 1)(sales_gap_pct)` more sales** than the transaction-level export used for the volume series above (e.g. `r format(round(sales_pub_2025), big.mark = ",")` vs `r format(sales_2025, big.mark = ",")` closings in 2025) — a near-constant level offset across every year, consistent with a property-type filter on the export. **Median sale prices agree between the two sources to within ~0.1%**, so the price findings are unaffected; the *level* of sales counts (and the active-listing snapshot below) should be read as the export's narrower definition, while the year-over-year *trend* holds under either source.
+:::
 
 ## Prices
 
@@ -228,33 +248,76 @@ ggplot(bands, aes(factor(year), share, fill = band)) +
 
 ```{r}
 #| label: fig-days-on-market
-#| fig-cap: "Homes still sell fast in a thin-supply market"
-#| fig-alt: "Line chart of median days on market for Fauquier County home sales from 2022 to 2026. The median hovers around 7 to 9 days in 2022–2024, rises to about 15 days in 2025, then reads 8 in the partial 2026 year — all well within a fast-moving market."
+#| fig-cap: "Homes still sell fast, but with a pronounced seasonal rhythm"
+#| fig-alt: "Line chart of median days to sell for Fauquier County home sales, monthly from 2022 to mid-2026. A faint monthly line swings between roughly 5 days in spring and 30 to 40 days in winter each year; a heavier three-month average line makes the seasonal sawtooth clear and drifts modestly higher in 2025 before easing in 2026."
 
-dom <- mls$dom_annual |> mutate(partial = year == 2026)
+roll3 <- \(x) as.numeric(stats::filter(x, rep(1/3, 3), sides = 2))
 
-ggplot(dom, aes(year, median_dom)) +
-  geom_line(data = ~ filter(.x, year <= 2025), color = blue, linewidth = 1) +
-  geom_point(aes(shape = partial), color = blue, size = 2.8) +
-  geom_text(aes(label = round(median_dom)), vjust = -1, size = 3, color = "grey25") +
-  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1), guide = "none") +
-  scale_y_continuous(limits = c(0, max(dom$median_dom) * 1.25), expand = c(0, 0)) +
-  scale_x_continuous(breaks = 2022:2026) +
+dom_m  <- ms_fau |> arrange(date) |> mutate(roll = roll3(days_to_sell))
+dom_yr <- ms_fau |> summarize(dts = round(median(days_to_sell)), .by = year)
+dg <- \(y) dom_yr$dts[dom_yr$year == y]
+
+ggplot(dom_m, aes(date, days_to_sell)) +
+  geom_line(color = "grey78", linewidth = 0.5) +
+  geom_line(aes(y = roll), color = blue, linewidth = 1) +
+  scale_y_continuous(limits = c(0, max(dom_m$days_to_sell) * 1.08), expand = c(0, 0)) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = expansion(c(0.02, 0.04))) +
   labs(
-    title = "Homes still sell fast in a thin-supply market",
-    subtitle = "Median days on market, Fauquier County closed sales, 2022–2026 (2026 partial-year, open point)",
-    caption = mls_cap("2022–2026"), x = NULL, y = NULL
+    title = "Homes still sell fast, but with a pronounced seasonal rhythm",
+    subtitle = "Median days to sell, Fauquier County — <span style='color:#b8b8b8'>**monthly**</span> and <span style='color:#445ca9'>**3-month average**</span>, 2022–2026",
+    caption = mls_cap("2022–2026 (monthly summary)"), x = NULL, y = NULL
   ) +
   theme_hda() +
-  add_zero_line("y")
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
 ```
 
-- Median days on market stayed **fast — around `r round(dom$median_dom[dom$year==2022])`–`r round(dom$median_dom[dom$year==2024])` days in 2022–2024, ticking up to `r round(dom$median_dom[dom$year==2025])` in 2025** as higher rates cooled demand, but still a matter of weeks, not months.
-- With only **`r active_n` active listings** against 2025's sales pace, the county holds about **`r round(mos, 1)` months of supply** — well inside the roughly six-month threshold that separates a buyer's from a seller's market.
+- Homes sell **fast — a median of `r dg(2022)`–`r dg(2024)` days in 2022–2024, rising to `r dg(2025)` in 2025** as higher rates cooled demand, but still weeks, not months.
+- The monthly view exposes a **strong seasonal rhythm the annual averages hide**: listings linger roughly 25–40 days in December–February and sell in under 10 by spring, every year.
+
+```{r}
+#| label: fig-supply-trend
+#| fig-cap: "Inventory has loosened from its pandemic lows — but supply is still tight"
+#| fig-alt: "Two-panel chart for 2022 to mid-2026. The top panel shows active listings rising from about 315 to a 2025 peak above 450 in Fauquier County, with Warrenton flat near 45; the bottom panel shows months of supply climbing from about 3 to roughly 4 to 5 months for both the county and Warrenton, staying below the dashed six-month line that marks a balanced market."
+
+sup <- ms |>
+  filter(geography %in% c("Fauquier", "Warrenton")) |>
+  arrange(geography, date) |>
+  transmute(geography, date,
+            `Active listings`  = active_listings,
+            `Months of supply` = months_supply) |>
+  pivot_longer(-c(geography, date), names_to = "metric", values_to = "value") |>
+  mutate(metric = factor(metric, levels = c("Active listings", "Months of supply")),
+         roll = roll3(value), .by = c(geography, metric))
+
+thresh <- tibble(metric = factor("Months of supply",
+                                 levels = levels(sup$metric)), yint = 6)
+
+ggplot(sup, aes(date, value, color = geography)) +
+  geom_hline(data = thresh, aes(yintercept = yint), linetype = "dashed", color = "grey55") +
+  geom_line(aes(alpha = "raw"), linewidth = 0.4) +
+  geom_line(aes(y = roll, alpha = "roll"), linewidth = 1) +
+  facet_wrap(~ metric, ncol = 1, scales = "free_y") +
+  scale_color_manual(values = c(Fauquier = blue, Warrenton = coral), guide = "none") +
+  scale_alpha_manual(values = c(raw = 0.3, roll = 1), guide = "none") +
+  scale_y_continuous(expand = expansion(c(0, 0.08))) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = expansion(c(0.02, 0.04))) +
+  labs(
+    title = "Inventory has loosened from its pandemic lows — but supply is still tight",
+    subtitle = "Active listings and months of supply (3-month average) — <span style='color:#445ca9'>**Fauquier County**</span> and <span style='color:#e76f52'>**Warrenton**</span>",
+    caption = mls_cap("2022–2026 (monthly summary)"), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
+```
+
+- Active for-sale inventory has climbed from a tight **~`r format(active_avg_2022, big.mark = ",")` listings a month in 2022 to ~`r format(active_avg_2025, big.mark = ",")` in 2025**, and months of supply from about **`r round(mos_avg_2022, 1)` to `r round(mos_avg_2025, 1)` months** — a real loosening from the pandemic-era squeeze.
+- Even so, supply stays **well below the roughly six-month mark** that separates a seller's from a buyer's market: Fauquier remains a seller's market, just a less extreme one than at the 2021–22 peak.
 
 ::: {.callout-note}
-## Current inventory — a strong seller's market
-As of the July 2026 snapshot, **`r active_n` homes were listed for sale** county-wide. Against the 2025 sales pace (~`r round(sales_2025/12)` closings a month), that is roughly **`r round(mos, 1)` months of supply** — a strong seller's market. Active inventory and months-of-supply are a **single point-in-time snapshot**, not a trend: a retroactive inventory time series cannot be reconstructed from the available data.
+## Inventory is recovering, not recovered
+Contrary to a point-in-time reading, the monthly Bright MLS series shows active listings and months of supply **trending upward since 2022** (from ~`r round(mos_avg_2022, 1)` to ~`r round(mos_avg_2025, 1)` months) as higher rates slowed the frantic pace — but Fauquier is **still firmly a seller's market**, with supply short of the ~6-month balance point and homes selling within weeks for most of the year.
 :::
 
 ## What it takes to buy
@@ -301,7 +364,7 @@ ggplot(f6, aes(value, what, fill = grp)) +
 ::: {.callout-important}
 ## Interview validation
 
-- **"Only about 3 for-sale listings under $350,000 were on the market (April 2026)."** *Confirmed.* The July 2026 snapshot shows **exactly `r active_u350` of `r active_n` active listings priced under $350,000** (@fig-price-bands, @fig-days-on-market) — the entry-level for-sale segment has effectively vanished.
+- **"Only about 3 for-sale listings under $350,000 were on the market (April 2026)."** *Confirmed.* The July 2026 listing export shows **exactly `r active_u350` of `r active_n` active listings priced under $350,000** (@fig-price-bands) — the entry-level for-sale segment has effectively vanished. (The `r active_n`-listing export is the narrower property-type subset noted above; Bright MLS's published count for the county runs higher, but the near-total absence of sub-$350k inventory holds regardless.)
 - **"Homes are expensive relative to what local incomes can support."** *Confirmed and nuanced.* Median prices nearly doubled since 2016 and rose in real terms (@fig-price-trend); the income needed to buy the median home now exceeds the actual median by ~$60k (@fig-income-to-buy). The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (@fig-price-payment-income).
 - **"Buyers face a quality-versus-price mismatch — what's affordable isn't desirable, and what's desirable isn't affordable."** *Confirmed and nuanced.* New construction skews larger and pricier (@sec-inventory), the sub-$350k segment has all but disappeared (@fig-price-bands), and the market still moves fast (@fig-days-on-market) — leaving entry-level buyers with few options at any quality level.
 :::

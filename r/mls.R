@@ -1,8 +1,10 @@
 # mls.R ----
-# What:   Tidy Bright MLS sales + listings + rentals; splice VAR/GP sources for 2016–2021
+# What:   Tidy Bright MLS sales + listings + rentals; splice VAR/GP sources for 2016–2021;
+#         ingest Bright MLS published monthly summary stats (2022+, 3 geographies)
 # Source: data/raw/mls/mls_sales_*.csv (2022+), data/raw/mls/var_*.xlsx (2016–2021),
-#         data/gp_appendix.rds ($sales), data/raw/mls/mls_active_*.csv, mls_rentals_*.csv
-# Output: data/mls.rds
+#         data/gp_appendix.rds ($sales), data/raw/mls/mls_active_*.csv, mls_rentals_*.csv,
+#         data/raw/mls/mls_monthly_{sales,listings,inventory}_{fauquier,warrenton,bealeton}.csv
+# Output: data/mls.rds (frames incl. monthly_summary — Bright MLS monthly summary, 2022+)
 
 ## 1. Setup ----
 library(tidyverse)
@@ -176,6 +178,56 @@ rentals <- rentals_raw |>
 message("  Rental records: ", nrow(rentals),
         " (", min(rentals$year), "–", max(rentals$year), ")")
 
+## 7b. Monthly summary statistics (Bright MLS published, 2022+) ----
+# Three metric files (sales / listings / inventory) × three geographies
+# (Fauquier = county-wide incl. all towns/CDPs, Warrenton, Bealeton), monthly Jan 2022+.
+# Supplies the monthly active-listings / new-listings / months-of-supply / days-to-sell
+# series the transaction-level data cannot provide. `grain` column is future-proofing: a
+# coarser Bealeton re-pull (quarterly/annual) can be appended without restructuring.
+message("Reading MLS monthly summary CSVs...")
+
+summary_geos <- c(Fauquier = "fauquier", Warrenton = "warrenton", Bealeton = "bealeton")
+
+read_monthly_metric <- function(geo_slug, metric) {
+  path <- file.path("data/raw/mls", paste0("mls_monthly_", metric, "_", geo_slug, ".csv"))
+  read_csv(path, show_col_types = FALSE) |>
+    clean_names() |>
+    rename(month_label = month)   # "Month" header → month; keep raw label for the join
+}
+
+monthly_summary <- imap_dfr(summary_geos, \(geo_slug, geo_name) {
+  sales_df <- read_monthly_metric(geo_slug, "sales") |>
+    transmute(month_label,
+              sales_n      = sales_number_of,
+              median_price = parse_number(as.character(sale_price_median)))
+  listings_df <- read_monthly_metric(geo_slug, "listings") |>
+    transmute(month_label,
+              active_listings = active_listings_number_of,
+              new_listings    = number_of_new_listings)
+  inventory_df <- read_monthly_metric(geo_slug, "inventory") |>
+    transmute(month_label,
+              days_to_sell  = days_to_sell_median,
+              months_supply = months_of_inventory)
+
+  sales_df |>
+    left_join(listings_df,  by = "month_label") |>
+    left_join(inventory_df, by = "month_label") |>
+    mutate(geography = geo_name,
+           date      = my(month_label),   # "Jan 2022" → 2022-01-01
+           year      = year(date),
+           month     = month(date),
+           grain     = "monthly")
+}) |>
+  select(geography, date, year, month, grain,
+         sales_n, median_price, active_listings, new_listings,
+         days_to_sell, months_supply) |>
+  arrange(geography, date)
+
+message("  monthly_summary rows: ", nrow(monthly_summary),
+        " (", n_distinct(monthly_summary$geography), " geographies × ",
+        n_distinct(monthly_summary$date), " months, ",
+        format(min(monthly_summary$date)), "–", format(max(monthly_summary$date)), ")")
+
 ## 8. New-construction vs resale attributes (2022+ transactions) ----
 # Supports Ch 1 Fig 6 ("large homes on large lots" / missing-middle validation).
 message("Building new-vs-resale attribute summary...")
@@ -235,7 +287,8 @@ message("  annual_zip rows: ", nrow(annual_zip),
 write_rds(
   list(monthly = monthly, annual = annual, active = active, rentals = rentals,
        new_vs_resale = new_vs_resale,
-       annual_zip = annual_zip, dom_annual = dom_annual, sales_bands = sales_bands),
+       annual_zip = annual_zip, dom_annual = dom_annual, sales_bands = sales_bands,
+       monthly_summary = monthly_summary),
   "data/mls.rds"
 )
 message("Wrote data/mls.rds")
@@ -296,10 +349,57 @@ message("  dom_annual: median DOM ", min(out$dom_annual$year), "=",
         out$dom_annual$median_dom[out$dom_annual$year == max(out$dom_annual$year)])
 message("  sales_bands: bands sum to 1 per year = ", all(abs(band_sums$s - 1) < 1e-9))
 
+# monthly_summary: structure + reconciliation vs transaction-derived series
+ms <- out$monthly_summary
+stopifnot(
+  setequal(unique(ms$geography), c("Fauquier", "Warrenton", "Bealeton")),
+  nrow(ms) == 162,                              # 3 geographies × 54 months
+  min(ms$date) == as.Date("2022-01-01"),
+  max(ms$date) == as.Date("2026-06-01")
+)
+fau_ms <- ms |> filter(geography == "Fauquier")
+stopifnot(
+  nrow(fau_ms) == 54,
+  !anyNA(fau_ms$sales_n),
+  !anyNA(fau_ms$active_listings),
+  !anyNA(fau_ms$months_supply)
+)
+
+# Investigate-first reconciliation: Bright MLS published summary (all residential) vs
+# the transaction-derived monthly series (mls_sales_*.csv, MLS 2022+). Report only —
+# do NOT re-base published figures here until the divergence is understood.
+recon <- fau_ms |>
+  select(date, year, summary_n = sales_n, summary_price = median_price) |>
+  inner_join(
+    out$monthly |> filter(source == "MLS") |>
+      select(date, derived_n = sales_count, derived_price = median_price),
+    by = "date"
+  )
+recon_yr <- recon |>
+  summarize(summary_n = sum(summary_n), derived_n = sum(derived_n), .by = year) |>
+  mutate(pct_gap = (summary_n - derived_n) / derived_n)
+
+message("  monthly_summary reconciliation — Fauquier sales counts (summary vs transaction-derived):")
+pwalk(recon_yr, \(year, summary_n, derived_n, pct_gap)
+      message(sprintf("    %d: summary %d vs derived %d (%+.1f%%)",
+                      as.integer(year), as.integer(summary_n),
+                      as.integer(derived_n), 100 * pct_gap)))
+
+if (any(abs(recon_yr$pct_gap) > 0.10))
+  warning("Summary vs transaction sales counts diverge >10% in ",
+          sum(abs(recon_yr$pct_gap) > 0.10), " year(s) — likely a Type/property-class ",
+          "filter in the mls_sales exports; reconcile before re-basing sales volume.")
+
+price_mad <- mean(abs(recon$summary_price - recon$derived_price) / recon$derived_price)
+message(sprintf("  monthly_summary median-price mean abs %% diff vs derived: %.1f%%",
+                100 * price_mad))
+
 message("mls.R validation passed.")
 message("  Monthly rows: ", nrow(out$monthly))
 message("  Annual rows:  ", nrow(out$annual))
 message("  Active listings: ", nrow(out$active))
 message("  Rental records:  ", nrow(out$rentals))
+message("  Monthly summary rows: ", nrow(out$monthly_summary), " (",
+        paste(sort(unique(out$monthly_summary$geography)), collapse = "/"), ")")
 message("  Median rental price: $", format(round(median_rent, 0), big.mark = ","),
         " (benchmark ~$2,450)")

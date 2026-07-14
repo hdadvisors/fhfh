@@ -238,7 +238,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 data-number="3.1" class="anchored" data-anchor-id="sales-volume"><span class="header-section-number">3.1</span> Sales volume</h2>
 <div class="cell" data-layout-align="left">
 <div class="cell-output-display">
-<div id="fig-sales-volume" class="quarto-float quarto-figure quarto-figure-left anchored" alt="Column chart of Fauquier County annual home sales from 2016 to 2026. Volume climbs from about 1,067 in 2016 to a 2020–21 peak near 1,450–1,470, then falls to roughly 850–940 sales a year in 2022–2025. Columns through 2021 come from the earlier GP/VAR series and 2022 onward from Bright MLS; the final 2026 column is a partial year-to-date count." data-fig-align="left">
+<div id="fig-sales-volume" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Column chart of Fauquier County annual home sales from 2016 to 2026. Volume climbs from about 1,067 in 2016 to a 2020–21 peak near 1,450–1,470, then falls to roughly 850–940 sales a year in 2022–2025. Columns through 2021 come from the earlier GP/VAR series and 2022 onward from Bright MLS; the final 2026 column is a partial year-to-date count.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-sales-volume-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="market-ownership_files/figure-html/fig-sales-volume-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Column chart of Fauquier County annual home sales from 2016 to 2026. Volume climbs from about 1,067 in 2016 to a 2020–21 peak near 1,450–1,470, then falls to roughly 850–940 sales a year in 2022–2025. Columns through 2021 come from the earlier GP/VAR series and 2022 onward from Bright MLS; the final 2026 column is a partial year-to-date count.">
@@ -255,12 +255,25 @@ Figure&nbsp;3.1: Home sales cooled sharply from the 2020–21 peak
 <li>The cooling reflects <strong>thin supply and higher financing costs</strong>, not falling demand — prices kept climbing through the slowdown (<a href="#fig-price-trend" class="quarto-xref">Figure&nbsp;<span>3.2</span></a>).</li>
 <li>Counts through 2021 come from the GP/VAR annual series and 2022 onward from Bright MLS; <strong>2026 is a partial year-to-date count</strong> and is not comparable to the full years.</li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A note on sales counts
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Bright MLS’s <strong>published monthly summary</strong> reports roughly <strong>20% more sales</strong> than the transaction-level export used for the volume series above (e.g.&nbsp;1,127 vs 938 closings in 2025) — a near-constant level offset across every year, consistent with a property-type filter on the export. <strong>Median sale prices agree between the two sources to within ~0.1%</strong>, so the price findings are unaffected; the <em>level</em> of sales counts (and the active-listing snapshot below) should be read as the export’s narrower definition, while the year-over-year <em>trend</em> holds under either source.</p>
+</div>
+</div>
 </section>
 <section id="prices" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="prices"><span class="header-section-number">3.2</span> Prices</h2>
 <div class="cell" data-layout-align="left">
 <div class="cell-output-display">
-<div id="fig-price-trend" class="quarto-float quarto-figure quarto-figure-left anchored" alt="Line chart of Fauquier County median sold price from 2016 to 2025. The nominal monthly line rises from about $360,000 to $650,000; the inflation-adjusted line in 2025 dollars rises more gently from about $465,000 to $650,000. Two annual town-ZIP lines beginning in 2022 sit on either side of the county: Warrenton near $690,000 and Bealeton near $570,000 by 2025." data-fig-align="left">
+<div id="fig-price-trend" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Line chart of Fauquier County median sold price from 2016 to 2025. The nominal monthly line rises from about $360,000 to $650,000; the inflation-adjusted line in 2025 dollars rises more gently from about $465,000 to $650,000. Two annual town-ZIP lines beginning in 2022 sit on either side of the county: Warrenton near $690,000 and Bealeton near $570,000 by 2025.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-price-trend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="market-ownership_files/figure-html/fig-price-trend-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Line chart of Fauquier County median sold price from 2016 to 2025. The nominal monthly line rises from about $360,000 to $650,000; the inflation-adjusted line in 2025 dollars rises more gently from about $465,000 to $650,000. Two annual town-ZIP lines beginning in 2022 sit on either side of the county: Warrenton near $690,000 and Bealeton near $570,000 by 2025.">
@@ -282,7 +295,7 @@ Figure&nbsp;3.2: Prices climbed steeply — and kept rising even after inflation
 <h2 data-number="3.3" class="anchored" data-anchor-id="prices-vs.-payments-vs.-incomes"><span class="header-section-number">3.3</span> Prices vs.&nbsp;payments vs.&nbsp;incomes</h2>
 <div class="cell" data-layout-align="left">
 <div class="cell-output-display">
-<div id="fig-price-payment-income" class="quarto-float quarto-figure quarto-figure-left anchored" alt="Indexed line chart set to 100 in 2016 for Fauquier County. The monthly mortgage payment line rises fastest, reaching about 250 by 2025; the median sold price line reaches about 180; and median household income rises most slowly to about 145 by 2024. The gap between payments and incomes widens sharply after 2021 as mortgage rates jump." data-fig-align="left">
+<div id="fig-price-payment-income" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Indexed line chart set to 100 in 2016 for Fauquier County. The monthly mortgage payment line rises fastest, reaching about 250 by 2025; the median sold price line reaches about 180; and median household income rises most slowly to about 145 by 2024. The gap between payments and incomes widens sharply after 2021 as mortgage rates jump.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-price-payment-income-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="market-ownership_files/figure-html/fig-price-payment-income-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Indexed line chart set to 100 in 2016 for Fauquier County. The monthly mortgage payment line rises fastest, reaching about 250 by 2025; the median sold price line reaches about 180; and median household income rises most slowly to about 145 by 2024. The gap between payments and incomes widens sharply after 2021 as mortgage rates jump.">
@@ -304,7 +317,7 @@ Figure&nbsp;3.3: Monthly mortgage payments have far outrun both prices and incom
 <h2 data-number="3.4" class="anchored" data-anchor-id="price-segments"><span class="header-section-number">3.4</span> Price segments</h2>
 <div class="cell" data-layout-align="left">
 <div class="cell-output-display">
-<div id="fig-price-bands" class="quarto-float quarto-figure quarto-figure-left anchored" alt="Hundred-percent stacked column chart of Fauquier County home sales by price band from 2022 to 2026. The under-$250,000 band shrinks from about 4% to under 2%, and the $250,000–$350,000 band from about 10% to 4%, while the $500,000–$750,000 and $750,000-plus bands together grow to roughly three-quarters of all sales." data-fig-align="left">
+<div id="fig-price-bands" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Hundred-percent stacked column chart of Fauquier County home sales by price band from 2022 to 2026. The under-$250,000 band shrinks from about 4% to under 2%, and the $250,000–$350,000 band from about 10% to 4%, while the $500,000–$750,000 and $750,000-plus bands together grow to roughly three-quarters of all sales.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-price-bands-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="market-ownership_files/figure-html/fig-price-bands-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Hundred-percent stacked column chart of Fauquier County home sales by price band from 2022 to 2026. The under-$250,000 band shrinks from about 4% to under 2%, and the $250,000–$350,000 band from about 10% to 4%, while the $500,000–$750,000 and $750,000-plus bands together grow to roughly three-quarters of all sales.">
@@ -326,21 +339,39 @@ Figure&nbsp;3.4: The entry-level segment has all but disappeared
 <h2 data-number="3.5" class="anchored" data-anchor-id="days-on-market-supply"><span class="header-section-number">3.5</span> Days on market &amp; supply</h2>
 <div class="cell" data-layout-align="left">
 <div class="cell-output-display">
-<div id="fig-days-on-market" class="quarto-float quarto-figure quarto-figure-left anchored" alt="Line chart of median days on market for Fauquier County home sales from 2022 to 2026. The median hovers around 7 to 9 days in 2022–2024, rises to about 15 days in 2025, then reads 8 in the partial 2026 year — all well within a fast-moving market." data-fig-align="left">
+<div id="fig-days-on-market" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Line chart of median days to sell for Fauquier County home sales, monthly from 2022 to mid-2026. A faint monthly line swings between roughly 5 days in spring and 30 to 40 days in winter each year; a heavier three-month average line makes the seasonal sawtooth clear and drifts modestly higher in 2025 before easing in 2026.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-days-on-market-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="market-ownership_files/figure-html/fig-days-on-market-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Line chart of median days on market for Fauquier County home sales from 2022 to 2026. The median hovers around 7 to 9 days in 2022–2024, rises to about 15 days in 2025, then reads 8 in the partial 2026 year — all well within a fast-moving market.">
+<img src="market-ownership_files/figure-html/fig-days-on-market-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Line chart of median days to sell for Fauquier County home sales, monthly from 2022 to mid-2026. A faint monthly line swings between roughly 5 days in spring and 30 to 40 days in winter each year; a heavier three-month average line makes the seasonal sawtooth clear and drifts modestly higher in 2025 before easing in 2026.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-days-on-market-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3.5: Homes still sell fast in a thin-supply market
+Figure&nbsp;3.5: Homes still sell fast, but with a pronounced seasonal rhythm
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 <ul>
-<li>Median days on market stayed <strong>fast — around 7–8 days in 2022–2024, ticking up to 14 in 2025</strong> as higher rates cooled demand, but still a matter of weeks, not months.</li>
-<li>With only <strong>218 active listings</strong> against 2025’s sales pace, the county holds about <strong>2.8 months of supply</strong> — well inside the roughly six-month threshold that separates a buyer’s from a seller’s market.</li>
+<li>Homes sell <strong>fast — a median of 10–11 days in 2022–2024, rising to 21 in 2025</strong> as higher rates cooled demand, but still weeks, not months.</li>
+<li>The monthly view exposes a <strong>strong seasonal rhythm the annual averages hide</strong>: listings linger roughly 25–40 days in December–February and sell in under 10 by spring, every year.</li>
+</ul>
+<div class="cell" data-layout-align="left">
+<div class="cell-output-display">
+<div id="fig-supply-trend" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Two-panel chart for 2022 to mid-2026. The top panel shows active listings rising from about 315 to a 2025 peak above 450 in Fauquier County, with Warrenton flat near 45; the bottom panel shows months of supply climbing from about 3 to roughly 4 to 5 months for both the county and Warrenton, staying below the dashed six-month line that marks a balanced market.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-supply-trend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="market-ownership_files/figure-html/fig-supply-trend-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Two-panel chart for 2022 to mid-2026. The top panel shows active listings rising from about 315 to a 2025 peak above 450 in Fauquier County, with Warrenton flat near 45; the bottom panel shows months of supply climbing from about 3 to roughly 4 to 5 months for both the county and Warrenton, staying below the dashed six-month line that marks a balanced market.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-supply-trend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.6: Inventory has loosened from its pandemic lows — but supply is still tight
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>Active for-sale inventory has climbed from a tight <strong>~315 listings a month in 2022 to ~392 in 2025</strong>, and months of supply from about <strong>3.4 to 4.3 months</strong> — a real loosening from the pandemic-era squeeze.</li>
+<li>Even so, supply stays <strong>well below the roughly six-month mark</strong> that separates a seller’s from a buyer’s market: Fauquier remains a seller’s market, just a less extreme one than at the 2021–22 peak.</li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -348,11 +379,11 @@ Figure&nbsp;3.5: Homes still sell fast in a thin-supply market
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Current inventory — a strong seller’s market
+<span class="screen-reader-only">Note</span>Inventory is recovering, not recovered
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>As of the July 2026 snapshot, <strong>218 homes were listed for sale</strong> county-wide. Against the 2025 sales pace (~78 closings a month), that is roughly <strong>2.8 months of supply</strong> — a strong seller’s market. Active inventory and months-of-supply are a <strong>single point-in-time snapshot</strong>, not a trend: a retroactive inventory time series cannot be reconstructed from the available data.</p>
+<p>Contrary to a point-in-time reading, the monthly Bright MLS series shows active listings and months of supply <strong>trending upward since 2022</strong> (from ~3.4 to ~4.3 months) as higher rates slowed the frantic pace — but Fauquier is <strong>still firmly a seller’s market</strong>, with supply short of the ~6-month balance point and homes selling within weeks for most of the year.</p>
 </div>
 </div>
 </section>
@@ -360,13 +391,13 @@ Figure&nbsp;3.5: Homes still sell fast in a thin-supply market
 <h2 data-number="3.6" class="anchored" data-anchor-id="what-it-takes-to-buy"><span class="header-section-number">3.6</span> What it takes to buy</h2>
 <div class="cell" data-layout-align="left">
 <div class="cell-output-display">
-<div id="fig-income-to-buy" class="quarto-float quarto-figure quarto-figure-left anchored" alt="Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $190,600, well above the actual median household income of about $130,200 — a gap of roughly $60,000." data-fig-align="left">
+<div id="fig-income-to-buy" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $190,600, well above the actual median household income of about $130,200 — a gap of roughly $60,000.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-income-to-buy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="market-ownership_files/figure-html/fig-income-to-buy-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $190,600, well above the actual median household income of about $130,200 — a gap of roughly $60,000.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-income-to-buy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3.6: Buying the median home takes about $60,000 more than the median household earns
+Figure&nbsp;3.7: Buying the median home takes about $60,000 more than the median household earns
 </figcaption>
 </figure>
 </div>
@@ -391,8 +422,8 @@ Figure&nbsp;3.6: Buying the median home takes about $60,000 more than the median
 </div>
 <div class="callout-body-container callout-body">
 <ul>
-<li><strong>“Only about 3 for-sale listings under $350,000 were on the market (April 2026).”</strong> <em>Confirmed.</em> The July 2026 snapshot shows <strong>exactly 3 of 218 active listings priced under $350,000</strong> (<a href="#fig-price-bands" class="quarto-xref">Figure&nbsp;<span>3.4</span></a>, <a href="#fig-days-on-market" class="quarto-xref">Figure&nbsp;<span>3.5</span></a>) — the entry-level for-sale segment has effectively vanished.</li>
-<li><strong>“Homes are expensive relative to what local incomes can support.”</strong> <em>Confirmed and nuanced.</em> Median prices nearly doubled since 2016 and rose in real terms (<a href="#fig-price-trend" class="quarto-xref">Figure&nbsp;<span>3.2</span></a>); the income needed to buy the median home now exceeds the actual median by ~$60k (<a href="#fig-income-to-buy" class="quarto-xref">Figure&nbsp;<span>3.6</span></a>). The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (<a href="#fig-price-payment-income" class="quarto-xref">Figure&nbsp;<span>3.3</span></a>).</li>
+<li><strong>“Only about 3 for-sale listings under $350,000 were on the market (April 2026).”</strong> <em>Confirmed.</em> The July 2026 listing export shows <strong>exactly 3 of 218 active listings priced under $350,000</strong> (<a href="#fig-price-bands" class="quarto-xref">Figure&nbsp;<span>3.4</span></a>) — the entry-level for-sale segment has effectively vanished. (The 218-listing export is the narrower property-type subset noted above; Bright MLS’s published count for the county runs higher, but the near-total absence of sub-$350k inventory holds regardless.)</li>
+<li><strong>“Homes are expensive relative to what local incomes can support.”</strong> <em>Confirmed and nuanced.</em> Median prices nearly doubled since 2016 and rose in real terms (<a href="#fig-price-trend" class="quarto-xref">Figure&nbsp;<span>3.2</span></a>); the income needed to buy the median home now exceeds the actual median by ~$60k (<a href="#fig-income-to-buy" class="quarto-xref">Figure&nbsp;<span>3.7</span></a>). The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (<a href="#fig-price-payment-income" class="quarto-xref">Figure&nbsp;<span>3.3</span></a>).</li>
 <li><strong>“Buyers face a quality-versus-price mismatch — what’s affordable isn’t desirable, and what’s desirable isn’t affordable.”</strong> <em>Confirmed and nuanced.</em> New construction skews larger and pricier (<a href="inventory.html" class="quarto-xref"><span>Chapter 1</span></a>), the sub-$350k segment has all but disappeared (<a href="#fig-price-bands" class="quarto-xref">Figure&nbsp;<span>3.4</span></a>), and the market still moves fast (<a href="#fig-days-on-market" class="quarto-xref">Figure&nbsp;<span>3.5</span></a>) — leaving entry-level buyers with few options at any quality level.</li>
 </ul>
 </div>
