@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.36">
+<meta name="generator" content="quarto-1.9.38">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -41,7 +41,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-46c6e2c251575f6e011ea95a3e909c79.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
@@ -72,6 +72,10 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
 
 
 </head>
@@ -195,8 +199,20 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#how-many-more-people-population-to-2050" id="toc-how-many-more-people-population-to-2050" class="nav-link active" data-scroll-target="#how-many-more-people-population-to-2050"><span class="header-section-number">7.1</span> How many more people: population to 2050</a></li>
+  <li><a href="#how-many-more-households" id="toc-how-many-more-households" class="nav-link" data-scroll-target="#how-many-more-households"><span class="header-section-number">7.2</span> How many more households</a></li>
+  <li><a href="#can-production-keep-pace" id="toc-can-production-keep-pace" class="nav-link" data-scroll-target="#can-production-keep-pace"><span class="header-section-number">7.3</span> Can production keep pace?</a></li>
+  <li><a href="#an-aging-county-the-65-surge" id="toc-an-aging-county-the-65-surge" class="nav-link" data-scroll-target="#an-aging-county-the-65-surge"><span class="header-section-number">7.4</span> An aging county: the 65+ surge</a></li>
+  <li><a href="#where-the-need-lands-tenure-and-income" id="toc-where-the-need-lands-tenure-and-income" class="nav-link" data-scroll-target="#where-the-need-lands-tenure-and-income"><span class="header-section-number">7.5</span> Where the need lands: tenure and income</a></li>
+  <li><a href="#town-spotlight-interview-validation" id="toc-town-spotlight-interview-validation" class="nav-link" data-scroll-target="#town-spotlight-interview-validation"><span class="header-section-number">7.6</span> Town spotlight &amp; interview validation</a></li>
+  <li><a href="#what-the-interviews-said-vs.-what-the-data-shows" id="toc-what-the-interviews-said-vs.-what-the-data-shows" class="nav-link" data-scroll-target="#what-the-interviews-said-vs.-what-the-data-shows"><span class="header-section-number">7.7</span> What the interviews said vs.&nbsp;what the data shows</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -220,10 +236,247 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<!-- Purpose: projected housing needs through 2050 from Weldon Cooper population projections (PLAN.md §7 Ch 6). -->
-<p><em>Figures, tables, and findings are built in Session 11 (PLAN.md §7, §9).</em></p>
+<!-- Purpose: forward housing needs through 2050 — Weldon Cooper population projections → household
+     growth → annual production need → 65+ demand → tenure×AMI needs allocation (PLAN.md §7 Ch 6).
+     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose.
+     Data-flow rule: read_rds() only; every figure sources data/wcoop.rds (+ gaps/chas/bps cross-refs). -->
+<section id="how-many-more-people-population-to-2050" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="how-many-more-people-population-to-2050"><span class="header-section-number">7.1</span> How many more people: population to 2050</h2>
+<div class="cell" data-layout-align="left">
+<div class="cell-output-display">
+<div id="fig-pop-projection" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Column charts of projected population for 2030, 2040, and 2050, shown in two panels. The Fauquier County panel rises from about 77,600 in 2030 to 84,800 in 2040 to 93,200 in 2050. The Warrenton panel rises from about 10,700 to 11,700 to 12,800 over the same years. Both grow steadily; the county adds far more people in absolute terms.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pop-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="projections_files/figure-html/fig-pop-projection-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Column charts of projected population for 2030, 2040, and 2050, shown in two panels. The Fauquier County panel rises from about 77,600 in 2030 to 84,800 in 2040 to 93,200 in 2050. The Warrenton panel rises from about 10,700 to 11,700 to 12,800 over the same years. Both grow steadily; the county adds far more people in absolute terms.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pop-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.1: Fauquier is projected to reach about 93,000 residents by 2050
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>Fauquier’s population is projected to grow from <strong>74,577 in 2024</strong> to <strong>93,171 by 2050</strong> — an increase of about <strong>18,594 residents (24.9%)</strong> that drives every downstream housing-need estimate in this chapter.</li>
+<li>Growth is <strong>steady across each decade</strong>, from 77,588 in 2030 to 93,171 in 2050 — a 20.1% gain over 2030–2050, outpacing Virginia’s projected 14.2% statewide growth over the same span.</li>
+<li><strong>Warrenton is projected to grow in parallel</strong>, from 10,693 (2030) to 12,841 (2050), up 2,148 residents (20.1%); Bealeton has no separate Weldon Cooper projection and is carried through the county totals.</li>
+</ul>
+</section>
+<section id="how-many-more-households" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="how-many-more-households"><span class="header-section-number">7.2</span> How many more households</h2>
+<div class="cell" data-layout-align="left">
+<div class="cell-output-display">
+<div id="fig-hh-projection" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Line chart of projected total households in Fauquier County from a 2024 base of about 26,700 to 2050. The lead average-household-size series rises to about 33,515 by 2050, an increase of roughly 6,800 households. A faint dashed constant-headship reference line tracks just below it, ending at about 33,382. The two methods nearly coincide.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hh-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="projections_files/figure-html/fig-hh-projection-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Line chart of projected total households in Fauquier County from a 2024 base of about 26,700 to 2050. The lead average-household-size series rises to about 33,515 by 2050, an increase of roughly 6,800 households. A faint dashed constant-headship reference line tracks just below it, ending at about 33,382. The two methods nearly coincide.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hh-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.2: The county is projected to add roughly 6,800 households by 2050
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>On the headline <strong>average-household-size method</strong>, the county grows from <strong>26,720 households in 2024</strong> to <strong>33,515 by 2050 — about 6,795 net new households (25.4%)</strong>.</li>
+<li>The <strong>constant-headship sensitivity nearly coincides</strong> with it (33,382 by 2050, 6,662 new households) — a difference of only about 133 households, so the choice of method does not materially change the total.</li>
+<li>This <strong>+6,795</strong> figure is the denominator for the production need (<a href="#fig-production-need" class="quarto-xref">Figure&nbsp;<span>7.3</span></a>) and the tenure-by-income allocation (<a href="#tbl-needs-allocation" class="quarto-xref">Table&nbsp;<span>7.1</span></a>) that follow.</li>
+</ul>
+</section>
+<section id="can-production-keep-pace" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="can-production-keep-pace"><span class="header-section-number">7.3</span> Can production keep pace?</h2>
+<div class="cell" data-layout-align="left">
+<div class="cell-output-display">
+<div id="fig-production-need" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Column chart of the annualized new housing units needed to house projected household growth in Fauquier County, over three horizons: about 204 per year through 2030, 244 per year through 2040, and 269 per year through 2050 on the average-household-size method. A dashed horizontal reference line marks the 2020–2025 building-permit pace of about 266 units per year. The 2050-horizon need sits just above that line; earlier horizons sit below it.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-production-need-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="projections_files/figure-html/fig-production-need-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Column chart of the annualized new housing units needed to house projected household growth in Fauquier County, over three horizons: about 204 per year through 2030, 244 per year through 2040, and 269 per year through 2050 on the average-household-size method. A dashed horizontal reference line marks the 2020–2025 building-permit pace of about 266 units per year. The 2050-horizon need sits just above that line; earlier horizons sit below it.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-production-need-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.3: Recent building has roughly kept pace with projected household growth
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>Through 2050 the county needs about <strong>269 new units per year</strong> to house projected growth (plus a 3% vacancy allowance) — essentially level with the <strong>266 units per year</strong> it permitted over 2020–2025. On the numbers, <strong>recent production roughly keeps pace with projected need</strong>.</li>
+<li>The need is <strong>front-loaded lighter</strong>: only about 204 units/year are required through 2030, rising toward the recent pace as growth compounds — so the near-term pressure is on the <em>type and price</em> of what is built, not the raw count.</li>
+<li><strong>This inverts the Greater Piedmont regional study’s finding</strong> that need (307/yr) exceeds the building pace. The difference is the household-size assumption: this study uses the county’s actual 2020–2024 ACS average household size of <strong>2.78</strong>, whereas the GP study’s +7,737-household figure back-implies a smaller ~2.7-person household. A larger average size spreads the same population over fewer new households, lowering the annual unit need; the full reconciliation is documented in the Data &amp; Methodology appendix.</li>
+<li>Keeping pace on <em>count</em> is not the same as meeting <em>need</em>: the affordability gaps (<a href="gaps.html#fig-rental-gap" class="quarto-xref">Figure&nbsp;<span>5.4</span></a>, <a href="gaps.html#fig-ownership-gap" class="quarto-xref">Figure&nbsp;<span>5.5</span></a>) show the recent product mix has skewed to the top of the market, so the forward challenge is composition, taken up in <a href="#tbl-needs-allocation" class="quarto-xref">Table&nbsp;<span>7.1</span></a>.</li>
+</ul>
+</section>
+<section id="an-aging-county-the-65-surge" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="an-aging-county-the-65-surge"><span class="header-section-number">7.4</span> An aging county: the 65+ surge</h2>
+<div class="cell" data-layout-align="left">
+<div class="cell-output-display">
+<div id="fig-senior-projection" class="quarto-float quarto-figure quarto-figure-left anchored" data-fig-align="left" alt="Line chart of projected senior population in Fauquier County for 2030, 2040, and 2050. The 65-and-older line rises from about 17,200 in 2030 to 18,200 in 2040 and holds near 18,200 in 2050. The 75-and-older line rises more steeply from about 7,400 to 9,900 and holds near 9,800 — so the older, higher-need group grows fastest and becomes a larger share of all seniors.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-senior-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="projections_files/figure-html/fig-senior-projection-1.png" class="img-fluid quarto-figure quarto-figure-left figure-img" style="width:100.0%" alt="Line chart of projected senior population in Fauquier County for 2030, 2040, and 2050. The 65-and-older line rises from about 17,200 in 2030 to 18,200 in 2040 and holds near 18,200 in 2050. The 75-and-older line rises more steeply from about 7,400 to 9,900 and holds near 9,800 — so the older, higher-need group grows fastest and becomes a larger share of all seniors.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-senior-projection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.4: The senior population surges through 2040, then plateaus near 18,200
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>The <strong>65-and-older population climbs from 17,157 (2030) to 18,246 (2040)</strong>, then holds essentially flat at 18,208 in 2050 as the leading edge of the baby-boom cohort ages through — the surge is concentrated in the next 15 years.</li>
+<li>The <strong>75-and-older group grows faster and deeper</strong>, from 7,371 to 9,939 before easing to 9,844 — so the higher-need older-senior share of all seniors rises from about <strong>43% to 54%</strong>.</li>
+<li>This is the forward-looking counterpart to the current-state senior profile in <a href="populations.html" class="quarto-xref"><span>Chapter 6</span></a> (65+ already 17% of residents, most owning their homes): the demand signal is for <strong>accessible, lower-maintenance, and smaller units</strong> — aging-in-place options and downsizing product the current stock largely lacks.</li>
+</ul>
+</section>
+<section id="where-the-need-lands-tenure-and-income" class="level2" data-number="7.5">
+<h2 data-number="7.5" class="anchored" data-anchor-id="where-the-need-lands-tenure-and-income"><span class="header-section-number">7.5</span> Where the need lands: tenure and income</h2>
+<div class="cell" data-layout-align="left">
+<div id="tbl-needs-allocation" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-layout-align="left">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-needs-allocation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;7.1: Projected need spans every income band — but the existing gap is deepest at the bottom
+</figcaption>
+<div aria-describedby="tbl-needs-allocation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-condensed table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+ <thead>
+  <tr>
+   <th style="text-align:left;"> AMI band </th>
+   <th style="text-align:right;"> Current households </th>
+   <th style="text-align:right;"> Share of households </th>
+   <th style="text-align:right;"> Forward need to 2050 </th>
+   <th style="text-align:right;"> Current affordable-unit gap </th>
+   <th style="text-align:left;"> Gap basis </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr grouplength="5"><td colspan="6" style="border-bottom: 1px solid;"><strong>Homeowner</strong></td></tr>
+<tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> ≤30% AMI </td>
+   <td style="text-align:right;"> 1,524 </td>
+   <td style="text-align:right;"> 5.9% </td>
+   <td style="text-align:right;"> 399 </td>
+   <td style="text-align:right;"> -2,779 </td>
+   <td style="text-align:left;"> Ownership gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> 30-50% AMI </td>
+   <td style="text-align:right;"> 1,509 </td>
+   <td style="text-align:right;"> 5.8% </td>
+   <td style="text-align:right;"> 395 </td>
+   <td style="text-align:right;"> -2,514 </td>
+   <td style="text-align:left;"> Ownership gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> 50-80% AMI </td>
+   <td style="text-align:right;"> 1,429 </td>
+   <td style="text-align:right;"> 5.5% </td>
+   <td style="text-align:right;"> 374 </td>
+   <td style="text-align:right;"> -2,323 </td>
+   <td style="text-align:left;"> Ownership gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> 80-100% AMI </td>
+   <td style="text-align:right;"> 2,035 </td>
+   <td style="text-align:right;"> 7.8% </td>
+   <td style="text-align:right;"> 533 </td>
+   <td style="text-align:right;"> -2,641 </td>
+   <td style="text-align:left;"> Ownership gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> &gt;100% AMI </td>
+   <td style="text-align:right;"> 13,614 </td>
+   <td style="text-align:right;"> 52.5% </td>
+   <td style="text-align:right;"> 3,566 </td>
+   <td style="text-align:right;"> -15,469 </td>
+   <td style="text-align:left;"> Ownership gap </td>
+  </tr>
+  <tr grouplength="4"><td colspan="6" style="border-bottom: 1px solid;"><strong>Renter</strong></td></tr>
+<tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> ≤30% AMI </td>
+   <td style="text-align:right;"> 1,255 </td>
+   <td style="text-align:right;"> 4.8% </td>
+   <td style="text-align:right;"> 329 </td>
+   <td style="text-align:right;"> -625 </td>
+   <td style="text-align:left;"> Rental gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> 30-50% AMI </td>
+   <td style="text-align:right;"> 1,005 </td>
+   <td style="text-align:right;"> 3.9% </td>
+   <td style="text-align:right;"> 263 </td>
+   <td style="text-align:right;"> -164 </td>
+   <td style="text-align:left;"> Rental gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> 50-80% AMI </td>
+   <td style="text-align:right;"> 895 </td>
+   <td style="text-align:right;"> 3.4% </td>
+   <td style="text-align:right;"> 234 </td>
+   <td style="text-align:right;"> -270 </td>
+   <td style="text-align:left;"> Rental gap </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> &gt;80% AMI </td>
+   <td style="text-align:right;"> 2,678 </td>
+   <td style="text-align:right;"> 10.3% </td>
+   <td style="text-align:right;"> 702 </td>
+   <td style="text-align:right;"> -2,256 </td>
+   <td style="text-align:left;"> Rental gap </td>
+  </tr>
+</tbody>
+<tfoot><tr><td style="padding: 0; " colspan="100%">
+<sup></sup> **Source:** University of Virginia Weldon Cooper Center for Public Service, Virginia Population Projections, 2024 release. Current household distribution: HUD CHAS 2018–2022. Existing affordable-unit gap: HDAdvisors gap analysis (affordability-gaps chapter). Forward need allocates the projected +6,795-household growth to 2050 by each cell's current share of households; it sums to +6,795. The current gap is joined by tenure — homeowner bands from the ownership gap, renter bands from the rental gap. Renter 80–100% and &gt;100% AMI are combined into "&gt;80% AMI" because the rental-gap frame uses a coarser top band than the ownership-gap frame; see the Data &amp; Methodology appendix.</td></tr></tfoot>
+</table>
+
+</div>
+</div>
+</figure>
+</div>
+</div>
+<ul>
+<li>The projected <strong>6,795 new households split roughly 5,267 owner (78%) to 1,528 renter (22%)</strong>, following the county’s current tenure and income mix — the single largest block is owner households above 100% AMI (3,566 units).</li>
+<li><strong>Forward growth is not the binding constraint at the bottom — the existing gap is.</strong> In the lowest owner and renter bands the <em>current</em> affordable-unit deficit (from <a href="gaps.html" class="quarto-xref"><span>Chapter 5</span></a>) dwarfs the projected new need: even building for all projected growth would leave the existing shortfall untouched.</li>
+<li>Because the allocation holds today’s income distribution constant, it describes <strong>where demand will arise, not where it is affordable</strong>; read alongside the current gaps (<a href="gaps.html#fig-rental-gap" class="quarto-xref">Figure&nbsp;<span>5.4</span></a>, <a href="gaps.html#fig-ownership-gap" class="quarto-xref">Figure&nbsp;<span>5.5</span></a>), it frames the forward task as delivering units at price points the recent market (<a href="market-ownership.html" class="quarto-xref"><span>Chapter 3</span></a>) has not.</li>
+</ul>
+</section>
+<section id="town-spotlight-interview-validation" class="level2" data-number="7.6">
+<h2 data-number="7.6" class="anchored" data-anchor-id="town-spotlight-interview-validation"><span class="header-section-number">7.6</span> Town spotlight &amp; interview validation</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Town spotlight — Warrenton grows with the county; Bealeton is folded into the county total
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Weldon Cooper projects the <strong>Town of Warrenton to grow from 10,693 residents in 2030 to 12,841 by 2050</strong> (+2,148, 20.1%), a pace close to the county’s own 20.1% over 2030–2050 (<a href="#fig-pop-projection" class="quarto-xref">Figure&nbsp;<span>7.1</span></a>). As the county’s principal water-and-sewer service area, Warrenton is where much of the projected household growth can physically be absorbed. <strong>Bealeton is not projected separately</strong> — Weldon Cooper publishes totals only for counties and large incorporated towns, and Bealeton is an unincorporated census-designated place — so its share of growth is carried inside the Fauquier County totals throughout this chapter.</p>
+</div>
+</div>
+</section>
+<section id="what-the-interviews-said-vs.-what-the-data-shows" class="level2" data-number="7.7">
+<h2 data-number="7.7" class="anchored" data-anchor-id="what-the-interviews-said-vs.-what-the-data-shows"><span class="header-section-number">7.7</span> What the interviews said vs.&nbsp;what the data shows</h2>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Interview validation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>“Aging-in-place and downsizing seniors, and returning young people, have no options.”</strong> <em>Confirmed and quantified forward.</em> <a href="populations.html" class="quarto-xref"><span>Chapter 6</span></a> confirmed the current state; the projections put numbers on the coming pressure. The <strong>65-and-older population grows by roughly 1,089 between 2030 and 2040</strong> before plateauing near 18,208, and the higher-need <strong>75-and-older share of seniors rises from about 43% to 54%</strong> (<a href="#fig-senior-projection" class="quarto-xref">Figure&nbsp;<span>7.4</span></a>) — a demand signal for accessible, smaller, lower-maintenance homes. On the young-adult side, the county must add about <strong>269 units per year</strong> just to keep pace with household formation (<a href="#fig-production-need" class="quarto-xref">Figure&nbsp;<span>7.3</span></a>); with almost nothing for sale below 100% AMI today (<a href="gaps.html#fig-ownership-gap" class="quarto-xref">Figure&nbsp;<span>5.5</span></a>), returning young households face the same entry barrier. The interview claim holds: the options gap is real now and widens as the county ages.</li>
+</ul>
+</div>
+</div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

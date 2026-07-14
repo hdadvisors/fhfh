@@ -1,11 +1,319 @@
 # Projected Housing Needs {#sec-projections}
 
-<!-- Purpose: projected housing needs through 2050 from Weldon Cooper population projections (PLAN.md §7 Ch 6). -->
+<!-- Purpose: forward housing needs through 2050 — Weldon Cooper population projections → household
+     growth → annual production need → 65+ demand → tenure×AMI needs allocation (PLAN.md §7 Ch 6).
+     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose.
+     Data-flow rule: read_rds() only; every figure sources data/wcoop.rds (+ gaps/chas/bps cross-refs). -->
 
 ```{r}
 #| label: setup
 #| include: false
 source("_common.R")
+
+wcoop <- read_rds("data/wcoop.rds")
+gaps  <- read_rds("data/gaps.rds")   # cross-reference only (existing gaps already joined into wcoop)
+chas  <- read_rds("data/chas.rds")   # cross-reference only (current HH distribution)
+bps   <- read_rds("data/bps.rds")    # cross-reference only (permit pace baked into wcoop$production)
+
+# Palette anchors (match ggtext subtitle spans to fill/line colors)
+blue   <- hda_pal[1]
+green  <- hda_pal[2]
+yellow <- hda_pal[3]
+coral  <- hda_pal[4]
+
+# --- Inline scalars for bullet text ----------------------------------------
+
+asm       <- wcoop$assumptions
+base_year <- asm$base_year          # 2024
+base_pop  <- asm$base_pop           # 74,577
+base_hh   <- asm$base_hh            # 26,720
+
+# Population (WC county + Warrenton town)
+pc <- wcoop$pop_county
+fq_2030 <- pc$population[pc$geoid == fauquier & pc$year == 2030]   # 77,588
+fq_2050 <- pc$population[pc$geoid == fauquier & pc$year == 2050]   # 93,171
+fq_grow_26 <- fq_2050 - base_pop                                   # 18,594
+fq_pct_26  <- fq_grow_26 / base_pop                                # 24.9%
+fq_pct_3050 <- fq_2050 / fq_2030 - 1                               # 20.1%
+
+va_2030 <- pc$population[pc$geoid == "51000" & pc$year == 2030]
+va_2050 <- pc$population[pc$geoid == "51000" & pc$year == 2050]
+va_pct_3050 <- va_2050 / va_2030 - 1                              # ~14.2%
+
+pt <- wcoop$pop_town
+wn_2030 <- pt$population[pt$year == 2030]                          # 10,693
+wn_2050 <- pt$population[pt$year == 2050]                          # 12,841
+wn_grow <- wn_2050 - wn_2030                                       # 2,148
+wn_pct  <- wn_2050 / wn_2030 - 1                                   # 20.1%
+
+# Households (avg-size headline vs headship sensitivity)
+hh <- wcoop$households
+hh_avg_2050  <- hh$hh_avgsize[hh$year == 2050]                     # 33,515
+hh_head_2050 <- hh$hh_headship[hh$year == 2050]                    # 33,382
+grow_avg     <- hh$growth_avgsize[hh$year == 2050]                 # 6,795
+grow_head    <- hh$growth_headship[hh$year == 2050]                # 6,662
+grow_avg_pct <- grow_avg / base_hh                                 # 25.4%
+
+# Production need vs recent pace
+prod <- wcoop$production
+need_yr_2050 <- prod$units_per_year_avgsize[prod$horizon == 2050]  # ~269
+need_yr_2030 <- prod$units_per_year_avgsize[prod$horizon == 2030]  # ~204
+need_yr_head <- prod$units_per_year_headship[prod$horizon == 2050] # ~264
+bps_pace     <- prod$bps_2020_25_avg[1]                            # 266.3
+gp_pace      <- 307                                                # GP study need estimate
+gp_hh        <- 7737                                               # GP study +HH to 2050
+gp_avgsize   <- 2.70                                               # GP implied avg HH size
+
+# Seniors (WC age detail — 65+/75+ constant within each year)
+sr <- wcoop$age_county |> distinct(year, senior_65plus, senior_75plus)
+s65_2030 <- sr$senior_65plus[sr$year == 2030]                      # 17,157
+s65_2040 <- sr$senior_65plus[sr$year == 2040]                      # 18,246
+s65_2050 <- sr$senior_65plus[sr$year == 2050]                      # 18,208
+s75_2030 <- sr$senior_75plus[sr$year == 2030]                      # 7,371
+s75_2040 <- sr$senior_75plus[sr$year == 2040]                      # 9,939
+s75_2050 <- sr$senior_75plus[sr$year == 2050]                      # 9,844
+s75_share_2030 <- s75_2030 / s65_2030                              # 43%
+s75_share_2050 <- s75_2050 / s65_2050                              # 54%
+
+# Needs allocation (forward need split by tenure/AMI; renter >80% collapsed)
+na_raw <- wcoop$needs_allocation
+owner_need  <- sum(na_raw$forward_need[na_raw$tenure == "Homeowner"])  # 5,267
+renter_need <- sum(na_raw$forward_need[na_raw$tenure == "Renter"])     # 1,528
+total_need  <- sum(na_raw$forward_need)                                # 6,795
+owner_top   <- na_raw$forward_need[na_raw$tenure == "Homeowner" & na_raw$band == "ami120"]  # 3,566
 ```
 
-*Figures, tables, and findings are built in Session 11 (PLAN.md §7, §9).*
+## How many more people: population to 2050
+
+```{r}
+#| label: fig-pop-projection
+#| fig-cap: "Fauquier is projected to reach about 93,000 residents by 2050"
+#| fig-alt: "Column charts of projected population for 2030, 2040, and 2050, shown in two panels. The Fauquier County panel rises from about 77,600 in 2030 to 84,800 in 2040 to 93,200 in 2050. The Warrenton panel rises from about 10,700 to 11,700 to 12,800 over the same years. Both grow steadily; the county adds far more people in absolute terms."
+
+pop_proj <- pc |>
+  filter(geoid == fauquier, year %in% c(2030, 2040, 2050)) |>
+  bind_rows(pt) |>
+  mutate(
+    geo  = factor(if_else(geoid == fauquier, "Fauquier County", "Warrenton town"),
+                  levels = c("Fauquier County", "Warrenton town")),
+    year = factor(year)
+  )
+
+ggplot(pop_proj, aes(year, population)) +
+  geom_col(fill = blue, width = 0.68) +
+  geom_text(aes(label = label_comma()(population)),
+            vjust = -0.4, size = 2.9, color = "grey25") +
+  facet_wrap(~ geo, scales = "free_y") +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "Fauquier is projected to reach about 93,000 residents by 2050",
+    subtitle = "Projected total population, Fauquier County and the Town of Warrenton",
+    caption = paste0(wc_cap(),
+                     " Weldon Cooper projects county and large-town totals; Bealeton (a census-designated place) is not projected separately."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- Fauquier's population is projected to grow from **`r label_comma()(base_pop)` in `r base_year`** to **`r label_comma()(fq_2050)` by 2050** — an increase of about **`r label_comma()(fq_grow_26)` residents (`r label_percent(accuracy = 0.1)(fq_pct_26)`)** that drives every downstream housing-need estimate in this chapter.
+- Growth is **steady across each decade**, from `r label_comma()(fq_2030)` in 2030 to `r label_comma()(fq_2050)` in 2050 — a `r label_percent(accuracy = 0.1)(fq_pct_3050)` gain over 2030–2050, outpacing Virginia's projected `r label_percent(accuracy = 0.1)(va_pct_3050)` statewide growth over the same span.
+- **Warrenton is projected to grow in parallel**, from `r label_comma()(wn_2030)` (2030) to `r label_comma()(wn_2050)` (2050), up `r label_comma()(wn_grow)` residents (`r label_percent(accuracy = 0.1)(wn_pct)`); Bealeton has no separate Weldon Cooper projection and is carried through the county totals.
+
+## How many more households
+
+```{r}
+#| label: fig-hh-projection
+#| fig-cap: "The county is projected to add roughly 6,800 households by 2050"
+#| fig-alt: "Line chart of projected total households in Fauquier County from a 2024 base of about 26,700 to 2050. The lead average-household-size series rises to about 33,515 by 2050, an increase of roughly 6,800 households. A faint dashed constant-headship reference line tracks just below it, ending at about 33,382. The two methods nearly coincide."
+
+hh_long <- hh |>
+  select(year, `avg-size` = hh_avgsize, headship = hh_headship) |>
+  add_row(year = base_year, `avg-size` = base_hh, headship = base_hh) |>
+  arrange(year) |>
+  pivot_longer(-year, names_to = "method", values_to = "hh")
+
+ends <- hh_long |> filter(year == 2050)
+
+ggplot(hh_long, aes(year, hh, group = method)) +
+  geom_line(data = ~ filter(.x, method == "headship"),
+            color = "grey65", linewidth = 0.8, linetype = "22") +
+  geom_line(data = ~ filter(.x, method == "avg-size"),
+            color = blue, linewidth = 1.2) +
+  geom_point(data = ~ filter(.x, method == "avg-size"),
+             color = blue, size = 2) +
+  geom_text(data = filter(ends, method == "avg-size"),
+            aes(label = label_comma()(hh)), color = blue,
+            hjust = 0, nudge_x = 0.6, size = 3, fontface = "bold") +
+  geom_text(data = filter(ends, method == "headship"),
+            aes(label = label_comma()(hh)), color = "grey55",
+            hjust = 0, nudge_x = 0.6, vjust = 1.6, size = 2.7) +
+  scale_x_continuous(breaks = c(base_year, 2030, 2035, 2040, 2045, 2050),
+                     expand = expansion(c(0.02, 0.14))) +
+  scale_y_continuous(labels = label_comma()) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "The county is projected to add roughly 6,800 households by 2050",
+    subtitle = "Projected total households — <span style='color:#445ca9'>**average household size**</span> vs <span style='color:#8c8c8c'>**constant headship**</span>",
+    caption = paste0(wc_cap(),
+                     " Households from Weldon Cooper population applied to the 2020–2024 ACS average household size (2.78); the headship series holds the 2024 householder rate constant."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  theme(plot.subtitle = element_markdown())
+```
+
+- On the headline **average-household-size method**, the county grows from **`r label_comma()(base_hh)` households in `r base_year`** to **`r label_comma()(hh_avg_2050)` by 2050 — about `r label_comma()(grow_avg)` net new households (`r label_percent(accuracy = 0.1)(grow_avg_pct)`)**.
+- The **constant-headship sensitivity nearly coincides** with it (`r label_comma()(hh_head_2050)` by 2050, `r label_comma()(grow_head)` new households) — a difference of only about `r label_comma()(grow_avg - grow_head)` households, so the choice of method does not materially change the total.
+- This **+`r label_comma()(grow_avg)`** figure is the denominator for the production need (@fig-production-need) and the tenure-by-income allocation (@tbl-needs-allocation) that follow.
+
+## Can production keep pace?
+
+```{r}
+#| label: fig-production-need
+#| fig-cap: "Recent building has roughly kept pace with projected household growth"
+#| fig-alt: "Column chart of the annualized new housing units needed to house projected household growth in Fauquier County, over three horizons: about 204 per year through 2030, 244 per year through 2040, and 269 per year through 2050 on the average-household-size method. A dashed horizontal reference line marks the 2020–2025 building-permit pace of about 266 units per year. The 2050-horizon need sits just above that line; earlier horizons sit below it."
+
+prod_plot <- prod |>
+  mutate(horizon = factor(horizon, levels = c(2030, 2040, 2050),
+                          labels = c("Through 2030", "Through 2040", "Through 2050")))
+
+ggplot(prod_plot, aes(horizon, units_per_year_avgsize)) +
+  geom_col(fill = blue, width = 0.6) +
+  geom_hline(yintercept = bps_pace, color = coral, linewidth = 0.9, linetype = "22") +
+  geom_text(aes(label = round(units_per_year_avgsize)),
+            vjust = -0.5, size = 3, color = "grey25") +
+  annotate("text", x = 0.6, y = bps_pace, label = "2020–25 permit pace (266/yr)",
+           color = coral, size = 2.7, hjust = 0, vjust = -0.5) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "Recent building has roughly kept pace with projected household growth",
+    subtitle = "New units needed per year vs the recent <span style='color:#e76f52'>**building-permit pace**</span>, by horizon",
+    caption = paste0(wc_cap(), " ", bps_cap(),
+                     " Need = projected household growth plus a 3% vacancy allowance, annualized over each horizon. Permit pace is the 2020–2025 Building Permits Survey average."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y")
+```
+
+- Through 2050 the county needs about **`r round(need_yr_2050)` new units per year** to house projected growth (plus a 3% vacancy allowance) — essentially level with the **`r round(bps_pace)` units per year** it permitted over 2020–2025. On the numbers, **recent production roughly keeps pace with projected need**.
+- The need is **front-loaded lighter**: only about `r round(need_yr_2030)` units/year are required through 2030, rising toward the recent pace as growth compounds — so the near-term pressure is on the *type and price* of what is built, not the raw count.
+- **This inverts the Greater Piedmont regional study's finding** that need (`r gp_pace`/yr) exceeds the building pace. The difference is the household-size assumption: this study uses the county's actual 2020–2024 ACS average household size of **`r asm$avg_hh_size`**, whereas the GP study's +`r label_comma()(gp_hh)`-household figure back-implies a smaller ~`r gp_avgsize`-person household. A larger average size spreads the same population over fewer new households, lowering the annual unit need; the full reconciliation is documented in the Data & Methodology appendix.
+- Keeping pace on *count* is not the same as meeting *need*: the affordability gaps (@fig-rental-gap, @fig-ownership-gap) show the recent product mix has skewed to the top of the market, so the forward challenge is composition, taken up in @tbl-needs-allocation.
+
+## An aging county: the 65+ surge
+
+```{r}
+#| label: fig-senior-projection
+#| fig-cap: "The senior population surges through 2040, then plateaus near 18,200"
+#| fig-alt: "Line chart of projected senior population in Fauquier County for 2030, 2040, and 2050. The 65-and-older line rises from about 17,200 in 2030 to 18,200 in 2040 and holds near 18,200 in 2050. The 75-and-older line rises more steeply from about 7,400 to 9,900 and holds near 9,800 — so the older, higher-need group grows fastest and becomes a larger share of all seniors."
+
+sr_long <- sr |>
+  pivot_longer(c(senior_65plus, senior_75plus), names_to = "grp", values_to = "pop") |>
+  mutate(grp = factor(if_else(grp == "senior_65plus", "65 and older", "75 and older"),
+                      levels = c("65 and older", "75 and older")))
+
+ggplot(sr_long, aes(year, pop, color = grp, group = grp)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2.2) +
+  geom_text(aes(label = label_comma()(pop)),
+            vjust = -0.9, size = 2.8, show.legend = FALSE) +
+  scale_color_manual(values = c("65 and older" = blue, "75 and older" = coral)) +
+  scale_x_continuous(breaks = c(2030, 2040, 2050), expand = expansion(c(0.06, 0.06))) +
+  scale_y_continuous(labels = label_comma(), limits = c(0, NA),
+                     expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "The senior population surges through 2040, then plateaus near 18,200",
+    subtitle = "Projected population <span style='color:#445ca9'>**65 and older**</span> and <span style='color:#e76f52'>**75 and older**</span>, Fauquier County",
+    caption = wc_cap(),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "none", plot.subtitle = element_markdown())
+```
+
+- The **65-and-older population climbs from `r label_comma()(s65_2030)` (2030) to `r label_comma()(s65_2040)` (2040)**, then holds essentially flat at `r label_comma()(s65_2050)` in 2050 as the leading edge of the baby-boom cohort ages through — the surge is concentrated in the next 15 years.
+- The **75-and-older group grows faster and deeper**, from `r label_comma()(s75_2030)` to `r label_comma()(s75_2040)` before easing to `r label_comma()(s75_2050)` — so the higher-need older-senior share of all seniors rises from about **`r label_percent(accuracy = 1)(s75_share_2030)` to `r label_percent(accuracy = 1)(s75_share_2050)`**.
+- This is the forward-looking counterpart to the current-state senior profile in @sec-populations (65+ already 17% of residents, most owning their homes): the demand signal is for **accessible, lower-maintenance, and smaller units** — aging-in-place options and downsizing product the current stock largely lacks.
+
+## Where the need lands: tenure and income
+
+```{r}
+#| label: tbl-needs-allocation
+#| tbl-cap: "Projected need spans every income band — but the existing gap is deepest at the bottom"
+#| fig-alt: "Table allocating the projected growth of about 6,795 households by 2050 across tenure and AMI income band. Homeowner rows (five bands from 30% AMI to over 100% AMI) account for about 5,267 units of forward need, concentrated in the over-100% AMI band (3,566). Renter rows (four bands) account for about 1,528. Each row also shows the current surplus or deficit of affordable units carried forward from the affordability-gaps chapter, which is far larger than the forward need in the lower bands."
+
+band_order <- c("≤30% AMI" = 1, "30-50% AMI" = 2, "50-80% AMI" = 3,
+                "80-100% AMI" = 4, ">100% AMI" = 5, ">80% AMI" = 6)
+
+# Collapse renter 80-100% + >100% into ">80% AMI" (rental-gap frame's coarser top band).
+# existing_surplus_deficit is identical (-2,256) on both source rows, so take it once — never sum.
+renter_hi <- na_raw |>
+  filter(tenure == "Renter", band %in% c("ami100", "ami120")) |>
+  summarize(current_hh = sum(current_hh),
+            share = sum(share),
+            forward_need = sum(forward_need),
+            existing_surplus_deficit = first(existing_surplus_deficit),
+            gap_source = first(gap_source)) |>
+  mutate(tenure = "Renter", household_income = ">80% AMI")
+
+na_tbl <- na_raw |>
+  filter(!(tenure == "Renter" & band %in% c("ami100", "ami120"))) |>
+  bind_rows(renter_hi) |>
+  mutate(ord = band_order[household_income]) |>
+  arrange(tenure, ord)
+
+na_disp <- na_tbl |>
+  transmute(
+    tenure,
+    `AMI band` = household_income,
+    `Current households` = label_comma()(current_hh),
+    `Share of households` = label_percent(accuracy = 0.1)(share),
+    `Forward need to 2050` = label_comma()(forward_need),
+    `Current affordable-unit gap` = label_comma()(existing_surplus_deficit),
+    `Gap basis` = if_else(gap_source == "ownership_gap", "Ownership gap", "Rental gap")
+  )
+
+n_owner  <- sum(na_tbl$tenure == "Homeowner")
+n_renter <- sum(na_tbl$tenure == "Renter")
+
+na_disp |>
+  select(-tenure) |>
+  kbl(align = "lrrrrl") |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE) |>
+  pack_rows("Homeowner", 1, n_owner) |>
+  pack_rows("Renter", n_owner + 1, n_owner + n_renter) |>
+  footnote(
+    general = paste0(
+      wc_cap(),
+      " Current household distribution: HUD CHAS 2018–2022. Existing affordable-unit gap: HDAdvisors gap analysis (affordability-gaps chapter). ",
+      "Forward need allocates the projected +", label_comma()(total_need),
+      "-household growth to 2050 by each cell's current share of households; it sums to +",
+      label_comma()(total_need), ". The current gap is joined by tenure — homeowner bands from the ownership gap, renter bands from the rental gap. ",
+      "Renter 80–100% and >100% AMI are combined into \">80% AMI\" because the rental-gap frame uses a coarser top band than the ownership-gap frame; see the Data & Methodology appendix."
+    ),
+    general_title = "", footnote_as_chunk = TRUE
+  )
+```
+
+- The projected **`r label_comma()(total_need)` new households split roughly `r label_comma()(owner_need)` owner (`r label_percent(accuracy = 1)(owner_need/total_need)`) to `r label_comma()(renter_need)` renter (`r label_percent(accuracy = 1)(renter_need/total_need)`)**, following the county's current tenure and income mix — the single largest block is owner households above 100% AMI (`r label_comma()(owner_top)` units).
+- **Forward growth is not the binding constraint at the bottom — the existing gap is.** In the lowest owner and renter bands the *current* affordable-unit deficit (from @sec-gaps) dwarfs the projected new need: even building for all projected growth would leave the existing shortfall untouched.
+- Because the allocation holds today's income distribution constant, it describes **where demand will arise, not where it is affordable**; read alongside the current gaps (@fig-rental-gap, @fig-ownership-gap), it frames the forward task as delivering units at price points the recent market (@sec-market-ownership) has not.
+
+## Town spotlight & interview validation
+
+::: {.callout-note}
+## Town spotlight — Warrenton grows with the county; Bealeton is folded into the county total
+
+Weldon Cooper projects the **Town of Warrenton to grow from `r label_comma()(wn_2030)` residents in 2030 to `r label_comma()(wn_2050)` by 2050** (+`r label_comma()(wn_grow)`, `r label_percent(accuracy = 0.1)(wn_pct)`), a pace close to the county's own `r label_percent(accuracy = 0.1)(fq_pct_3050)` over 2030–2050 (@fig-pop-projection). As the county's principal water-and-sewer service area, Warrenton is where much of the projected household growth can physically be absorbed. **Bealeton is not projected separately** — Weldon Cooper publishes totals only for counties and large incorporated towns, and Bealeton is an unincorporated census-designated place — so its share of growth is carried inside the Fauquier County totals throughout this chapter.
+:::
+
+## What the interviews said vs. what the data shows
+
+::: {.callout-important}
+## Interview validation
+
+- **"Aging-in-place and downsizing seniors, and returning young people, have no options."** *Confirmed and quantified forward.* @sec-populations confirmed the current state; the projections put numbers on the coming pressure. The **65-and-older population grows by roughly `r label_comma()(s65_2040 - s65_2030)` between 2030 and 2040** before plateauing near `r label_comma()(s65_2050)`, and the higher-need **75-and-older share of seniors rises from about `r label_percent(accuracy = 1)(s75_share_2030)` to `r label_percent(accuracy = 1)(s75_share_2050)`** (@fig-senior-projection) — a demand signal for accessible, smaller, lower-maintenance homes. On the young-adult side, the county must add about **`r round(need_yr_2050)` units per year** just to keep pace with household formation (@fig-production-need); with almost nothing for sale below 100% AMI today (@fig-ownership-gap), returning young households face the same entry barrier. The interview claim holds: the options gap is real now and widens as the county ages.
+:::

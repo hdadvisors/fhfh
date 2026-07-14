@@ -125,6 +125,10 @@ vdoe_cap <- function()
   paste0("**Source:** VDOE Project HOPE-Virginia, McKinney-Vento ",
          "homeless student counts.")
 
+wc_cap <- function(release = 2024)
+  paste0("**Source:** University of Virginia Weldon Cooper Center for Public Service, ",
+         "Virginia Population Projections, ", release, " release.")
+
 # High/Medium/Low reliability tiers from a 0–100 CV column (PLAN.md §3 thresholds 15/30).
 # The .rds frames store `cv` on a 0–100 scale; hdatools::add_reliability() expects a *_cv
 # column on a 0–1 proportion scale, so a thin local wrapper avoids mislabeling town cells.

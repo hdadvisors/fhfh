@@ -46,7 +46,7 @@ renv::restore()
 - **Caption helpers** (bold-markdown source lines): `acs_cap()`, `chas_cap()`, `mls_cap()`,
   `qcew_cap()`, `dec_cap()`, `pep_cap()`, `bps_cap()`, `lodes_cap()`, `cpi_cap()`,
   `costar_cap()`, `fmr_cap(year)`, `nhpd_cap()`, `pmms_cap()`, `compplan_cap(chapter, page)`,
-  `ami_cap(year)`, `pit_cap()`, `vdoe_cap()`.
+  `ami_cap(year)`, `pit_cap()`, `vdoe_cap()`, `wc_cap(release)`.
 - **`flag_reliability(df, cv_col = cv)`** — adds a `reliability` column (High ≤15 / Medium ≤30 /
   Low >30) from a **0–100** `cv`. Use this for place-level ACS, **not** `hdatools::add_reliability()`
   (which expects a `*_cv` column on a 0–1 scale and mislabels every town cell "Low"). Bealeton floor:
