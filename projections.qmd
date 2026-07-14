@@ -11,9 +11,12 @@
 source("_common.R")
 
 wcoop <- read_rds("data/wcoop.rds")
-gaps  <- read_rds("data/gaps.rds")   # cross-reference only (existing gaps already joined into wcoop)
+gaps  <- read_rds("data/gaps.rds")   # existing gaps (Ch 4) — sourced directly for the scope ladder
 chas  <- read_rds("data/chas.rds")   # cross-reference only (current HH distribution)
 bps   <- read_rds("data/bps.rds")    # cross-reference only (permit pace baked into wcoop$production)
+stock <- read_rds("data/acs_stock.rds")        # total stock + year built (scope-ladder replacement rung)
+dec   <- read_rds("data/decennial.rds")        # 2010/2020 pop + occupied HH (historical hh-size trend)
+acsd  <- read_rds("data/acs_demographics.rds") # B25010 (2024 avg household size)
 
 # Palette anchors (match ggtext subtitle spans to fill/line colors)
 blue   <- hda_pal[1]
@@ -81,6 +84,69 @@ owner_need  <- sum(na_raw$forward_need[na_raw$tenure == "Homeowner"])  # 5,267
 renter_need <- sum(na_raw$forward_need[na_raw$tenure == "Renter"])     # 1,528
 total_need  <- sum(na_raw$forward_need)                                # 6,795
 owner_top   <- na_raw$forward_need[na_raw$tenure == "Homeowner" & na_raw$band == "ami120"]  # 3,566
+
+# --- Figure A: household-formation range (vary only avg household size) ------
+# Hold WC 2050 population fixed; HH = pop / size; units = ΔHH × 1.03 vacancy, /26 yrs.
+horizon_yrs <- base_year |> (\(y) 2050 - y)()                     # 26
+vac_mult    <- 1 + asm$vacancy_allowance                          # 1.03
+
+hhsize_scen <- tibble(
+  size  = c(2.78, 2.70, 2.60),
+  scen  = c("Size holds\n(2.78)", "Modest decline\n(2.70)", "Continued decline\n(2.60)")
+) |>
+  mutate(
+    hh_2050  = fq_2050 / size,
+    new_hh   = hh_2050 - base_hh,
+    units_yr = new_hh * vac_mult / horizon_yrs,
+    scen     = factor(scen, levels = scen),
+    headline = size == asm$avg_hh_size
+  )
+
+rng_lo <- min(hhsize_scen$units_yr)   # ~269
+rng_hi <- max(hhsize_scen$units_yr)   # ~361
+
+# Historical household-size trend (Fauquier's own — decennial pop / occupied HH + ACS)
+occ_hh_2010 <- dec$tenure$value[dec$tenure$GEOID == fauquier & dec$tenure$year == 2010 &
+                                  dec$tenure$variable == "H004001"]
+occ_hh_2020 <- dec$tenure$value[dec$tenure$GEOID == fauquier & dec$tenure$year == 2020 &
+                                  dec$tenure$variable == "H4_001N"]
+pop_2010 <- dec$pop$value[dec$pop$GEOID == fauquier & dec$pop$year == 2010]
+pop_2020 <- dec$pop$value[dec$pop$GEOID == fauquier & dec$pop$year == 2020]
+size_2010 <- pop_2010 / occ_hh_2010                               # ~2.76
+size_2020 <- pop_2020 / occ_hh_2020                               # ~2.76
+size_2024 <- acsd$b25010$estimate[acsd$b25010$GEOID == fauquier &
+                                    acsd$b25010$variable == "B25010_001"]   # 2.78
+va_size_2024 <- acsd$b25010$estimate[acsd$b25010$GEOID == virginia &
+                                       acsd$b25010$variable == "B25010_001"] # 2.52
+
+# --- Figure B: components-of-need scope ladder ------------------------------
+grow_units <- grow_avg                                            # 6,795 (ΔHH, avg-size)
+vac_units  <- round(grow_avg * asm$vacancy_allowance)            # 204 (3% allowance)
+
+# Rung 3 backlog: rental sub-80% AMI deficit (data) + 1/3 of ownership sub-80% shortfall (assumed)
+rg <- gaps$rental_gap
+backlog_rent <- -sum(rg$surplus_deficit[rg$band %in% c("≤30% AMI", "30-50% AMI", "50-80% AMI")]) # 1,059
+og <- gaps$ownership_gap
+own_sub80    <- -sum(og$surplus_deficit[og$band %in% c("ami30", "ami50", "ami80")])  # 7,616
+backlog_own  <- round(own_sub80 / 3)                              # 2,539 (conservative buildable share)
+backlog_tot  <- backlog_rent + backlog_own                       # 3,598
+
+# Rung 4 replacement: assumption-driven (no demolition data)
+total_units  <- stock$b25001$estimate[stock$b25001$GEOID == fauquier]            # 28,621
+repl_rate    <- 0.0025                                            # 0.25%/yr (conservative)
+repl_units   <- round(total_units * repl_rate * horizon_yrs)     # 1,860
+# Aging-stock context: median built 1987; share pre-1990
+b34 <- stock$b25034 |> filter(GEOID == fauquier)
+pre1990 <- sum(b34$estimate[b34$variable %in%
+  c("B25034_007","B25034_008","B25034_009","B25034_010","B25034_011")]) +
+  b34$estimate[b34$variable == "B25034_006"]
+pre1990_share <- pre1990 / total_units                           # ~56%
+
+# Cumulative ladder totals
+lad_c1 <- grow_units                                             # 6,795
+lad_c2 <- grow_units + vac_units                                # 6,999
+lad_c3 <- lad_c2 + backlog_tot                                  # 10,597
+lad_c4 <- lad_c3 + repl_units                                   # 12,457
 ```
 
 ## How many more people: population to 2050
@@ -201,6 +267,107 @@ ggplot(prod_plot, aes(horizon, units_per_year_avgsize)) +
 - The need is **front-loaded lighter**: only about `r round(need_yr_2030)` units/year are required through 2030, rising toward the recent pace as growth compounds — so the near-term pressure is on the *type and price* of what is built, not the raw count.
 - **This inverts the Greater Piedmont regional study's finding** that need (`r gp_pace`/yr) exceeds the building pace. The difference is the household-size assumption: this study uses the county's actual 2020–2024 ACS average household size of **`r asm$avg_hh_size`**, whereas the GP study's +`r label_comma()(gp_hh)`-household figure back-implies a smaller ~`r gp_avgsize`-person household. A larger average size spreads the same population over fewer new households, lowering the annual unit need; the full reconciliation is documented in the Data & Methodology appendix.
 - Keeping pace on *count* is not the same as meeting *need*: the affordability gaps (@fig-rental-gap, @fig-ownership-gap) show the recent product mix has skewed to the top of the market, so the forward challenge is composition, taken up in @tbl-needs-allocation.
+
+## How much does the answer swing? One assumption sets the range
+
+```{r}
+#| label: fig-need-range
+#| fig-cap: "Household-size assumptions put annual need between 270 and 360 units"
+#| fig-alt: "Column chart of the annual new-housing-units needed through 2050 under three average-household-size assumptions, holding the projected 2050 population fixed at 93,171. If household size holds at 2.78 (the county's actual current average), need is about 269 units per year. If it declines modestly to 2.70, need rises to about 309. If it continues down to 2.60, need reaches about 361. A dashed reference line marks the 2020–2025 building-permit pace of 266 per year, essentially level with the size-holds scenario. The Greater Piedmont regional study's estimate of 307 per year falls between the first two bars, inside the band."
+
+ggplot(hhsize_scen, aes(scen, units_yr, fill = headline)) +
+  geom_col(width = 0.6) +
+  geom_hline(yintercept = bps_pace, color = coral, linewidth = 0.9, linetype = "22") +
+  geom_text(aes(label = paste0(round(units_yr), "/yr")),
+            vjust = -1.6, size = 3.1, color = "grey25", fontface = "bold") +
+  geom_text(aes(label = paste0("+", label_comma()(round(new_hh)), " HH")),
+            vjust = -0.4, size = 2.6, color = "grey40") +
+  annotate("text", x = 0.55, y = bps_pace, label = "2020–25 permit pace (266/yr)",
+           color = coral, size = 2.7, hjust = 0, vjust = 1.6) +
+  annotate("point", x = 2, y = gp_pace, color = "grey25", size = 1.8) +
+  annotate("text", x = 2, y = gp_pace, label = "Greater Piedmont study (307/yr)",
+           color = "grey25", size = 2.6, hjust = 0.5, vjust = 2) +
+  scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "#9aa9cf"), guide = "none") +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.16))) +
+  labs(
+    title = "Household-size assumptions put annual need between 270 and 360 units",
+    subtitle = "New units needed per year, varying only <span style='color:#445ca9'>**average household size**</span>",
+    caption = paste0(wc_cap(),
+                     " Population held at the Weldon Cooper 2050 projection (93,171); households = population ÷ assumed average size; need = household growth plus a 3% vacancy allowance, annualized over 26 years. The 2.78 scenario is the county's actual 2020–2024 ACS average."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
+```
+
+- The headline number is only as firm as its household-size assumption. **Holding the county's actual `r size_2024`-person average constant yields ~`r round(rng_lo)` units per year; letting size drift down to 2.60 pushes need to ~`r round(rng_hi)`** — so a plausible reading of the same population projection spans roughly **`r round(rng_lo)`–`r round(rng_hi)` units per year**.
+- **The `r round(need_yr_2050)`/yr headline is the conservative floor of that band, not its midpoint** — it sits essentially on the 2020–2025 permit pace (`r round(bps_pace)`/yr), and the Greater Piedmont study's `r gp_pace`/yr estimate falls *inside* the range (it back-implies a ~`r gp_avgsize`-person household).
+- **The floor is the locally-grounded case: Fauquier's own household size has not fallen.** It measured about `r number(size_2010, accuracy = 0.01)` in 2010 and `r number(size_2020, accuracy = 0.01)` in 2020 (decennial), and `r size_2024` in 2024 (ACS) — flat-to-rising, bucking the national downward drift. The `r round(rng_hi)`/yr high end therefore is *not* an extrapolation of local history; it is a sensitivity that assumes the county begins converging toward the smaller households seen statewide (Virginia averages `r va_size_2024`).
+
+## From new arrivals to full need: a scope ladder
+
+```{r}
+#| label: fig-scope-ladder
+#| fig-cap: "The 'units needed' total depends on how widely you define need"
+#| fig-alt: "Stacked column chart showing cumulative housing units needed through 2050 as the definition of need widens across four steps. Step 1, housing new household growth alone, is about 6,795 units. Step 2 adds a 3% vacancy allowance for about 6,999. Step 3 adds the existing affordability backlog — a data-grounded rental deficit of about 1,059 units plus an assumed ownership component of about 2,539 — reaching about 10,597. Step 4 adds replacement of aging, obsolete stock at an assumed 0.25% per year, about 1,860 units, for a total near 12,457. Each added segment is a distinct color; the ownership-backlog and replacement segments are labeled as assumption-driven."
+
+comp_lvl <- c("New households", "Healthy vacancy (3%)",
+              "Existing rental deficit", "Ownership backlog (assumed)",
+              "Replace aging stock (assumed)")
+
+ladder <- tribble(
+  ~component,                        ~value,       ~min_rung,
+  "New households",                  grow_units,   1,
+  "Healthy vacancy (3%)",            vac_units,    2,
+  "Existing rental deficit",         backlog_rent, 3,
+  "Ownership backlog (assumed)",     backlog_own,  3,
+  "Replace aging stock (assumed)",   repl_units,   4
+) |>
+  mutate(component = factor(component, levels = comp_lvl))
+
+rung_lab <- c("1. New\nhouseholds", "2. + Healthy\nvacancy",
+              "3. + Existing\nbacklog", "4. + Replace\naging stock")
+
+ladder_long <- tidyr::crossing(rung = 1:4, ladder) |>
+  filter(rung >= min_rung) |>
+  mutate(rung = factor(rung, levels = 1:4, labels = rung_lab))
+
+rung_tot <- ladder_long |> summarize(total = sum(value), .by = rung)
+
+fill_vals <- c(
+  "New households"                = blue,
+  "Healthy vacancy (3%)"          = green,
+  "Existing rental deficit"       = coral,
+  "Ownership backlog (assumed)"   = yellow,
+  "Replace aging stock (assumed)" = "grey70"
+)
+
+ggplot(ladder_long, aes(rung, value, fill = component)) +
+  geom_col(width = 0.66, position = position_stack(reverse = TRUE)) +
+  geom_text(data = rung_tot, aes(rung, total, label = label_comma()(total)),
+            inherit.aes = FALSE, vjust = -0.5, size = 3.1,
+            fontface = "bold", color = "grey25") +
+  scale_fill_manual(values = fill_vals, name = NULL) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  labs(
+    title = "The 'units needed' total depends on how widely you define need",
+    subtitle = "Cumulative units through 2050 as the definition of need widens",
+    caption = paste0(wc_cap(), " ",
+                     "Rental deficit: HDAdvisors gap analysis (affordability-gaps chapter), affordable-and-available shortfall below 80% AMI. ",
+                     "Ownership backlog: one-third of the sub-80%-AMI ownership shortfall, a conservative buildable share (assumption). ",
+                     "Replacement: 0.25%/yr of the 28,621-unit stock over 26 years (assumption — no demolition data; stock median year built is 1987)."),
+    x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(legend.position = "right")
+```
+
+- Read strictly, the county needs **`r label_comma()(lad_c1)` units to house projected household growth** — about `r round(lad_c1/horizon_yrs)`/yr. Adding a **3% vacancy allowance** lifts that to **`r label_comma()(lad_c2)`** (`r round(lad_c2/horizon_yrs)`/yr), the published headline.
+- Layering in **today's affordability backlog adds roughly `r label_comma()(backlog_tot)` units** — a data-grounded **`r label_comma()(backlog_rent)`-unit rental deficit below 80% AMI** (@fig-rental-gap) plus a conservative, **assumption-driven `r label_comma()(backlog_own)`-unit ownership share** (one-third of the ~`r label_comma()(round(own_sub80))` sub-80%-AMI ownership shortfall; the raw for-sale snapshot is not a build target) — reaching **`r label_comma()(lad_c3)`** (`r round(lad_c3/horizon_yrs)`/yr).
+- Finally, **replacing aging and obsolete stock** — an **assumption**, since permits capture additions but not demolitions — at a conservative 0.25%/yr of the `r label_comma()(total_units)`-unit stock adds about **`r label_comma()(repl_units)`** units, for a full-scope total near **`r label_comma()(lad_c4)`** (`r round(lad_c4/horizon_yrs)`/yr). The stock is old — median year built 1987, about `r label_percent(accuracy = 1)(pre1990_share)` built before 1990 — so some replacement demand is real even though its size is assumed.
+- **The single "units needed" number is a definitional choice, not a fact.** Housing only new arrivals points to ~`r round(lad_c2/horizon_yrs)`/yr; also clearing the existing shortfall and replacing obsolete stock roughly *doubles* that. The two rightmost rungs rest partly on stated assumptions and should be read as scope, not precision.
 
 ## An aging county: the 65+ surge
 
