@@ -6,19 +6,20 @@ Conventions for all Claude sessions on this project. See PLAN.md for the full so
 
 **Render the book:**
 ```bash
-export PATH="/c/Program Files/R/R-4.5.1/bin:$PATH"
+export PATH="/c/R/R-4.5.3/bin:$PATH"
 quarto render
 ```
 
 **Run an R script:**
 ```bash
-export PATH="/c/Program Files/R/R-4.5.1/bin:$PATH"
+export PATH="/c/R/R-4.5.3/bin:$PATH"
 Rscript r/script-name.R
 ```
 
 > R is **not** on the system PATH. Always prepend the path as shown above.
-> Recommendation: add `C:\Program Files\R\R-4.5.1\bin` to Windows PATH permanently via
+> Recommendation: add `C:\R\R-4.5.3\bin` to Windows PATH permanently via
 > System → Environment Variables → Path → New.
+> Installed versions on this machine: `C:\R\R-4.5.3` (default) and `C:\R\R-4.6.0`.
 
 **Restore the renv environment (first time after cloning):**
 ```r
