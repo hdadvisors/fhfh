@@ -6,6 +6,10 @@ project:
 execute:
   freeze: auto
 
+knitr:
+  opts_chunk:
+    dev: "ragg_png"
+
 book:
   title: "Fauquier Housing Needs Assessment"
   subtitle: "Fauquier County, the Town of Warrenton, and Bealeton"
