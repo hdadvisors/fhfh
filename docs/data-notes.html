@@ -194,8 +194,15 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#population-series" id="toc-population-series" class="nav-link active" data-scroll-target="#population-series"><span class="header-section-number">A.1</span> Population series</a></li>
+  <li><a href="#acs-estimates-labeled-by-a-single-year" id="toc-acs-estimates-labeled-by-a-single-year" class="nav-link" data-scroll-target="#acs-estimates-labeled-by-a-single-year"><span class="header-section-number">A.2</span> ACS estimates labeled by a single year</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -220,9 +227,17 @@ ul.task-list li input[type="checkbox"] {
 
 
 <!-- Purpose: data sources, vintages, methodology, and reliability notes (PLAN.md §7 Appendix; adapt from faar data-notes.qmd). -->
-<p><em>Content built in Session 11 (PLAN.md §7, §9).</em></p>
+<p><em>Full appendix content to be built in a later session. The notes below address cross-cutting definitions and data choices that multiple chapters reference.</em></p>
+<section id="population-series" class="level2" data-number="A.1">
+<h2 data-number="A.1" class="anchored" data-anchor-id="population-series"><span class="header-section-number">A.1</span> Population series</h2>
+<p><strong>Two population estimates appear in this report for the same year, 2024.</strong> The demographics chapter (<a href="demographics.html" class="quarto-xref"><span>Chapter 2</span></a>) leads with the U.S. Census Bureau Population Estimates Program (PEP) July 1, 2024 estimate — <strong>75,865</strong> — because PEP is the current, point-in-time measure best suited to describing recent growth. The projections chapter (<a href="projections.html" class="quarto-xref"><span>Chapter 7</span></a>) bases its household-formation and forward-need estimates on the ACS 2020–2024 5-year estimate — <strong>74,577 (Table B01003)</strong> — because the projections model is built on ACS-derived household size (2.78, B25010) and CHAS affordability shares, which are themselves 5-year-pooled measures; using the same ACS universe keeps the inputs internally consistent. These are different measures of the same underlying population (PEP is a point-in-time July estimate; ACS 5-year is a period estimate pooling surveys from roughly 2022 in concept), and the ~1,300-person gap is expected, not a discrepancy. Readers comparing the two chapters should not assume one figure is wrong.</p>
+</section>
+<section id="acs-estimates-labeled-by-a-single-year" class="level2" data-number="A.2">
+<h2 data-number="A.2" class="anchored" data-anchor-id="acs-estimates-labeled-by-a-single-year"><span class="header-section-number">A.2</span> ACS estimates labeled by a single year</h2>
+<p>All figures and tables in this report that cite a single calendar year for American Community Survey data (e.g., “2024”) are drawn from <strong>ACS 5-year estimates</strong> referenced by their <strong>end year</strong>. The “2024” estimates pool survey responses collected from 2020 through 2024. Five-year estimates are used throughout because Fauquier County and especially its two places (Warrenton, Bealeton) have populations too small for reliable 1-year ACS estimates. Readers should not interpret a “2024” ACS figure as a point-in-time 2024 value; it reflects conditions across the full five-year survey window, with the center of the period near 2022.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

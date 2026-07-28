@@ -13,11 +13,13 @@
 library(tidyverse)
 source("r/affordcalc.R")
 
-hud_ami <- read_rds("data/hud_ami.rds")
-chas    <- read_rds("data/chas.rds")
-mls     <- read_rds("data/mls.rds")
-qcew    <- read_rds("data/qcew.rds")
-fred    <- read_rds("data/fred.rds")
+hud_ami   <- read_rds("data/hud_ami.rds")
+chas      <- read_rds("data/chas.rds")
+mls       <- read_rds("data/mls.rds")
+qcew      <- read_rds("data/qcew.rds")
+fred      <- read_rds("data/fred.rds")
+acs_costs <- read_rds("data/acs_costs.rds")
+costar    <- read_rds("data/costar.rds")
 
 rep_size  <- "3-person"                                  # §8(d)
 down_pct  <- 0.10                                        # GP-mirrored
@@ -26,10 +28,24 @@ int_rate  <- rate_row$mortgage_rate_30yr / 100           # DECIMAL (fred is perc
 rate_date <- rate_row$date
 tax_ins   <- .tax_ins_monthly                            # GP-mirrored (affordcalc default, $697)
 
-# Market reference points (last complete year = 2025; fact sheet: $645,250 sale / $2,450 rent)
+# Market reference points (last complete year = 2025; fact sheet: $645,250 sale)
+# Rent anchor (DATA-AUDIT.md C1, Jonathan-approved 2026-07-28): ACS median gross rent
+# (B25064) is the source of truth — full universe of rental units, highest reliability.
+# CoStar (professionally-managed apartments only) and MLS closed-lease median (broker-side
+# transactions, which skew toward larger single-family/townhome rentals — verified against
+# the raw MLS export: 985 rental records, ~74% carry no MLS "Type" tag and median 3BR/
+# 1,500+ sqft, i.e. houses/townhomes, not the small apartment units that CoStar tracks and
+# that lease in-house rather than through an MLS broker) are retained as supplemental
+# reference points only, not the affordability anchor.
 ref_year  <- 2025
 med_price <- mls$annual |> filter(year == ref_year) |> pull(median_price)
-med_rent  <- mls$rentals |>
+med_rent  <- acs_costs$B25064 |>
+  filter(GEOID == "51061", str_detect(variable, "_001")) |>
+  pull(estimate)
+
+costar_rent <- costar$quarterly |>
+  filter(!is.na(asking_rent_adj)) |> slice_max(year * 10 + qtr, n = 1) |> pull(asking_rent_adj)
+mls_rent    <- mls$rentals |>
   filter(year == ref_year, between(lease_price, 200, 15000)) |>
   pull(lease_price) |> median(na.rm = TRUE)
 
@@ -122,12 +138,13 @@ wages_costs <- tibble(
   mutate(one_earner = if_else(category == "2-worker household", NA_real_, avg_wage),
          two_earner = avg_wage * if_else(category == "2-worker household", 1, 2))
 
-## 6. Income-needed thresholds + summary (fact-sheet ~$98k rent / ~$183k buy) ----
+## 6. Income-needed thresholds + summary (rent anchored to ACS; fact-sheet ~$183k buy) ----
 thresholds <- tibble(med_price = med_price, med_rent = med_rent) |>
   calc_income_needed("med_price", "med_rent",
                      int_rate = int_rate, down_pct = down_pct, tax_ins_monthly = tax_ins)
 income_needed <- thresholds |>
-  transmute(med_rent, med_price, renter_income = round(renter_income), buyer_income = round(buyer_income))
+  transmute(med_rent, med_price, renter_income = round(renter_income), buyer_income = round(buyer_income),
+            costar_rent = costar_rent, mls_rent = mls_rent)
 
 # attach the thresholds to the wages matrix for the chart's reference lines
 wages_costs <- wages_costs |>
@@ -144,10 +161,17 @@ assumptions <- tibble(
   representative_hh_size  = rep_size,
   median_price           = med_price,
   median_rent            = med_rent,
+  median_rent_source     = "ACS B25064 median gross rent (2024)",
+  costar_rent            = costar_rent,
+  mls_rent               = mls_rent,
   reference_year         = ref_year,
   source = paste("Rate: PMMS via fred.rds (last non-NA). Down/front-end/tax+ins mirror the GP study",
                  "(fact sheet + pp.42,48); tax+ins is a combined proxy (GP published no itemized",
-                 "figure). Rental gap: CHAS T15C/T14B (no PUMS). Wages: QCEW avg annual pay.")
+                 "figure). Rent anchor: ACS B25064 median gross rent (full rental universe, highest",
+                 "reliability); CoStar (professionally-managed apartments) and MLS closed-lease median",
+                 "(broker-side, skews to larger SF/townhome rentals) retained as supplemental",
+                 "reference only — see DATA-AUDIT.md C1. Rental gap: CHAS T15C/T14B (no PUMS).",
+                 "Wages: QCEW avg annual pay.")
 )
 
 ## 8. Write output ----
@@ -164,15 +188,16 @@ rg  <- out$rental_gap
 og  <- out$ownership_gap
 
 message("  Rate: ", round(int_rate * 100, 2), "% (", rate_date, ") | ",
-        "median price $", format(med_price, big.mark = ","), " | median rent $", med_rent)
+        "median price $", format(med_price, big.mark = ","), " | median rent (ACS) $", med_rent,
+        " (CoStar $", round(costar_rent), " | MLS lease $", mls_rent, ")")
 message("  Income needed — rent: $", format(out$income_needed$renter_income, big.mark = ","),
-        " (fact-sheet ~$98k) | buy: $", format(out$income_needed$buyer_income, big.mark = ","),
-        " (fact-sheet ~$183k)")
+        " (ACS-anchored; fact-sheet ~$98k used the MLS lease median, now supplemental) | buy: $",
+        format(out$income_needed$buyer_income, big.mark = ","), " (fact-sheet ~$183k)")
 message("  Rental gap ≤30% AMI: ", rg$surplus_deficit[rg$band == "≤30% AMI"],
         " (deficit expected) | Ownership gap ≤30%: ", og$surplus_deficit[og$band == "ami30"])
 
 stopifnot(
-  abs(out$income_needed$renter_income - 98000)  / 98000  < 0.20,
+  between(out$income_needed$renter_income, 55000, 70000),   # ACS-anchored (was MLS-anchored ~$98k)
   abs(out$income_needed$buyer_income  - 183000) / 183000 < 0.25,
   all(diff(afford_by_band$max_price) >= 0),                 # higher band → higher max price
   rg$surplus_deficit[rg$band == "≤30% AMI"] < 0,            # rental deficit at the bottom (GP Fig 27)

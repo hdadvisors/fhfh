@@ -222,7 +222,7 @@ ggplot(sr_ten_plot, aes(geo, est_p, fill = tenure)) +
 ```
 
 - **About `r label_percent(accuracy = 1)(sr_own_sh)` of the county's senior householders own their homes** — aging in place overwhelmingly means aging in an owned single-family house, with the maintenance and accessibility burdens that implies.
-- The small senior-renter population is the group with the fewest local options: little purpose-built senior rental stock (@sec-market-rental) and the county's tightest affordable-rental deficit falls on the lowest incomes (@fig-rental-gap).
+- The small senior-renter population is the group with the fewest local options: the county's small apartment market (@sec-market-rental) offers little dedicated senior product, and the county's tightest affordable-rental deficit falls on the lowest incomes (@fig-rental-gap).
 - **Warrenton** carries a larger senior-renter share than the county, consistent with its role as the principal rental submarket (its renter cell is Medium reliability); **Bealeton's** senior counts are too small to report reliably (CV > 30%) and are suppressed.
 
 ```{r}
@@ -248,7 +248,7 @@ ggplot(eld_c, aes(tenure, share, fill = cost_burden)) +
   theme(legend.position = "top", plot.subtitle = element_markdown())
 ```
 
-- **Senior renters carry the heavier burden:** about **`r label_percent(accuracy = 1)(eld_burdened_rent)` of the county's elderly renter households are cost-burdened**, versus `r label_percent(accuracy = 1)(eld_burdened_own)` of elderly owners — the mirror of the tenure pattern seen county-wide (@fig-burden-band).
+- **Senior renters carry the heavier burden:** about **`r label_percent(accuracy = 1)(eld_burdened_rent)` of the county's elderly renter households are cost-burdened** (CHAS defines "elderly" as 62 or older — slightly broader than the 65+ threshold used elsewhere in this chapter), versus `r label_percent(accuracy = 1)(eld_burdened_own)` of elderly owners — the mirror of the tenure pattern seen county-wide (@fig-burden-band).
 - Because seniors are overwhelmingly owners (@fig-senior-tenure), owner burden reaches more households in absolute terms, but the renter *rate* is higher and concentrated among those least able to move.
 - The towns show the same renter-heavier pattern — senior renters in both Warrenton and Bealeton are burdened at roughly 60% — but those cells rest on very small CHAS samples, so only the county figures are charted here.
 
@@ -410,7 +410,7 @@ ggplot(vdoe_df, aes(school_year, students)) +
 
 - McKinney-Vento counts — students who lacked fixed, adequate housing at any point in the year — fell from **`r vdoe_first` in 2020–21 to `r vdoe_last` in 2024–25**, roughly halving over five years.
 - The decline tracks the post-pandemic recovery and expanded rental assistance; on counts this small, year-to-year movement is volatile and a single school year should not be over-read.
-- Even at `r vdoe_last`, the school-based count exceeds the county's point-in-time homeless tally — a reminder that most housing instability is doubled-up or precariously housed, not literally unsheltered.
+- The school-based McKinney-Vento count and the PIT tally measure different things — McKinney-Vento counts a full school year of doubled-up, precariously housed, and temporarily housed students, while PIT captures one night's literally homeless — so they are not rank-orderable and should not be read as competing tallies of the same population. Most housing instability is never captured on a single count night.
 
 ## Housing quality and manufactured housing
 
@@ -488,5 +488,5 @@ Manufactured-home and mobile-home communities are a known feature of the **Beale
 ::: {.callout-important}
 ## Interview validation
 
-- **"Aging-in-place and downsizing seniors, and returning young people, have no options."** *Confirmed for the current state; the forward-looking pressure is quantified in Ch 6.* The county's older adults are overwhelmingly **homeowners** — about `r label_percent(accuracy = 1)(sr_own_sh)` of senior householders own (@fig-senior-tenure) — and nearly a third of senior households are **older adults living alone** (@fig-senior-alone), the profile most likely to want to downsize. Yet the options they would move *into* are exactly what the market lacks: few small or purpose-built senior rentals (@sec-market-rental), the county's deepest affordable-rental deficit at the lowest incomes (@fig-rental-gap), and a for-sale market with almost nothing below 100% AMI (@fig-ownership-gap) — the same wall facing returning young adults. Meanwhile **`r label_percent(accuracy = 1)(eld_burdened_rent)` of senior renters are cost-burdened** (@fig-senior-burden) and disability climbs to roughly `r label_percent(accuracy = 1)(dis_75_sh)` among those 75+ (@fig-disability-age), so the need is not only for *more* homes but for *accessible, smaller, lower-cost* ones. The projected surge to `r label_comma()(wc_65_2050)` residents 65+ by 2050 (@sec-projections) turns a current mismatch into a structural one.
+- **"Aging-in-place and downsizing seniors, and returning young people, have no options."** *Confirmed for the current state; the forward-looking pressure is quantified in Ch 6.* The county's older adults are overwhelmingly **homeowners** — about `r label_percent(accuracy = 1)(sr_own_sh)` of senior householders own (@fig-senior-tenure) — and nearly a third of senior households are **older adults living alone** (@fig-senior-alone), the profile most likely to want to downsize. Yet the options they would move *into* are exactly what the market lacks: the county's small apartment market (@sec-market-rental) offers little dedicated senior product, the county's deepest affordable-rental deficit at the lowest incomes (@fig-rental-gap), and a for-sale market with almost nothing below 100% AMI (@fig-ownership-gap) — the same wall facing returning young adults. Meanwhile **`r label_percent(accuracy = 1)(eld_burdened_rent)` of senior renters are cost-burdened** (@fig-senior-burden) and disability climbs to roughly `r label_percent(accuracy = 1)(dis_75_sh)` among those 75+ (@fig-disability-age), so the need is not only for *more* homes but for *accessible, smaller, lower-cost* ones. The projected surge to `r label_comma()(wc_65_2050)` residents 65+ by 2050 (@sec-projections) turns a current mismatch into a structural one.
 :::

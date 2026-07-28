@@ -44,8 +44,12 @@ ami100_4 <- ami4$income[ami4$level == "ami100"]
 ab <- gaps$afford_by_band
 afford50_rent  <- ab$max_rent[ab$band == "ami50"]
 afford50_price <- ab$max_price[ab$band == "ami50"]
-med_price <- gaps$income_needed$med_price   # 650,000
-med_rent  <- gaps$income_needed$med_rent    # 2,450
+# Rent anchor = ACS median gross rent (DATA-AUDIT.md C1, Jonathan-approved 2026-07-28):
+# full rental universe, highest reliability. CoStar/MLS are supplemental context, not this figure.
+med_price   <- gaps$income_needed$med_price     # 650,000
+med_rent    <- gaps$income_needed$med_rent      # 1,613 (ACS B25064)
+costar_rent <- gaps$income_needed$costar_rent   # 1,604 (professionally-managed apartments)
+mls_rent    <- gaps$income_needed$mls_rent      # 2,450 (MLS broker-side closed leases)
 
 # ACS burden (multi-year trend frame; county 2024 = 40.2% / 21.5%)
 bt <- costs$burden_trend
@@ -82,7 +86,7 @@ wage_all    <- wc$avg_wage[wc$category == "All Jobs"]
 wage_retail <- wc$avg_wage[wc$category == "Retail Trade"]
 wage_health <- wc$avg_wage[wc$category == "Health Care"]
 wage_gov    <- wc$avg_wage[wc$category == "Local Government"]
-inc_rent <- gaps$income_needed$renter_income   # 98,000
+inc_rent <- gaps$income_needed$renter_income   # 64,520 (ACS-anchored)
 inc_buy  <- gaps$income_needed$buyer_income    # 190,586
 
 # T7 total occupied households (detail-sum benchmark ≈ 25,944)
@@ -161,9 +165,15 @@ ab_tbl |>
   )
 ```
 
-- A **50% AMI household can afford about `r label_dollar()(afford50_rent)` in rent** — below the county's median asking rent of `r label_dollar()(med_rent)` — and a home of roughly **`r label_dollar()(afford50_price)`**, a fraction of the `r label_dollar()(med_price)` median sale price.
+- A **50% AMI household can afford about `r label_dollar()(afford50_rent)` in rent** — below the county's median rent of `r label_dollar()(med_rent)` — and a home of roughly **`r label_dollar()(afford50_price)`**, a fraction of the `r label_dollar()(med_price)` median sale price.
 - Affordability rises steeply with income: only at **100–120% AMI** does the affordable purchase price clear a quarter-million dollars, and even 120% AMI (`r label_dollar()(ab$max_price[ab$band=="ami120"])`) stops short of the median home.
 - These thresholds — not local wages — define who the market can and cannot serve; the gaps that follow measure the distance between them.
+
+::: {.callout-note collapse="true"}
+## A note on "median rent"
+
+This chapter anchors on the **ACS median gross rent (`r label_dollar()(med_rent)`)** — it covers the full universe of occupied rentals and carries the highest reliability of any rent figure in this study (@sec-market-rental). Two other figures appear elsewhere and mean something different: **CoStar's professionally-managed asking rent (`r label_dollar()(round(costar_rent))`)** tracks only market-rate apartment communities, and the **MLS closed-lease median (`r label_dollar()(mls_rent)`)** reflects broker-side leases, which skew toward larger single-family homes and townhouses rather than the smaller units that make up most of the rental stock — not a market-wide asking rent.
+:::
 
 ## Who bears the cost: households by income and tenure
 
@@ -375,8 +385,8 @@ ggplot(og_plot, aes(band, n, fill = measure)) +
 
 ```{r}
 #| label: fig-wages-costs
-#| fig-cap: "Most local jobs don't pay enough to rent, let alone buy"
-#| fig-alt: "Lollipop chart of average annual wages for major Fauquier employment sectors, shown for a single earner and a two-earner household, against two reference lines: the income needed to afford the median rent (about $98,000) and the income needed to buy the median home (about $190,586). A single all-jobs wage of $68,000 falls short of the rent line; only a two-earner all-jobs household ($136,000) clears the rent line, and no configuration reaches the purchase line. Retail wages are far below both."
+#| fig-cap: "The average wage clears the rent — but most named sectors, and every path to buying, fall short"
+#| fig-alt: "Lollipop chart of average annual wages for major Fauquier employment sectors, shown for a single earner and a two-earner household, against two reference lines: the income needed to afford the median rent (about $64,520) and the income needed to buy the median home (about $190,586). The all-jobs average wage of $68,000 narrowly clears the rent line, but Health Care ($60,062), Local Government ($58,079), and especially Retail Trade ($41,934) all fall short of it. No single-earner wage reaches the purchase line; even a two-earner all-jobs household ($136,000) falls well short of the price needed to buy."
 
 wc_plot <- gaps$wages_costs |>
   filter(category != "2-worker household") |>
@@ -403,10 +413,10 @@ ggplot(wc_plot, aes(wage, category)) +
                      limits = c(0, NA)) +
   coord_cartesian(clip = "off") +
   labs(
-    title = "Most local jobs don't pay enough to rent, let alone buy",
+    title = "The average wage clears the rent — but most named sectors, and every path to buying, fall short",
     subtitle = "Average annual wage by sector — <span style='color:#e76f52'>**one earner**</span> vs <span style='color:#445ca9'>**two earners**</span> — against income needed to <span style='color:#8baeaa'>**rent**</span> and <span style='color:#c98f22'>**buy**</span>",
     caption = paste0(qcew_cap(),
-                     " Income-needed figures from the affordability assumptions in the income-band table."),
+                     " Income-needed figures from the affordability assumptions in the income-band table; rent anchored to the ACS median gross rent (see note above)."),
     x = NULL, y = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
@@ -414,9 +424,9 @@ ggplot(wc_plot, aes(wage, category)) +
   theme(legend.position = "none", plot.subtitle = element_markdown())
 ```
 
-- **A single average local wage doesn't cover the rent:** all-jobs average pay is about **`r label_dollar()(wage_all)`**, short of the **`r label_dollar()(inc_rent)`** needed to afford the median rent — and sector wages like Retail Trade (`r label_dollar()(wage_retail)`) fall far further behind.
-- **Only a two-earner household clears the rent bar:** two average local jobs (`r label_dollar()(wage_all*2)`) exceed the `r label_dollar()(inc_rent)` rent threshold — but **no configuration reaches the `r label_dollar()(inc_buy)` needed to buy** the median home.
-- The message is structural: the county's wage base and its housing costs have decoupled, so even dual-income working households are priced out of ownership and the lowest-wage sectors are priced out of the market entirely.
+- **The all-jobs average wage (`r label_dollar()(wage_all)`) narrowly covers the county's median rent (`r label_dollar()(inc_rent)` needed)** — a margin of about `r label_dollar()(wage_all - inc_rent)`, or roughly 5%. That headline flips, though, once you look sector by sector.
+- **Most named sectors fall short of the rent line on their own:** Health Care (`r label_dollar()(wage_health)`), Local Government (`r label_dollar()(wage_gov)`), and especially Retail Trade (`r label_dollar()(wage_retail)`) all pay below the `r label_dollar()(inc_rent)` needed to afford the median rent — it's lower-wage sectors and single-earner households in them, not the "average" worker, who are priced out of renting.
+- **Buying is out of reach at every wage level:** even a two-earner, two-average-job household (`r label_dollar()(wage_all*2)`) falls well short of the **`r label_dollar()(inc_buy)`** needed to buy the median home — ownership, not rental, is where the wage-to-cost gap is structural and unavoidable.
 
 ## Town spotlight & interview validation
 
@@ -431,5 +441,5 @@ Both towns run **hotter than the county on renter cost burden**: in 2024 roughly
 ::: {.callout-important}
 ## Interview validation
 
-- **"Workers can't afford to both work and live here."** *Confirmed.* A single average local wage (`r label_dollar()(wage_all)`) falls short of the **`r label_dollar()(inc_rent)`** needed to afford the median rent, and even a two-earner household (`r label_dollar()(wage_all*2)`) cannot reach the **`r label_dollar()(inc_buy)`** needed to buy the median home (@fig-wages-costs). Lower-wage sectors — Retail Trade at `r label_dollar()(wage_retail)`, Local Government at `r label_dollar()(wage_gov)` — fall further behind, and the for-sale market offers **`r og_below_100` of `r format(og_total_listings, big.mark=",")`** listings below 100% AMI (@fig-ownership-gap). The wage-to-housing-cost gap is not a perception; it is the defining structural feature of Fauquier's housing market.
+- **"Workers can't afford to both work and live here."** *Confirmed for buying and for most named sectors; not universal on renting.* The all-jobs average wage (`r label_dollar()(wage_all)`) narrowly clears the **`r label_dollar()(inc_rent)`** needed to afford the county's median rent — but Retail Trade (`r label_dollar()(wage_retail)`), Local Government (`r label_dollar()(wage_gov)`), and Health Care (`r label_dollar()(wage_health)`) all pay below that line, and even a two-earner household (`r label_dollar()(wage_all*2)`) cannot reach the **`r label_dollar()(inc_buy)`** needed to buy the median home (@fig-wages-costs). The for-sale market offers **`r og_below_100` of `r format(og_total_listings, big.mark=",")`** listings below 100% AMI (@fig-ownership-gap). The wage-to-housing-cost gap is real and structural — it shows up hardest in ownership and in the lower-wage sectors, not as a blanket "no local job pays the rent."
 :::

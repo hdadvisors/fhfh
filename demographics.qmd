@@ -166,7 +166,7 @@ ggplot(age_cv, aes(age_band, share, fill = geo)) +
   theme(legend.position = "none")
 ```
 
-- Fauquier has a **notably thin young-adult band**: just `r label_percent(accuracy = 1)(f_1834)` of residents are 18–34, versus `r label_percent(accuracy = 1)(va_1834)` statewide — young adults leave (or never arrive) for lack of entry-level housing and jobs.
+- Fauquier has a **notably thin young-adult band**: just `r label_percent(accuracy = 1)(f_1834)` of residents are 18–34, versus `r label_percent(accuracy = 1)(va_1834)` statewide — consistent with the county's thin entry-level housing supply (@sec-market-ownership) and slower job growth (@fig-employment).
 - The county skews toward **established working age**: 35–64-year-olds are its largest group, feeding demand for family-sized housing.
 - Seniors are a **modestly larger and growing share**: `r label_percent(accuracy = 1)(f_65)` are 65+, edging above Virginia's `r label_percent(accuracy = 1)(va_65)` and rising as the 35–64 cohort ages in place.
 
@@ -257,7 +257,7 @@ ggplot(lvls, aes(estimate, place, fill = is_fauq)) +
 
 - At **$130,189**, Fauquier's median household income is **the third-highest of its peer set** — essentially tied with Prince William and far below fast-growing Loudoun ($181,765).
 - The **towns sit well below the county**: Warrenton's median ($83,331) is the lowest in the comparison and below the statewide $93,170, while Bealeton ($108,224) lands between the two.
-- High county-wide income coexists with a lower-income town core — a spatial income gap that shapes where affordability pressure concentrates.
+- High county-wide income coexists with a lower-income Warrenton core — Warrenton's median ($83k) sits below the statewide $93k, while Bealeton ($108k) tracks closer to the county — a spatial income gap that shapes where affordability pressure concentrates.
 
 ```{r}
 #| label: fig-income-real
@@ -407,7 +407,7 @@ ggplot(wages, aes(industry, pay, fill = area)) +
 
 - Fauquier's **all-jobs average pay was about $68,000 in 2025** — mid-pack among its peers, above Culpeper (~$57,600) and Prince William (~$66,000) but far below Loudoun (~$87,100).
 - Its **largest employment sectors pay modestly**: health care averaged ~$60,100 and retail trade just ~$41,900 — the lowest-paying major sector in every county.
-- **Wage *growth* has kept pace** with neighbors (all four counties saw all-jobs pay rise ~42–48% since 2015); the gap is one of *level*, not trajectory — Fauquier simply has fewer of the high-wage jobs concentrated to its east.
+- **Wage *growth* has kept pace** with neighbors (QCEW trend 2015→2025, not shown in the chart above: all four counties saw all-jobs pay rise ~42–48%); the gap is one of *level*, not trajectory — Fauquier simply has fewer of the high-wage jobs concentrated to its east.
 
 ::: {.callout-note}
 ## A note on the wage figures
@@ -443,7 +443,7 @@ ggplot(out, aes(workers, county)) +
   theme_hda(flip_gridlines = TRUE)
 ```
 
-- Only **35.4% of the jobs located in Fauquier are held by county residents** — the majority of working residents leave the county each day.
+- **76.4% of Fauquier's employed residents commute out** — just 8,266 of the county's 35,028 employed residents work in Fauquier itself. Separately, **only 35.4% of jobs located in Fauquier are filled by county residents** (8,266 of 23,349 Fauquier jobs) — two measures of the same bedroom-community pattern.
 - The largest outbound flows run east into the D.C. job market: **~8,200 to Fairfax, ~5,400 to Prince William, ~3,000 to Loudoun**.
 - Inbound commuting is the mirror image but smaller — the top in-commuter origins are **Culpeper (~2,400), Prince William (~2,300), and Fairfax (~1,300)** — filling local jobs Fauquier residents don't.
 
@@ -487,7 +487,7 @@ ggplot(tt, aes(share, place, fill = is_fauq)) +
 
 ::: {.callout-important}
 ## Interview validation
-- **"Fauquier is a bedroom community — people live here and work elsewhere."** *Confirmed.* Only 35.4% of local jobs are held by residents, ~8,200 residents commute to Fairfax alone, and 37% of workers travel 45+ minutes (@fig-commute-out, @fig-traveltime).
+- **"Fauquier is a bedroom community — people live here and work elsewhere."** *Confirmed.* 76.4% of employed residents commute out of the county, with ~8,200 going to Fairfax alone; only 35.4% of local jobs are filled by county residents; and 37% of workers travel 45+ minutes (@fig-commute-out, @fig-traveltime).
 - **"Higher-paying employers have been pushed out; what's left pays less."** *Partly confirmed, with nuance.* Fauquier's wage base sits below high-wage Loudoun and its largest sectors (health care, retail) pay modestly — but wage *growth* has matched neighbors, so the issue is the *mix* of jobs, not falling pay (@fig-wages).
 - **Town contrast (required spotlight):** Warrenton and Bealeton are demographically opposite — Warrenton older, more single-person and renter households, and lower-income; Bealeton younger, family-heavy, and higher-income (@fig-households, @fig-income-dist). Affordability pressure and the demographic story both play out differently in the two places.
 :::

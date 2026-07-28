@@ -32,6 +32,55 @@ framing/labeling/appendix matters, not numeric — noted per finding.
 
 ---
 
+## ✅ C1/A1 resolved (2026-07-28) — rent anchor is now the ACS median gross rent
+
+**Decision [Jonathan-approved]:** the report anchors on the **ACS median gross rent
+($1,613, B25064, 2024)** — full universe of rental units, highest reliability of the
+three rent figures in play. CoStar (~$1,604, adjusted) is presented as a supplemental
+figure scoped explicitly to professionally-managed apartments. The MLS closed-lease
+median ($2,450) is kept as an aside, not an affordability anchor.
+
+**MLS rent inspected before finalizing** (per Jonathan's request) — pulled the raw
+`mls_rentals_*.csv` exports (985 records, 2022–2026) directly:
+- **74% of records carry no MLS property-type tag** (blank `Type` field in the raw
+  export, not a parsing artifact — confirmed against both source CSVs); of the
+  remainder, 24.5% are Townhouse, 1.7% House, 0.2% Duplex.
+- **Median 3 bedrooms / 1,500+ sqft** across the untyped majority and the whole file —
+  sizes consistent with single-family homes and townhouses, not the smaller units that
+  make up most of the county's apartment stock.
+- **Subdivision field** is dominated by named SF/townhome developments (Leeds Square,
+  Waverly Station, Wankoma Village, Marshall...) with no large purpose-built apartment
+  complex appearing at high volume — consistent with big professionally-managed
+  communities leasing in-house rather than through an MLS broker.
+- **Conclusion confirmed:** MLS rentals are a broker-side subset that skews toward
+  larger, higher-end SF/townhome leases — exactly the "likely higher, likely nicer/
+  larger units" hypothesis. It's a real and useful signal (@sec-market-rental interview
+  validation on rentals under $1,700), just not a market-wide median.
+
+**Downstream effect (headline flip, as flagged):** `r/gaps.R` `med_rent` now reads
+`acs_costs$B25064` instead of the MLS 2025 lease median. Income needed to rent drops
+from **$98,000 → $64,520** — *below* the $68,000 all-jobs average wage. The gaps
+chapter's marquee finding is reframed: **the average wage narrowly clears the median
+rent**, but Health Care ($60,062), Local Government ($58,079), and especially Retail
+Trade ($41,934) all fall short of it — the story is "lower-wage sectors and
+single-earner households in them are priced out of renting," not "no local job pays
+the rent." Buying remains out of reach at every wage level (no change — buyer income
+needed was never rent-dependent).
+
+**Files touched:** `r/gaps.R` (rent source, supplemental `costar_rent`/`mls_rent`
+fields, updated validation bounds), `gaps.qmd` (rent-anchor callout, fig-wages-costs
+title/subtitle/fig-alt/bullets, interview-validation callout), `market-rental.qmd`
+(cross-reference to the ACS anchor; MLS-vs-ACS gap explained inline at the rentals-
+under-$1,700 interview validation). Full-book render clean, no broken cross-refs.
+
+**A1 ("the median rent" never defined report-wide) — resolved as part of C1:** now
+defined once, at first use, in `gaps.qmd`'s collapsible rent-anchor note, with
+`market-rental.qmd` and `gaps.qmd`'s fig-wages-costs caption both pointing back to it.
+Still worth a one-line restatement in `data-notes.qmd` (Session 11b) alongside the
+other cross-cutting definitions (A3 senior/elderly, A5 ACS vintage labeling).
+
+---
+
 ## ⚠️ Decision required before any prose edits: which rent anchors the affordability math? (finding C1)
 
 **This is the one fork that changes a headline conclusion — settle it first; every
@@ -59,7 +108,7 @@ in **C1** below (and **A1**).
 
 ## Contradictions
 
-### C1. Two different "median rent" figures drive the affordability findings — $1,610 (Ch 3b) vs $2,450 (Ch 4)
+### C1. Two different "median rent" figures drive the affordability findings — $1,610 (Ch 3b) vs $2,450 (Ch 4) — ✅ RESOLVED, see top of file (2026-07-28)
 
 **Location**
 - `market-rental.qmd` → *What renters pay*: ACS median gross rent `rent_24 ≈ $1,610`
@@ -370,7 +419,7 @@ inset would strengthen it.
 
 ## Ambiguities
 
-### A1. "The median rent" is never defined report-wide
+### A1. "The median rent" is never defined report-wide — ✅ RESOLVED, see top of file (2026-07-28)
 
 **Location** — cross-cutting; see C1. Ch 3b uses $1,610 (ACS) and ~$1,604 (CoStar);
 Ch 4 uses $2,450 (MLS) and labels it "median asking rent."
@@ -512,6 +561,83 @@ reconciliations "in the Data & Methodology appendix" that a reader cannot yet ch
 Building that appendix (Session 11 per PLAN.md) will discharge a meaningful share of the
 ambiguities above and should be treated as a dependency for closing them, not a separate
 task.
+
+## ✅ Editorial decisions locked (2026-07-28) — action list for next session
+
+All remaining findings (C2–C6, U1–U3, A2–A7) were talked through with Jonathan this
+session; no `.qmd`/`.R` edits were made — this is the action list to execute fresh.
+Ordered roughly by dependency, not severity.
+
+1. ✅ DONE **C5 — Bealeton population.** `inventory.qmd` "~6,000" → "**~5,000**" (ACS B01003 =
+   5,034, matches `demographics.qmd`). Pure text fix, no data change.
+
+2. ✅ DONE **C2 — year-built contradiction.** `inventory.qmd` "56% of all homes were built
+   before 1980" → "**before 1990**". The 56% figure in inventory used B25036 (occupied
+   units, era bins); projections already uses B25034 (all units, 55.9%). Both converge on
+   ~56% pre-1990 so no further reconciliation needed — text now reads "before 1990".
+
+3. ✅ DONE **A2 — commute stat mislabeled.** `demographics.qmd` commute bullet and interview
+   validation rewritten: leads with 76.4% outflow (26,762 of 35,028 employed residents),
+   35.4% kept as a separately-labeled inflow stat about who fills local jobs.
+
+4. ✅ DONE **A6 — "lower-income town core" wording.** `demographics.qmd` household-income
+   section reworded: "a lower-income Warrenton core — Warrenton's median ($83k) sits
+   below the statewide $93k, while Bealeton ($108k) tracks closer to the county."
+
+5. ✅ DONE **C3 — school-homeless "exceeds" claim.** `populations.qmd` fig-vdoe-mv bullet
+   rewritten: dropped the numeric comparison entirely; replaced with a qualitative note
+   that McKinney-Vento (full-year, broader definition) and PIT (one night, literal
+   homelessness) are not rank-orderable.
+
+6. ✅ DONE **A3 — senior/elderly age threshold.** `populations.qmd` fig-senior-burden bullet
+   updated: added parenthetical "(CHAS defines 'elderly' as 62 or older — slightly
+   broader than the 65+ threshold used elsewhere in this chapter)" in the cost-burden
+   bullet text. Caption already stated 62+; now the body text discloses it too.
+
+7. ✅ DONE **U3 — wage-growth claim not visible in its chart.** `demographics.qmd` fig-wages
+   bullet updated: "~42–48% since 2015" now reads "(QCEW trend 2015→2025, not shown in
+   the chart above: all four counties saw all-jobs pay rise ~42–48%)".
+
+8. ✅ DONE **U1 — unsupported senior-rental claim.** `populations.qmd` senior-tenure bullet
+   and interview validation both updated to "the county's small apartment market
+   (@sec-market-rental) offers little dedicated senior product". `market-rental.qmd`
+   assisted-inventory bullet: "Section 202" → "PRAC/811 (elderly/disabled project
+   rental assistance)".
+
+9. ✅ DONE **U2 — young-adult out-migration stated as causal fact.** `demographics.qmd`
+   age-structure bullet updated: "leave (or never arrive) for lack of entry-level housing
+   and jobs" → "consistent with the county's thin entry-level housing supply
+   (@sec-market-ownership) and slower job growth (@fig-employment)".
+
+10. ✅ DONE **A7 — Warrenton "principal" service area.** `projections.qmd` town spotlight
+    updated: "the county's principal water-and-sewer service area" → "a major
+    water-and-sewer service area within the county's eight service districts".
+
+11. ✅ DONE **C4 — two "2024" populations.** Disclosure sentence added to `projections.qmd`
+    pop-growth bullet (ACS 5-year 74,577 vs PEP 75,865, with pointer to @sec-data-notes).
+    Full reconciliation note added to `data-notes.qmd` "Population series" section.
+
+12. ✅ DONE **C6 — full-scope need vs by-right capacity.** New section "Projected need
+    outpaces by-right service-district capacity" added to `conclusions.qmd`: explains
+    the ~8,381-unit 2010 baseline, estimates ~4,000–4,500 remaining capacity today
+    given permit pace, and frames the four policy choices. Cross-reference added to
+    `projections.qmd` scope-ladder bullet pointing to @sec-conclusions.
+
+13. ✅ DONE **A5 — 5-year ACS estimates labeled by single year.** Note added to
+    `data-notes.qmd` "ACS estimates labeled by a single year" section: all ACS figures
+    captioned by a single year are 2020–2024 5-year estimates referenced by their end
+    year; 5-year pooled for reliability at small geographies. No per-figure edits.
+
+**Not yet touched:** none — all 16 findings (C1–C6, U1–U3, A1–A7) now have a locked
+editorial decision. Items 1–10 are independent, mechanical-once-decided edits, most
+confined to a single chapter — safe to batch in any order. Item 11 (C4) and item 13
+(A5) both touch `data-notes.qmd`/appendix framing — do together. Item 12 (C6) is the
+one substantive new-prose addition (a `conclusions.qmd` section) and should get its own
+careful pass, ideally after the mechanical items are cleared so `conclusions.qmd` isn't
+touched twice. After all edits: re-run any touched `r/` scripts, re-render affected
+chapters + full-book `quarto render`, confirm no `?@` broken refs, update PLAN.md §11.
+
+---
 
 ## Suggested sequence
 

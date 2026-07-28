@@ -200,7 +200,7 @@ ggplot() +
 ```
 
 - The county's **median gross rent rose from $`r format(rent_13, big.mark=",")` (2013) to $`r format(rent_24, big.mark=",")` (2024)** — **+`r label_percent(accuracy=1)(rent_growth_nom)` nominal, +`r label_percent(accuracy=1)(rent_growth_real)` in real terms** — so renters have lost ground even after inflation.
-- **CoStar professional asking rents (~$`r format(round(cs_rent_adj), big.mark=",")`, adjusted) sit at or just above the ACS median**, consistent with a small stock of newer market-rate apartments pricing above the broader rental pool.
+- **CoStar professional asking rents (~$`r format(round(cs_rent_adj), big.mark=",")`, adjusted) sit at or just above the ACS median**, consistent with a small stock of newer market-rate apartments pricing above the broader rental pool. This report uses the **ACS median gross rent** as its affordability benchmark (@sec-gaps) — it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
 - **Town rents track the county:** all Warrenton and Bealeton rent cells are High reliability, and both towns' 2024 medians sit within roughly $50–$200 of the county figure.
 
 ## Where the rental stock prices
@@ -418,7 +418,7 @@ nhpd_tbl |>
 
 - Fauquier's assisted stock is **`r format(nhpd_assist, big.mark=",")` assisted units across `r nhpd_props` federally supported properties** — a small cushion against the market rents documented above.
 - **Preservation risk is real and near-term:** the soonest subsidy expiration is `r format(nhpd_soonest, "%B %Y")`, and **`r nhpd_10yr` of the `r nhpd_props` properties** have a subsidy expiring by 2036 — the window in which preservation decisions must be made.
-- The **program mix is dominated by Low-Income Housing Tax Credit** deals, with a handful of older project-based Section 8, Section 202, and USDA Rural Housing (515) properties whose subsidies are the closest to expiring.
+- The **program mix is dominated by Low-Income Housing Tax Credit** deals, with a handful of older project-based Section 8, PRAC/811 (elderly/disabled project rental assistance), and USDA Rural Housing (515) properties whose subsidies are the closest to expiring.
 
 ::: {.callout-note}
 ## Town spotlight — assisted units concentrate in and around Warrenton
@@ -430,7 +430,7 @@ Most of the county's assisted properties sit in **Warrenton** (and nearby Reming
 ::: {.callout-important}
 ## Interview validation
 
-- **"Only about 2 of 19 available rentals were priced under $1,700 (spring 2026)."** *Confirmed and nuanced.* In 2025 the MLS recorded **`r rent_u1700` of `r rent_n_2025` closed leases under $1,700** (about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`), with a **median lease of $`r format(rent_median, big.mark=",")`** — a somewhat larger affordable share than the single snapshot suggested, but the same story: sub-$1,700 rentals are scarce and most of the market prices well above (@fig-rent-distribution, @fig-rent-trend).
+- **"Only about 2 of 19 available rentals were priced under $1,700 (spring 2026)."** *Confirmed and nuanced.* In 2025 the MLS recorded **`r rent_u1700` of `r rent_n_2025` closed leases under $1,700** (about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`), with a **median lease of $`r format(rent_median, big.mark=",")`** — a somewhat larger affordable share than the single snapshot suggested, but the same story: sub-$1,700 rentals are scarce and most of the market prices well above (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median rent — expected, since MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
 - **"There aren't enough apartments — most rentals are just houses."** *Confirmed.* Purpose-built apartments (5+ units) are only ~`r label_percent(accuracy=1)(apt_share)` of the rental stock and the professional market spans just `r cs_props` tracked properties (@fig-rental-structure, @fig-costar); single-family homes carry ~`r label_percent(accuracy=1)(sf_share)` of all rentals.
 - **"Affordable, subsidized units are limited and aging."** *Confirmed and nuanced.* Only `r format(nhpd_assist, big.mark=",")` assisted units exist county-wide (@tbl-nhpd), concentrated around Warrenton, and `r nhpd_10yr` of `r nhpd_props` assisted properties face subsidy expiration within about a decade — a preservation challenge layered on top of an already thin affordable supply.
 :::

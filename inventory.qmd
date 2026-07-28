@@ -84,7 +84,7 @@ ggplot() +
 ```
 
 - Fauquier County covers roughly `r format(round(geo$county$ALAND[geo$county$GEOID == fauquier] / 2589988), big.mark = ",")` square miles — a large, predominantly rural jurisdiction between the Piedmont and the outer Washington, D.C. suburbs.
-- The study zooms in on the county's two population centers: the **Town of Warrenton** (the county seat, ~10,000 residents) near the center, and the unincorporated **Bealeton CDP** (~6,000) to the south along US-17.
+- The study zooms in on the county's two population centers: the **Town of Warrenton** (the county seat, ~10,000 residents) near the center, and the unincorporated **Bealeton CDP** (~5,000) to the south along US-17.
 - Roughly **90% of the county's land lies outside its eight designated service districts**, where public water and sewer — and therefore most new housing — are concentrated (see the land-constraint callout below).
 
 ## Housing stock composition
@@ -207,7 +207,7 @@ ggplot(yb, aes(x = era, y = share, fill = tenure)) +
   theme(legend.position = "none")
 ```
 
-- The county's **median year built is 1987**, and **56% of all homes were built before 1980** — an aging stock overall.
+- The county's **median year built is 1987**, and **56% of all homes were built before 1990** — an aging stock overall.
 - **Owned homes skew newer:** 34% were built in 2000 or later, reflecting the county's for-sale subdivision growth.
 - **The rental stock skews older:** about 32% of renter-occupied homes predate 1960, versus 12% of owner-occupied homes — the opposite of a "newer rental" pattern.
 
