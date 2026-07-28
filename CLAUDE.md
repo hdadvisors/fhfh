@@ -77,17 +77,15 @@ commit values. Verify key visibility to R with a TRUE/FALSE check only (see PLAN
 
 ## Publishing status
 
-`docs/` is committed to `main`. **GitHub Pages is NOT enabled** — the repo is private and the
-hdadvisors org is on GitHub Free, which only serves Pages from public repos.
+`docs/` is committed to `main`. **GitHub Pages is live** (verified Session 12, 2026-07-28):
+the repo is now public and Pages serves `main` / `/docs` at
+<https://hdadvisors.github.io/fhfh/>. The site updates on push — a local `quarto render`
+alone does not publish.
 
-To enable Pages later (once the repo is public or the org upgrades to Team/Enterprise):
+Check status any time with:
+```bash
+gh api repos/hdadvisors/fhfh/pages
 ```
-gh api -X POST repos/hdadvisors/fhfh/pages \
-  -f "source[branch]=main" \
-  -f "source[path]=/docs"
-```
-Or: Settings → Pages → Deploy from branch → `main` / `docs`. URL will be
-`https://hdadvisors.github.io/fhfh/`.
 
 ## Session hygiene
 

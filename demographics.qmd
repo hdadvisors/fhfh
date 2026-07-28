@@ -168,7 +168,7 @@ ggplot(age_cv, aes(age_band, share, fill = geo)) +
 
 - Fauquier has a **notably thin young-adult band**: just `r label_percent(accuracy = 1)(f_1834)` of residents are 18–34, versus `r label_percent(accuracy = 1)(va_1834)` statewide — consistent with the county's thin entry-level housing supply (@sec-market-ownership) and slower job growth (@fig-employment).
 - The county skews toward **established working age**: 35–64-year-olds are its largest group, feeding demand for family-sized housing.
-- Seniors are a **modestly larger and growing share**: `r label_percent(accuracy = 1)(f_65)` are 65+, edging above Virginia's `r label_percent(accuracy = 1)(va_65)` and rising as the 35–64 cohort ages in place.
+- Seniors are a **modestly larger and growing share**: `r label_percent(accuracy = 0.1)(f_65)` are 65+, edging above Virginia's `r label_percent(accuracy = 0.1)(va_65)` and rising as the 35–64 cohort ages in place.
 
 ::: {.callout-note}
 ## Town spotlight — two very different age profiles
@@ -222,6 +222,7 @@ ggplot(hh, aes(share, geo, fill = type)) +
 - **Married-couple families are 60% of Fauquier's households** — well above Virginia's 49% — and average household size is **2.78**, larger than the state's 2.52.
 - **Warrenton looks structurally different:** people living alone are its single largest household type (**41%**), and its average household is just **2.49** — the profile of a small-town rental and senior center.
 - **Bealeton runs the other way** — family-heavy (54% married-couple) with the largest average household (**3.11**), pointing to demand for larger, family-sized homes.
+- *Reliability:* town composition shares are Medium reliability (CV 15–30%) for most categories — Bealeton's "other non-family" slice is Low (CV > 30%) — so read the town bars as broad profiles, not precise shares. Both towns' average household sizes are High reliability.
 
 ## Household income
 
@@ -258,6 +259,7 @@ ggplot(lvls, aes(estimate, place, fill = is_fauq)) +
 - At **$130,189**, Fauquier's median household income is **the third-highest of its peer set** — essentially tied with Prince William and far below fast-growing Loudoun ($181,765).
 - The **towns sit well below the county**: Warrenton's median ($83,331) is the lowest in the comparison and below the statewide $93,170, while Bealeton ($108,224) lands between the two.
 - High county-wide income coexists with a lower-income Warrenton core — Warrenton's median ($83k) sits below the statewide $93k, while Bealeton ($108k) tracks closer to the county — a spatial income gap that shapes where affordability pressure concentrates.
+- *Reliability:* Warrenton's median is High reliability (CV 5%); **Bealeton's is Medium** (CV 17%, ±$30,504), so its position relative to the county should be read as approximate.
 
 ```{r}
 #| label: fig-income-real

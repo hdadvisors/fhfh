@@ -48,4 +48,17 @@ format:
     crossrefs-hover: false
     html-table-processing: none
 
-# PDF route (format: typst vs. manual assembly) deferred to Session 12 — PLAN.md §9.
+# PDF route — prototyped in Session 12, NOT adopted. Findings and recommendation in
+# PLAN.md §11 (2026-07-28). To reproduce the test, uncomment the typst block below *and*
+# add `prefer-html: true` at the top level of this file (kableExtra emits HTML, which typst
+# rejects outright — 5 of 9 chapters hard-fail without it), then `quarto render --to typst`.
+# A typst render clears docs/, so re-run plain `quarto render` afterwards to restore the site.
+#
+#  typst:
+#    papersize: us-letter
+#    margin:
+#      x: 1in
+#      y: 1in
+#    fontsize: 10pt
+#    number-depth: 2
+#    keep-typ: true

@@ -453,15 +453,15 @@ na_disp |>
   pack_rows("Homeowner", 1, n_owner) |>
   pack_rows("Renter", n_owner + 1, n_owner + n_renter) |>
   footnote(
-    general = paste0(
+    general = tbl_note(paste0(
       wc_cap(),
       " Current household distribution: HUD CHAS 2018–2022. Existing affordable-unit gap: HDAdvisors gap analysis (affordability-gaps chapter). ",
       "Forward need allocates the projected +", label_comma()(total_need),
       "-household growth to 2050 by each cell's current share of households; it sums to +",
       label_comma()(total_need), ". The current gap is joined by tenure — homeowner bands from the ownership gap, renter bands from the rental gap. ",
       "Renter 80–100% and >100% AMI are combined into \">80% AMI\" because the rental-gap frame uses a coarser top band than the ownership-gap frame; see the Data & Methodology appendix."
-    ),
-    general_title = "", footnote_as_chunk = TRUE
+    )),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
   )
 ```
 

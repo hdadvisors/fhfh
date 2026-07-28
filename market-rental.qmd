@@ -387,6 +387,7 @@ ggplot(f6, aes(bedrooms)) +
 ```{r}
 #| label: tbl-nhpd
 #| tbl-cap: "Federally assisted rental properties, sorted by earliest subsidy expiration"
+#| fig-alt: "Table of the county's 13 federally assisted rental properties with their town, total and assisted unit counts, subsidy programs, and earliest subsidy expiration. The 874 assisted units are concentrated in and around Warrenton and dominated by Low-Income Housing Tax Credit deals; expirations begin in January 2027 and 8 of the 13 properties have a subsidy lapsing by 2036."
 
 prog_by_prop <- nhpd$programs |>
   distinct(nhpd_id, program_name) |>
@@ -409,10 +410,10 @@ nhpd_tbl |>
   kbl(align = "llrrll") |>
   kable_styling(c("condensed", "striped"), full_width = FALSE) |>
   footnote(
-    general = paste0(nhpd_cap(),
+    general = tbl_note(paste0(nhpd_cap(),
                      " Assisted-unit counts may exceed total units where a property carries overlapping subsidies. ",
-                     "Programs list active subsidy types per property."),
-    general_title = "", footnote_as_chunk = TRUE
+                     "Programs list active subsidy types per property.")),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
   )
 ```
 

@@ -129,6 +129,11 @@ wc_cap <- function(release = 2024)
   paste0("**Source:** University of Virginia Weldon Cooper Center for Public Service, ",
          "Virginia Population Projections, ", release, " release.")
 
+# The caption helpers above emit markdown bold, which ggtext renders in ggplot captions but
+# kableExtra::footnote() passes through literally. Convert before using one in a table footnote
+# (and pass escape = FALSE so the tags survive).
+tbl_note <- function(x) gsub("\\*\\*(.+?)\\*\\*", "<strong>\\1</strong>", x)
+
 # High/Medium/Low reliability tiers from a 0–100 CV column (PLAN.md §3 thresholds 15/30).
 # The .rds frames store `cv` on a 0–100 scale; hdatools::add_reliability() expects a *_cv
 # column on a 0–1 proportion scale, so a thin local wrapper avoids mislabeling town cells.

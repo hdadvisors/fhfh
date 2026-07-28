@@ -163,7 +163,7 @@ ggplot() +
 
 - The county's **median sold price nearly doubled in nominal terms — about $`r round(p16/1e3)`k (2016) to $`r round(med_2025/1e3)`k (2025), +`r round(idx_price_2025 - 100)`%**.
 - Even after inflation, **real prices rose from roughly $`r round(p16_real/1e3)`k to $`r round(med_2025/1e3)`k in 2025 dollars (+`r round(med_2025/p16_real*100 - 100)`%)** — genuine appreciation, not just inflation.
-- The town ZIPs track the county: **Warrenton (~$`r round(town_a$median_price[town_a$town=="Warrenton" & town_a$year==2025]/1e3)`k in 2025) runs above Bealeton (~$`r round(town_a$median_price[town_a$town=="Bealeton" & town_a$year==2025]/1e3)`k)**. Town-ZIP series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only).
+- The town ZIPs track the county: **Warrenton (~$`r round(town_a$median_price[town_a$town=="Warrenton" & town_a$year==2025]/1e3)`k in 2025) runs above Bealeton (~$`r round(town_a$median_price[town_a$town=="Bealeton" & town_a$year==2025]/1e3)`k)**. Town-ZIP series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only). *These are ZIP-code cuts (20186/20187 for Warrenton, 22712 for Bealeton), not town boundaries — the Warrenton ZIPs in particular extend well beyond the town limits.*
 
 ## Prices vs. payments vs. incomes
 
@@ -207,7 +207,7 @@ ggplot(idx, aes(year, index, color = series)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- Over 2016–2025 the **median price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)`%** — the 30-year rate climbed from `r fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021]`% (2021) to `r fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025]`% (2025), compounding the price increase.
+- Over 2016–2025 the **median price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)`%** — the 30-year rate climbed from `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021])`% (2021) to `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025])`% (2025), compounding the price increase.
 - **Median household income rose only +`r round(idx_inc_2024 - 100)`% through 2024** — far behind both, so buying power has fallen sharply.
 - The pattern matches the GP study's Figure 9 direction (GP: price +79%, payment +127%, income +35%); FHFH's actuals run somewhat higher on all three but tell the same story — **payments ≫ prices ≫ incomes**.
 

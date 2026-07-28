@@ -131,6 +131,7 @@ ggplot(struct, aes(x = share, y = geo, fill = cat, alpha = geo_type)) +
 ```{r}
 #| label: tbl-town-structure
 #| tbl-cap: "Town housing units by structure type, with reliability (counts, not rates)"
+#| fig-alt: "Table of housing-unit counts by structure type for Warrenton and Bealeton, each cell tagged High or Medium reliability. Only single-family detached counts survive the reliability screen in both towns (roughly 1,900 in Warrenton and 1,200 in Bealeton); most attached, multifamily, and manufactured-housing cells carry a coefficient of variation above 30% and are suppressed."
 
 town_struct <- stock$b25024 |>
   filter(geo_type == "place", variable != "B25024_001") |>
@@ -154,8 +155,12 @@ town_struct |>
   kbl(col.names = c("Structure type", "Warrenton", "Bealeton"), align = "lrr") |>
   kable_styling(c("condensed", "striped"), full_width = FALSE) |>
   footnote(
-    general = "Cells with a coefficient of variation above 30% (Low reliability) are suppressed (—). High = CV ≤ 15%, Medium = CV 15–30%.",
-    general_title = "", footnote_as_chunk = TRUE
+    general = tbl_note(paste0(
+      acs_cap("B25024"),
+      " Cells with a coefficient of variation above 30% (Low reliability) are suppressed (—).",
+      " High = CV ≤ 15%, Medium = CV 15–30%."
+    )),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
   )
 ```
 
@@ -262,6 +267,7 @@ ggplot(trend, aes(year, owner_share, color = geo_type)) +
 
 - Fauquier's **owner-occupied share has held in the high-70s to 80%** across all four ACS estimates (80.1% in 2013 to 78.8% in 2024), and **Bealeton tracks closely behind** (77.8% to 78.7%, dipping to 71.1% in 2017).
 - **Warrenton is a consistent outlier**, not just a 2024 snapshot: its owner-occupied share has held in a narrow 61–63% band across all four estimates — roughly 15 to 17 points below the county and Bealeton in every single year.
+- *Reliability:* every Warrenton cell is High reliability; Bealeton's renter counts are Medium (CV 16–22%) in 2013, 2021, and 2024, so year-to-year wobble in its line is partly sampling noise rather than real change.
 
 ## Residential construction
 

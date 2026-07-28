@@ -116,13 +116,13 @@ ami_wide |>
   kable_styling(c("condensed", "striped"), full_width = FALSE) |>
   add_header_above(c(" " = 1, "Household size" = 8)) |>
   footnote(
-    general = paste0(
+    general = tbl_note(paste0(
       ami_cap(),
       " Limits for the ", hud_ami$area_name,
       " (published median family income ", label_dollar()(mfi), "). ",
       hud_ami$cap_note, "."
-    ),
-    general_title = "", footnote_as_chunk = TRUE
+    )),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
   )
 ```
 
@@ -152,7 +152,7 @@ ab_tbl |>
   kbl(align = "lrrr") |>
   kable_styling(c("condensed", "striped"), full_width = FALSE) |>
   footnote(
-    general = paste0(
+    general = tbl_note(paste0(
       "**Source:** HDAdvisors affordability calculation. ",
       "Rent affordability at 30% of gross income. Purchase price assumes a ",
       label_percent(accuracy = 0.01)(asm$mortgage_rate), " 30-year fixed rate, ",
@@ -160,8 +160,8 @@ ab_tbl |>
       label_percent(accuracy = 1)(asm$front_end_ratio), " front-end ratio, and ",
       label_dollar()(asm$tax_ins_monthly), "/month taxes and insurance, for a ",
       asm$representative_hh_size, " household."
-    ),
-    general_title = "", footnote_as_chunk = TRUE
+    )),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
   )
 ```
 
