@@ -1,13 +1,14 @@
 # Executive summary {#sec-exec-sum .unnumbered}
 
-<!-- Purpose: headline-finding skeleton (Session 12). Bullets only — one per chapter, each
-     sourced from that chapter's rendered figures. Humans expand these into prose. -->
+<!-- Purpose: summary paragraph (migrated from the team's Google Doc draft, Oct 2026) plus a
+     headline-finding list — one per chapter, each sourced from that chapter's rendered figures. -->
 
-*Skeleton only. Each bullet is the single headline finding from its chapter, with the key
-number inline and a cross-reference to the figure that carries it. Connecting prose,
-framing, and recommendations are written by hand.*
+Fauquier County has a highly priced housing market with a moderate working income environment, where the majority of residents commute away for work and those working within the county must commute in. The county is housing affluent households that commute elsewhere for high paying work, but it sustains short term and lower wage employment where workers must live elsewhere.
 
-- **The county builds one thing.** Single-family detached homes are **85.1%** of Fauquier's
+## Key findings {.unnumbered}
+
+
+- **Housing choices are very limited.** Single-family detached homes are **85.1%** of Fauquier's
   housing stock (Virginia: 61.3%), and the **266 permits/year** issued over 2020–2025 were
   almost entirely single-family — 2–4 unit "missing middle" production is effectively zero
   across the full 2000–2025 record (@sec-inventory, @fig-structure, @fig-permits).
@@ -20,7 +21,7 @@ framing, and recommendations are written by hand.*
 - **The entry-level for-sale market has disappeared.** The median sale price reached
   **$650,000** in 2025, and just **3 of 218** active listings were priced under $350,000 —
   while monthly payments on the median home rose **+152%** since 2016 against a **+81%**
-  price increase and **+45%** income growth (@sec-market-ownership, @fig-price-bands,
+  price increase and **+43%** income growth (@sec-market-ownership, @fig-price-bands,
   @fig-price-payment-income).
 
 - **Rentals are mostly houses, and the subsidized stock is thin and aging.** Single-family
@@ -29,8 +30,8 @@ framing, and recommendations are written by hand.*
   **8 of which** have a subsidy expiring by 2036 (@sec-market-rental, @fig-rental-structure,
   @tbl-nhpd).
 
-- **Burden is concentrated at the bottom, and the gap is structural.** **40%** of renters
-  are cost-burdened versus 21% of owners; every AMI band runs a rental deficit for a net
+- **Housing cost burden is concentrated at lower incomes.** **40%** of renters
+  are cost-burdened versus 21% of owners. Every AMI band runs a rental deficit for a net
   shortfall of **~3,315 units**, and only **8 of 218** for-sale listings are affordable
   below 100% AMI — buying the median home requires **$190,586**, about **$60,000** above
   the actual median income (@sec-gaps, @fig-rental-gap, @fig-ownership-gap,

@@ -2,7 +2,7 @@
 
 <!-- Purpose: forward housing needs through 2050 — Weldon Cooper population projections → household
      growth → annual production need → 65+ demand → tenure×AMI needs allocation (PLAN.md §7 Ch 6).
-     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose.
+     Narrative: prose migrated from the team Google Doc draft (Oct 2026); numbers audited against the data.
      Data-flow rule: read_rds() only; every figure sources data/wcoop.rds (+ gaps/chas/bps cross-refs). -->
 
 ```{r}
@@ -151,6 +151,10 @@ lad_c4 <- lad_c3 + repl_units                                   # 12,457
 
 ## How many more people: population to 2050
 
+Fauquier is undoubtedly growing, even when its growth has been stable since 2000. Fauquier's population is projected to grow from `r label_comma()(base_pop)` residents in `r base_year`[^base-pop] to `r label_comma()(fq_2050)` by 2050, an increase of about `r label_comma()(fq_grow_26)` residents. This `r label_percent(accuracy = 0.1)(fq_pct_26)` increase in population drives every downstream housing-need estimate in this chapter.
+
+[^base-pop]: The base population is the ACS 2020–2024 5-year estimate, which runs modestly below the PEP July-2024 point-in-time estimate (~75,865) used in @sec-demographics; see @sec-data-notes for the reconciliation.
+
 ```{r}
 #| label: fig-pop-projection
 #| fig-cap: "Fauquier is projected to reach about 93,000 residents by 2050"
@@ -182,11 +186,16 @@ ggplot(pop_proj, aes(year, population)) +
   add_zero_line("y")
 ```
 
-- Fauquier's population is projected to grow from **`r label_comma()(base_pop)` in `r base_year`** to **`r label_comma()(fq_2050)` by 2050** — an increase of about **`r label_comma()(fq_grow_26)` residents (`r label_percent(accuracy = 0.1)(fq_pct_26)`)** that drives every downstream housing-need estimate in this chapter. The base population is the ACS 2020–2024 5-year estimate, which runs modestly below the PEP July-2024 point-in-time estimate (~75,865) used in @sec-demographics; see @sec-data-notes for the reconciliation.
-- Growth is **steady across each decade**, from `r label_comma()(fq_2030)` in 2030 to `r label_comma()(fq_2050)` in 2050 — a `r label_percent(accuracy = 0.1)(fq_pct_3050)` gain over 2030–2050, outpacing Virginia's projected `r label_percent(accuracy = 0.1)(va_pct_3050)` statewide growth over the same span.
-- **Warrenton is projected to grow in parallel**, from `r label_comma()(wn_2030)` (2030) to `r label_comma()(wn_2050)` (2050), up `r label_comma()(wn_grow)` residents (`r label_percent(accuracy = 0.1)(wn_pct)`); Bealeton has no separate Weldon Cooper projection and is carried through the county totals.
+Growth is steady across each decade, from `r label_comma()(fq_2030)` in 2030 to `r label_comma()(fq_2050)` in 2050. This is a `r label_percent(accuracy = 0.1)(fq_pct_3050)` gain over twenty years, outpacing Virginia's projected `r label_percent(accuracy = 0.1)(va_pct_3050)` statewide growth until 2050. Warrenton is projected to grow in parallel, from `r label_comma()(wn_2030)` residents in 2030 to `r label_comma()(wn_2050)` in 2050: up `r label_comma()(wn_grow)` residents (also a `r label_percent(accuracy = 0.1)(wn_pct)` increase).
+
+::: {.callout-warning}
+## Data note: Bealeton
+Bealeton has no separate Weldon Cooper projection and is carried through the county totals.
+:::
 
 ## How many more households
+
+Using the average-household-size method, or the number of occupied housing units multiplied by the average household size, the county grows from `r label_comma()(base_hh)` households in `r base_year` to `r label_comma()(hh_avg_2050)` by 2050. This is about `r label_comma()(grow_avg)` net new households or a `r label_percent(accuracy = 0.1)(grow_avg_pct)` increase in households.
 
 ```{r}
 #| label: fig-hh-projection
@@ -229,11 +238,25 @@ ggplot(hh_long, aes(year, hh, group = method)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- On the headline **average-household-size method**, the county grows from **`r label_comma()(base_hh)` households in `r base_year`** to **`r label_comma()(hh_avg_2050)` by 2050 — about `r label_comma()(grow_avg)` net new households (`r label_percent(accuracy = 0.1)(grow_avg_pct)`)**.
-- The **constant-headship sensitivity nearly coincides** with it (`r label_comma()(hh_head_2050)` by 2050, `r label_comma()(grow_head)` new households) — a difference of only about `r label_comma()(grow_avg - grow_head)` households, so the choice of method does not materially change the total.
-- This **+`r label_comma()(grow_avg)`** figure is the denominator for the production need (@fig-production-need) and the tenure-by-income allocation (@tbl-needs-allocation) that follow.
+Compared with constant-headship sensitivity, which measures projected population outcomes based on the proportion of people in a given demographic group that are a head of household, average household size nearly coincides with an estimate of `r label_comma()(hh_head_2050)` households by 2050 (or `r label_comma()(grow_head)` additional households). Only using headship could over or under estimate the projected growth, because of an increase in young adult headship or conversely more multigenerational families.
+
+::: {.callout-warning}
+## Data note: choice of method
+This is a difference of only about `r label_comma()(grow_avg - grow_head)` households, so the choice of method does not materially change the total. This `r label_comma()(grow_avg)` increased figure is the denominator for the production need (@fig-production-need) and the tenure-by-income allocation (@tbl-needs-allocation) that follow.
+:::
 
 ## Can production keep pace?
+
+Based on these estimates, the county needs about `r round(need_yr_2050)` new units per year to house the projected growth by 2050, plus at least a 3% vacancy allowance. On the numbers alone, the county's recent production roughly keeps pace with projected need, essentially level with the `r round(bps_pace)` units per year the county permitted over 2020–2025.
+
+The baseline need is lighter in upcoming years, with only about `r round(need_yr_2030)` units/year required through 2030, rising toward the recent pace as growth compounds. The build pressure, or need to add units, is in near-term and more specific to the type and price of what is built, not the overall raw count.
+
+This inverts the Greater Piedmont REALTOR's study's finding that units needed (`r gp_pace`/yr) exceeds the current building pace. The difference in calculations is relative to the household-size assumptions made. This study uses the county's actual 2020–2024 ACS average household size of `r asm$avg_hh_size`, whereas the GP study's +`r label_comma()(gp_hh)`-household figure back-implies a roughly `r gp_avgsize`-person household.
+
+::: {.callout-warning}
+## Why household size matters
+A larger average person size spreads the same population over fewer new households, ultimately lowering the annual unit need; the full reconciliation is documented in the Data & Methodology appendix (@sec-data-notes).
+:::
 
 ```{r}
 #| label: fig-production-need
@@ -263,12 +286,11 @@ ggplot(prod_plot, aes(horizon, units_per_year_avgsize)) +
   add_zero_line("y")
 ```
 
-- Through 2050 the county needs about **`r round(need_yr_2050)` new units per year** to house projected growth (plus a 3% vacancy allowance) — essentially level with the **`r round(bps_pace)` units per year** it permitted over 2020–2025. On the numbers, **recent production roughly keeps pace with projected need**.
-- The need is **front-loaded lighter**: only about `r round(need_yr_2030)` units/year are required through 2030, rising toward the recent pace as growth compounds — so the near-term pressure is on the *type and price* of what is built, not the raw count.
-- **This inverts the Greater Piedmont regional study's finding** that need (`r gp_pace`/yr) exceeds the building pace. The difference is the household-size assumption: this study uses the county's actual 2020–2024 ACS average household size of **`r asm$avg_hh_size`**, whereas the GP study's +`r label_comma()(gp_hh)`-household figure back-implies a smaller ~`r gp_avgsize`-person household. A larger average size spreads the same population over fewer new households, lowering the annual unit need; the full reconciliation is documented in the Data & Methodology appendix.
-- Keeping pace on *count* is not the same as meeting *need*: the affordability gaps (@fig-rental-gap, @fig-ownership-gap) show the recent product mix has skewed to the top of the market, so the forward challenge is composition, taken up in @tbl-needs-allocation.
+Keeping pace with the baseline count is admirable but not the same as meeting need, though. The affordability gaps (@fig-rental-gap, @fig-ownership-gap) and interviews show the recent product mix has skewed towards the top of the market. The forward challenge is in composition that can meet the diverse needs of those described in @tbl-needs-allocation.
 
 ## How much does the answer swing? One assumption sets the range
+
+The estimate for the baseline need for units is only as firm as its household-size assumption. Holding the county's actual `r size_2024`-person household size average constant yields about `r round(rng_lo)` units needed per year, whereas letting size drift down to 2.60 people per household pushes the baseline units needed to `r round(rng_hi)` units. Therefore, a plausible reading of the same population projection spans roughly `r round(rng_lo)`–`r round(rng_hi)` units per year.
 
 ```{r}
 #| label: fig-need-range
@@ -301,11 +323,17 @@ ggplot(hhsize_scen, aes(scen, units_yr, fill = headline)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- The headline number is only as firm as its household-size assumption. **Holding the county's actual `r size_2024`-person average constant yields ~`r round(rng_lo)` units per year; letting size drift down to 2.60 pushes need to ~`r round(rng_hi)`** — so a plausible reading of the same population projection spans roughly **`r round(rng_lo)`–`r round(rng_hi)` units per year**.
-- **The `r round(need_yr_2050)`/yr headline is the conservative floor of that band, not its midpoint** — it sits essentially on the 2020–2025 permit pace (`r round(bps_pace)`/yr), and the Greater Piedmont study's `r gp_pace`/yr estimate falls *inside* the range (it back-implies a ~`r gp_avgsize`-person household).
-- **The floor is the locally-grounded case: Fauquier's own household size has not fallen.** It measured about `r number(size_2010, accuracy = 0.01)` in 2010 and `r number(size_2020, accuracy = 0.01)` in 2020 (decennial), and `r size_2024` in 2024 (ACS) — flat-to-rising, bucking the national downward drift. The `r round(rng_hi)`/yr high end therefore is *not* an extrapolation of local history; it is a sensitivity that assumes the county begins converging toward the smaller households seen statewide (Virginia averages `r va_size_2024`).
+`r round(need_yr_2050)` units per year is a conservative floor of that estimate range, not its midpoint, sitting essentially on the 2020–2025 permit pace of `r round(bps_pace)` units/yr.[^gp-range]
+
+The floor is the locally-grounded case: Fauquier's own household size has not fallen, measuring about `r number(size_2010, accuracy = 0.01)` in 2010 and `r number(size_2020, accuracy = 0.01)` in 2020 (decennial), and `r size_2024` in 2024 (ACS). This household size is flat-to-rising, bucking the national downward drift. The `r round(rng_hi)`/yr high end of this estimate range, therefore, is not an extrapolation of local history. It is a sensitivity that assumes the county begins converging toward the smaller households as otherwise seen statewide (Virginia averages `r va_size_2024`).
+
+[^gp-range]: The Greater Piedmont study's `r gp_pace` units/yr estimate falls inside the range, back-implying about a `r gp_avgsize`-person household.
 
 ## From new arrivals to full need: a scope ladder
+
+How widely "need" is defined changes the units needed. Policy is what can ensure housing unit types developed meet the needs of Fauquier's new arrivals. Read strictly, the county needs `r label_comma()(lad_c1)` units to house projected household growth or about `r round(lad_c1/horizon_yrs)`/yr. Adding a 3% vacancy allowance lifts that to `r label_comma()(lad_c2)` or `r round(lad_c2/horizon_yrs)`/yr until 2050.
+
+Layering in today's affordability backlog adds roughly `r label_comma()(backlog_tot)` units that are needed. This is calculated with a data-grounded `r label_comma()(backlog_rent)`-unit rental deficit estimated for below 80% AMI households (@fig-rental-gap), plus a conservative, assumption-driven estimate for `r label_comma()(backlog_own)` ownership units. The estimated ownership share needed is about one-third of the `r label_comma()(round(own_sub80))` units estimated for the sub-80%-AMI ownership shortfall (the raw for-sale snapshot is not a build target). Adding in these estimates raises the need to `r label_comma()(lad_c3)` units built or `r round(lad_c3/horizon_yrs)`/yr.
 
 ```{r}
 #| label: fig-scope-ladder
@@ -364,12 +392,22 @@ ggplot(ladder_long, aes(rung, value, fill = component)) +
   theme(legend.position = "right")
 ```
 
-- Read strictly, the county needs **`r label_comma()(lad_c1)` units to house projected household growth** — about `r round(lad_c1/horizon_yrs)`/yr. Adding a **3% vacancy allowance** lifts that to **`r label_comma()(lad_c2)`** (`r round(lad_c2/horizon_yrs)`/yr), the published headline.
-- Layering in **today's affordability backlog adds roughly `r label_comma()(backlog_tot)` units** — a data-grounded **`r label_comma()(backlog_rent)`-unit rental deficit below 80% AMI** (@fig-rental-gap) plus a conservative, **assumption-driven `r label_comma()(backlog_own)`-unit ownership share** (one-third of the ~`r label_comma()(round(own_sub80))` sub-80%-AMI ownership shortfall; the raw for-sale snapshot is not a build target) — reaching **`r label_comma()(lad_c3)`** (`r round(lad_c3/horizon_yrs)`/yr).
-- Finally, **replacing aging and obsolete stock** — an **assumption**, since permits capture additions but not demolitions — at a conservative 0.25%/yr of the `r label_comma()(total_units)`-unit stock adds about **`r label_comma()(repl_units)`** units, for a full-scope total near **`r label_comma()(lad_c4)`** (`r round(lad_c4/horizon_yrs)`/yr). The stock is old — median year built 1987, about `r label_percent(accuracy = 1)(pre1990_share)` built before 1990 — so some replacement demand is real even though its size is assumed.
-- **The single "units needed" number is a definitional choice, not a fact.** Housing only new arrivals points to ~`r round(lad_c2/horizon_yrs)`/yr; also clearing the existing shortfall and replacing obsolete stock roughly *doubles* that. The two rightmost rungs rest partly on stated assumptions and should be read as scope, not precision. Critically, the headline ~7,000-unit need already approaches — and the full-scope 12,457 far exceeds — the county's existing by-right service-district build-out capacity; see @sec-conclusions for the policy implications.
+::: {.callout-warning}
+## Reading the ladder
+The two rightmost rungs are determined partly on stated assumptions and should be read as scope, not precision.
+:::
+
+The county's stock is aging — median year built 1987, with about `r label_percent(accuracy = 1)(pre1990_share)` built before 1990, so some replacement demand is real even though its size is assumed. To replace obsolete stock involves an assumption since permits capture additions, but not demolitions. At a conservative 0.25%/yr of the `r label_comma()(total_units)`-unit stock, adds about `r label_comma()(repl_units)` units in replaced/updated housing stock.
+
+Altogether, the full-scope total comes near `r label_comma()(lad_c4)` units or `r round(lad_c4/horizon_yrs)`/yr to add supply, add additional under 80% AMI units, and replace low quality/ high maintenance stock.
+
+The single "units needed" number is a definitional choice, not a fact. Housing only new arrivals points to needing about `r round(lad_c2/horizon_yrs)`/yr. Also clearing the existing shortfall for lower income households - the vast majority of the county - and replacing obsolete stock roughly doubles that. <!-- VERIFY (Amelie comment): "the vast majority of the county -- need to verify this." Table 7.1 shows households under 80% AMI are roughly 29% of households. -->
+
+Critically, the headline ~7,000-unit need already approaches — and the full-scope `r label_comma()(lad_c4)` far exceeds — the county's existing by-right service-district build-out capacity; see @sec-conclusions for the policy implications.
 
 ## An aging county: the 65+ surge
+
+The 65-and-older population climbs from `r label_comma()(s65_2030)` in 2030 to `r label_comma()(s65_2040)` in 2040, then holds essentially flat at `r label_comma()(s65_2050)` in 2050, as the leading edge of the baby-boom cohort ages through. The surge is concentrated in the next 15 years.
 
 ```{r}
 #| label: fig-senior-projection
@@ -401,11 +439,11 @@ ggplot(sr_long, aes(year, pop, color = grp, group = grp)) +
   theme(legend.position = "none", plot.subtitle = element_markdown())
 ```
 
-- The **65-and-older population climbs from `r label_comma()(s65_2030)` (2030) to `r label_comma()(s65_2040)` (2040)**, then holds essentially flat at `r label_comma()(s65_2050)` in 2050 as the leading edge of the baby-boom cohort ages through — the surge is concentrated in the next 15 years.
-- The **75-and-older group grows faster and deeper**, from `r label_comma()(s75_2030)` to `r label_comma()(s75_2040)` before easing to `r label_comma()(s75_2050)` — so the higher-need older-senior share of all seniors rises from about **`r label_percent(accuracy = 1)(s75_share_2030)` to `r label_percent(accuracy = 1)(s75_share_2050)`**.
-- This is the forward-looking counterpart to the current-state senior profile in @sec-populations (65+ already 17% of residents, most owning their homes): the demand signal is for **accessible, lower-maintenance, and smaller units** — aging-in-place options and downsizing product the current stock largely lacks.
+The 75-and-older group grows faster and deeper, from `r label_comma()(s75_2030)` to `r label_comma()(s75_2040)` before easing to `r label_comma()(s75_2050)`. The higher-need and older-senior share of all seniors rises from about `r label_percent(accuracy = 1)(s75_share_2030)` to `r label_percent(accuracy = 1)(s75_share_2050)` over the next 20 years. This is the forward-looking counterpart to the current-state senior profile in @sec-populations (65+ already 17% of residents, most owning their homes). The demand signal is for accessible, lower-maintenance, and smaller units, where aging-in-place options and downsizing product in the current stock largely lacks.
 
 ## Where the need lands: tenure and income
+
+Following the county's current tenure and income mix, the projected `r label_comma()(total_need)` new households are split roughly between `r label_comma()(owner_need)` owners (`r label_percent(accuracy = 1)(owner_need/total_need)`) to `r label_comma()(renter_need)` renters (`r label_percent(accuracy = 1)(renter_need/total_need)`). The single largest block is owner households above 100% AMI or `r label_comma()(owner_top)` units - who are likely already served by current permitting and development plans. <!-- VERIFY (Amelie comment): "also need to verify this." -->
 
 ```{r}
 #| label: tbl-needs-allocation
@@ -465,22 +503,13 @@ na_disp |>
   )
 ```
 
-- The projected **`r label_comma()(total_need)` new households split roughly `r label_comma()(owner_need)` owner (`r label_percent(accuracy = 1)(owner_need/total_need)`) to `r label_comma()(renter_need)` renter (`r label_percent(accuracy = 1)(renter_need/total_need)`)**, following the county's current tenure and income mix — the single largest block is owner households above 100% AMI (`r label_comma()(owner_top)` units).
-- **Forward growth is not the binding constraint at the bottom — the existing gap is.** In the lowest owner and renter bands the *current* affordable-unit deficit (from @sec-gaps) dwarfs the projected new need: even building for all projected growth would leave the existing shortfall untouched.
-- Because the allocation holds today's income distribution constant, it describes **where demand will arise, not where it is affordable**; read alongside the current gaps (@fig-rental-gap, @fig-ownership-gap), it frames the forward task as delivering units at price points the recent market (@sec-market-ownership) has not.
+Forward growth is not the binding constraint at the bottom — the existing gap is. In the lowest owner and renter income bands, the current affordable-unit deficit (from @sec-gaps) dwarfs the projected new need. Even building for all projected growth would leave the existing shortfall for under 80% AMI households untouched.
 
-## Town spotlight & interview validation
+Because the allocation holds today's income distribution constant, it describes where demand will arise, not where it is affordable. Read alongside the current gaps (@fig-rental-gap, @fig-ownership-gap), it frames the forward task as delivering units at price points the recent market (@sec-market-ownership) has not.
 
-::: {.callout-note}
+For those that said, "Aging in place and downsizing seniors and returning young people have no options," the county must add about `r round(need_yr_2050)` units per year to keep pace with household formation. By addressing seniors' needs, with accessible and low maintenance housing options, young folks returning will be competing for the same units. Without addressing this gap in options across the household spectrum, the supply in the county will continue to increase but only widens the housing and affordability gap.
+
+::: {.callout-tip}
 ## Town spotlight — Warrenton grows with the county; Bealeton is folded into the county total
-
 Weldon Cooper projects the **Town of Warrenton to grow from `r label_comma()(wn_2030)` residents in 2030 to `r label_comma()(wn_2050)` by 2050** (+`r label_comma()(wn_grow)`, `r label_percent(accuracy = 0.1)(wn_pct)`), a pace close to the county's own `r label_percent(accuracy = 0.1)(fq_pct_3050)` over 2030–2050 (@fig-pop-projection). As a major water-and-sewer service area within the county's eight service districts, Warrenton is where much of the projected household growth can physically be absorbed. **Bealeton is not projected separately** — Weldon Cooper publishes totals only for counties and large incorporated towns, and Bealeton is an unincorporated census-designated place — so its share of growth is carried inside the Fauquier County totals throughout this chapter.
-:::
-
-## What the interviews said vs. what the data shows
-
-::: {.callout-important}
-## Interview validation
-
-- **"Aging-in-place and downsizing seniors, and returning young people, have no options."** *Confirmed and quantified forward.* @sec-populations confirmed the current state; the projections put numbers on the coming pressure. The **65-and-older population grows by roughly `r label_comma()(s65_2040 - s65_2030)` between 2030 and 2040** before plateauing near `r label_comma()(s65_2050)`, and the higher-need **75-and-older share of seniors rises from about `r label_percent(accuracy = 1)(s75_share_2030)` to `r label_percent(accuracy = 1)(s75_share_2050)`** (@fig-senior-projection) — a demand signal for accessible, smaller, lower-maintenance homes. On the young-adult side, the county must add about **`r round(need_yr_2050)` units per year** just to keep pace with household formation (@fig-production-need); with almost nothing for sale below 100% AMI today (@fig-ownership-gap), returning young households face the same entry barrier. The interview claim holds: the options gap is real now and widens as the county ages.
 :::

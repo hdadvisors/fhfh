@@ -1,7 +1,7 @@
 # The For-Sale Market {#sec-market-ownership}
 
 <!-- Purpose: ownership-market dynamics — prices, payments, inventory, and buyer affordability for the study area (PLAN.md §7 Ch 3a).
-     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
+     Narrative: prose migrated from the team's Google Doc draft (Oct 2026); numbers audited against the data. -->
 
 ```{r}
 #| label: setup
@@ -109,13 +109,13 @@ ggplot(vol, aes(year, sales_count, fill = source, alpha = partial)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- Sales peaked at **`r format(peak_sales, big.mark = ",")` in `r peak_yr`** and have since fallen to **`r format(sales_2025, big.mark = ",")` in 2025 — down about `r label_percent(accuracy = 1)(sales_decline)`** from the pandemic-era high.
-- The cooling reflects **thin supply and higher financing costs**, not falling demand — prices kept climbing through the slowdown (@fig-price-trend).
-- Counts through 2021 come from the GP/VAR annual series and 2022 onward from Bright MLS; **2026 is a partial year-to-date count** and is not comparable to the full years.
+Sales peaked at `r format(peak_sales, big.mark = ",")` sold in `r peak_yr` and have since fallen to `r format(sales_2025, big.mark = ",")` in 2025 (down about `r label_percent(accuracy = 1)(sales_decline)` from the pandemic-era high). The cooling reflects Fauquier's thin supply and higher financing costs, not falling demand, as prices kept climbing through the slowdown (@fig-price-trend).
 
-::: {.callout-note}
+Counts through 2021 come from the GP/VAR annual series and 2022 onward from Bright MLS; 2026 is a partial year-to-date count and is not comparable to the full years.
+
+::: {.callout-warning}
 ## A note on sales counts
-Bright MLS's **published monthly summary** reports roughly **`r label_percent(accuracy = 1)(sales_gap_pct)` more sales** than the transaction-level export used for the volume series above (e.g. `r format(round(sales_pub_2025), big.mark = ",")` vs `r format(sales_2025, big.mark = ",")` closings in 2025) — a near-constant level offset across every year, consistent with a property-type filter on the export. **Median sale prices agree between the two sources to within ~0.1%**, so the price findings are unaffected; the *level* of sales counts (and the active-listing snapshot below) should be read as the export's narrower definition, while the year-over-year *trend* holds under either source.
+Bright MLS's **published monthly summary** reports roughly **`r label_percent(accuracy = 1)(sales_gap_pct)` more sales** than the transaction-level export used for the volume series above (e.g. `r format(round(sales_pub_2025), big.mark = ",")` vs `r format(sales_2025, big.mark = ",")` closings in 2025) — a near-constant level offset across every year, consistent with a property-type filter on the export. **Median sale prices agree between the two sources to within ~0.1%**, so the price findings are unaffected; the level of sales counts (and the active-listing snapshot below) should be read as the export's narrower definition, while the year-over-year trend holds under either source.
 :::
 
 ## Prices
@@ -161,9 +161,9 @@ ggplot() +
   theme(plot.subtitle = element_markdown())
 ```
 
-- The county's **median sold price nearly doubled in nominal terms — about $`r round(p16/1e3)`k (2016) to $`r round(med_2025/1e3)`k (2025), +`r round(idx_price_2025 - 100)`%**.
-- Even after inflation, **real prices rose from roughly $`r round(p16_real/1e3)`k to $`r round(med_2025/1e3)`k in 2025 dollars (+`r round(med_2025/p16_real*100 - 100)`%)** — genuine appreciation, not just inflation.
-- The town ZIPs track the county: **Warrenton (~$`r round(town_a$median_price[town_a$town=="Warrenton" & town_a$year==2025]/1e3)`k in 2025) runs above Bealeton (~$`r round(town_a$median_price[town_a$town=="Bealeton" & town_a$year==2025]/1e3)`k)**. Town-ZIP series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only). *These are ZIP-code cuts (20186/20187 for Warrenton, 22712 for Bealeton), not town boundaries — the Warrenton ZIPs in particular extend well beyond the town limits.*
+The county's median sold price nearly doubled in nominal terms: about $`r round(p16/1e3)`k in 2016 to $`r round(med_2025/1e3)`k in 2025, an `r round(idx_price_2025 - 100)`% increase. Even after inflation, real prices rose from roughly $`r round(p16_real/1e3)`k to $`r round(med_2025/1e3)`k in 2025 dollars, a `r round(med_2025/p16_real*100 - 100)`% increase in genuine appreciation, not just inflation. The town ZIPs track the county: Warrenton (~$`r round(town_a$median_price[town_a$town=="Warrenton" & town_a$year==2025]/1e3)`k in 2025) runs above Bealeton (~$`r round(town_a$median_price[town_a$town=="Bealeton" & town_a$year==2025]/1e3)`k).[^town-zips]
+
+[^town-zips]: Town-ZIP series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only). These are ZIP-code cuts (20186/20187 for Warrenton, 22712 for Bealeton), not town boundaries — the Warrenton ZIPs in particular extend well beyond the town limits.
 
 ## Prices vs. payments vs. incomes
 
@@ -207,9 +207,9 @@ ggplot(idx, aes(year, index, color = series)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- Over 2016–2025 the **median price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)`%** — the 30-year rate climbed from `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021])`% (2021) to `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025])`% (2025), compounding the price increase.
-- **Median household income rose only +`r round(idx_inc_2024 - 100)`% through 2024** — far behind both, so buying power has fallen sharply.
-- The pattern matches the GP study's Figure 9 direction (GP: price +79%, payment +127%, income +35%); FHFH's actuals run somewhat higher on all three but tell the same story — **payments ≫ prices ≫ incomes**.
+Over 2016–2025 the median home sales price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)` percent. This is likely a reflection of the 30-year rate that climbed from `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021])`% in 2021 to `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025])`% in 2025, compounding the price increase. Median household income rose only +`r round(idx_inc_2024 - 100)`% through 2024, far behind both. Buying power has fallen sharply and this is widely recognized amongst residents and employers alike.[^gp-fig9]
+
+[^gp-fig9]: The pattern matches the GP study's Figure 9 direction (GP: price +79%, payment +127%, income +35%); FHFH's actuals run somewhat higher on all three but tell the same story — payments ≫ prices ≫ incomes.
 
 ## Price segments
 
@@ -240,9 +240,11 @@ ggplot(bands, aes(factor(year), share, fill = band)) +
   guides(fill = guide_legend(nrow = 1))
 ```
 
-- **Homes under $250k fell from `r label_percent(accuracy = 0.1)(sh(2022, "<$250k"))` of sales in 2022 to `r label_percent(accuracy = 0.1)(sh(2025, "<$250k"))` in 2025**; everything under $350k is now barely `r label_percent(accuracy = 1)(sh(2025, "<$250k") + sh(2025, "$250-350k"))` of the market.
-- The **$750k+ band has surged to `r label_percent(accuracy = 1)(sh(2025, "$750k+"))` of sales** (from `r label_percent(accuracy = 1)(sh(2022, "$750k+"))` in 2022), and the modal band is now **$500–750k** (`r label_percent(accuracy = 1)(sh(2025, "$500-750k"))`).
-- This is the tail end of a long collapse: the GP study found under-$250k sales fell from **27.8% (2016) to 3.0% (2021)** — the MLS-only view here (2022+) shows the entry level eroding the rest of the way.
+In a focus group for realtors, participants shared the unit types missing from Fauquier's market: starter and downsize homes (often the same unit). Homes under $250k fell from `r label_percent(accuracy = 0.1)(sh(2022, "<$250k"))` of sales in 2022 to `r label_percent(accuracy = 0.1)(sh(2025, "<$250k"))` in 2025. Everything under $350k is now barely `r label_percent(accuracy = 1)(sh(2025, "<$250k") + sh(2025, "$250-350k"))` of the market. As of the July 2026 listing export, just `r active_u350` of `r active_n` active listings were priced under $350,000.
+
+The $750k+ home price band has surged to `r label_percent(accuracy = 1)(sh(2025, "$750k+"))` of sales from `r label_percent(accuracy = 1)(sh(2022, "$750k+"))` in 2022. The modal band is now $500–750k (or `r label_percent(accuracy = 1)(sh(2025, "$500-750k"))` of sales).
+
+This is the tail end of a long collapse in the starter home market: the Greater Piedmont REALTOR's identified that under-$250k sales **fell from 27.8% in 2016 to 3.0% in 2021.** The MLS-only view here (2022+) shows the effective erosion of the market for entry level homes.
 
 ## Days on market & supply
 
@@ -272,8 +274,9 @@ ggplot(dom_m, aes(date, days_to_sell)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- Homes sell **fast — a median of `r dg(2022)`–`r dg(2024)` days in 2022–2024, rising to `r dg(2025)` in 2025** as higher rates cooled demand, but still weeks, not months.
-- The monthly view exposes a **strong seasonal rhythm the annual averages hide**: listings linger roughly 25–40 days in December–February and sell in under 10 by spring, every year.
+Despite the recognition, as well as data confirmation, of the gap in availability for starter style homes, the housing market (with larger single family homes) is still hot. Homes sell fast with a median `r dg(2022)` to `r dg(2024)` days on the market in 2022 - 2024. This rose to `r dg(2025)` days on the market in 2025, reflecting a cooling effect from increased rates. This is still a matter of weeks, not months.
+
+The monthly view exposes a strong seasonal rhythm that the annual averages can hide. Listings linger on the market for roughly 25 to 40 days in December through February and sell in under 10 days by spring yearly.
 
 ```{r}
 #| label: fig-supply-trend
@@ -312,12 +315,13 @@ ggplot(sup, aes(date, value, color = geography)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-- Active for-sale inventory has climbed from a tight **~`r format(active_avg_2022, big.mark = ",")` listings a month in 2022 to ~`r format(active_avg_2025, big.mark = ",")` in 2025**, and months of supply from about **`r round(mos_avg_2022, 1)` to `r round(mos_avg_2025, 1)` months** — a real loosening from the pandemic-era squeeze.
-- Even so, supply stays **well below the roughly six-month mark** that separates a seller's from a buyer's market: Fauquier remains a seller's market, just a less extreme one than at the 2021–22 peak.
+Active for-sale inventory has climbed from a tight `r format(active_avg_2022, big.mark = ",")` listings a month in 2022 to `r format(active_avg_2025, big.mark = ",")` in 2025. There's a real loosening of the pandemic era squeeze with months of supply on the market - `r round(mos_avg_2022, 1)` to `r round(mos_avg_2025, 1)` months.
 
-::: {.callout-note}
+Even so, supply stays well below the roughly six-month mark that separates a seller's from a buyer's market: Fauquier remains a seller's market, just a less extreme one than at the 2021–22 peak.
+
+::: {.callout-tip}
 ## Inventory is recovering, not recovered
-Contrary to a point-in-time reading, the monthly Bright MLS series shows active listings and months of supply **trending upward since 2022** (from ~`r round(mos_avg_2022, 1)` to ~`r round(mos_avg_2025, 1)` months) as higher rates slowed the frantic pace — but Fauquier is **still firmly a seller's market**, with supply short of the ~6-month balance point and homes selling within weeks for most of the year.
+Contrary to a point-in-time reading, the monthly Bright MLS series shows active listings and months of supply trending upward since 2022 (from ~`r round(mos_avg_2022, 1)` to ~`r round(mos_avg_2025, 1)` months) as higher rates slowed the frantic pace. Fauquier is still firmly a **seller's market**, with supply short of the ~6-month balance point, and homes selling within weeks for most of the year.
 :::
 
 ## What it takes to buy
@@ -355,16 +359,8 @@ ggplot(f6, aes(value, what, fill = grp)) +
   theme_hda(flip_gridlines = TRUE)
 ```
 
-- Affording the **$`r round(med_price/1e3)`k median home requires about $`r format(round(buyer_income), big.mark = ",")`** in household income under standard underwriting — versus Fauquier's actual **$`r format(round(actual_income), big.mark = ",")`** median, a gap of roughly **$`r format(round(income_gap/1e3)*1e3, big.mark = ",")`**.
-- The gap is driven by the same forces as @fig-price-payment-income: high prices *and* a `r label_percent(accuracy = 0.01)(gaps$assumptions$mortgage_rate)` mortgage rate.
-- This figure reuses the affordability parameters from the gaps analysis so Chapters 3 and 4 reconcile; the full owner/renter gap by income band is developed in @sec-gaps.
+Homes available for sale in Fauquier are expensive relative to what local incomes can support. That said, both housing prices and incomes have risen in 10 years. However, affording the $`r round(med_price/1e3)`k median home requires about $`r format(round(buyer_income), big.mark = ",")` in household income under standard underwriting, versus Fauquier's actual $`r format(round(actual_income), big.mark = ",")` median, a gap of roughly $`r format(round(income_gap/1e3)*1e3, big.mark = ",")`. The gap is driven by the same forces as outlined in @fig-price-payment-income: high prices and a `r label_percent(accuracy = 0.01)(gaps$assumptions$mortgage_rate)` mortgage rate. The full owner/renter gap by income band is developed in @sec-gaps.
 
-## What the interviews said vs. what the data shows
+The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (@fig-price-payment-income). "Buyers face a quality-versus-price mismatch — what's affordable isn't desirable, and what's desirable isn't affordable."
 
-::: {.callout-important}
-## Interview validation
-
-- **"Only about 3 for-sale listings under $350,000 were on the market (April 2026)."** *Confirmed.* The July 2026 listing export shows **exactly `r active_u350` of `r active_n` active listings priced under $350,000** (@fig-price-bands) — the entry-level for-sale segment has effectively vanished. (The `r active_n`-listing export is the narrower property-type subset noted above; Bright MLS's published count for the county runs higher, but the near-total absence of sub-$350k inventory holds regardless.)
-- **"Homes are expensive relative to what local incomes can support."** *Confirmed and nuanced.* Median prices nearly doubled since 2016 and rose in real terms (@fig-price-trend); the income needed to buy the median home now exceeds the actual median by ~$60k (@fig-income-to-buy). The squeeze is amplified by financing: monthly payments rose far faster than prices or incomes (@fig-price-payment-income).
-- **"Buyers face a quality-versus-price mismatch — what's affordable isn't desirable, and what's desirable isn't affordable."** *Confirmed and nuanced.* New construction skews larger and pricier (@sec-inventory), the sub-$350k segment has all but disappeared (@fig-price-bands), and the market still moves fast (@fig-days-on-market) — leaving entry-level buyers with few options at any quality level.
-:::
+This is more nuanced than interview participants realize: as new construction skews larger and pricier (@sec-inventory), the sub-$350k segment has all but disappeared (@fig-price-bands), and the market still moves fast (@fig-days-on-market). This leaves entry-level buyers with few options at any quality level.

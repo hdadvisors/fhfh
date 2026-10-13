@@ -1,7 +1,7 @@
 # Demographic Shifts & Socioeconomic Factors {#sec-demographics}
 
 <!-- Purpose: demographic shifts and socioeconomic context for housing demand (PLAN.md §7 Ch 2).
-     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
+     Narrative: prose migrated from the team's Google Doc draft (Oct 2026); numbers audited against the data. -->
 
 ```{r}
 #| label: setup
@@ -42,6 +42,15 @@ va_65   <- sum(age$share[age$GEOID == virginia & age$age_band %in% c("65-74", "7
 ```
 
 ## Population growth
+
+Fauquier has seen steady population growth over the last 35 years, despite consistent descriptions of the county's similarities over time. Those that grew up in Fauquier still recognize it as the place where they were raised. Fauquier's population climbed from 48,741 in 1990 to about 75,900 in 2024, a 56% increase, adding some 27,000 residents over 34 years.
+
+Growth throughout has been steady rather than explosive: the county gained about 600 to 1,000 residents a year across the 2020–2024 estimates. Warrenton grew to about 10,200 people and Bealeton to nearly 5,000 by 2024. Both towns together hold about a fifth of the county's residents, but most growth has occurred in the unincorporated county.
+
+::: {.callout-warning}
+## Caveat: mixed sources and universes
+The county line splices decennial 100% counts (April 1: 1990, 2000, 2010, 2020) with Population Estimates Program figures (July 1: 2021–2024); the 2024 town points are ACS 5-year estimates. These are different universes and reference dates — small level differences between series are expected, not real change. Bealeton has no 2000 decennial place record and is not published in the PEP, so its line starts in 2010. Documented in @sec-data-notes.
+:::
 
 ```{r}
 #| label: fig-population
@@ -87,16 +96,11 @@ ggplot(mapping = aes(year, pop)) +
   theme(legend.position = "top")
 ```
 
-- Fauquier's population climbed from **48,741 in 1990 to about 75,900 in 2024** — roughly **+56%**, adding some 27,000 residents over 34 years.
-- Growth has been **steady rather than explosive**: the county gained about 600–1,000 residents a year across the 2020–2024 estimates.
-- **Warrenton grew to ~10,200 and Bealeton to ~5,000** by 2024; the two places together hold about a fifth of the county's residents, but most growth has occurred in the unincorporated county.
-
-::: {.callout-note}
-## Caveat: mixed sources and universes
-The county line splices decennial 100% counts (April 1: 1990, 2000, 2010, 2020) with Population Estimates Program figures (July 1: 2021–2024); the 2024 town points are ACS 5-year estimates. These are different universes and reference dates — small level differences between series are expected, not real change. Bealeton has no 2000 decennial place record and is not published in the PEP, so its line starts in 2010. Documented in @sec-data-notes.
-:::
+With 600 to 1,000 residents gained yearly from 2020–2024 and limited residential development areas, the sensation of housing scarcity is felt by newer and long-term residents alike.
 
 ## Components of change
+
+Net migration, people moving in from elsewhere, far outweighs natural change, births within the county compared with deaths, as the county's growth engine. The county grows chiefly because more people move in (+474) than are born there (+138). Natural increase is thin and shrinking: 755 births barely exceeded 617 deaths, which is consistent with an aging population.
 
 ```{r}
 #| label: fig-components
@@ -133,11 +137,13 @@ ggplot(comp, aes(value, label, fill = sign)) +
   theme(legend.position = "top")
 ```
 
-- **Net migration (+474) far outweighs natural change (+138)** as the engine of growth — the county grows chiefly because more people move in than are born there.
-- Natural increase is thin and shrinking: **755 births barely exceeded 617 deaths**, consistent with an aging population.
-- Migration is **overwhelmingly domestic** (+305) with a smaller international component (+169) — people relocating from elsewhere in the U.S., largely the D.C. metro.
+Migration is overwhelmingly domestic (+305) with a smaller international component (+169). People relocate to Fauquier from elsewhere in the U.S., largely the D.C. metro.
 
 ## Age structure
+
+As implied by natural population change, Fauquier has a notably thin young-adult band: just `r label_percent(accuracy = 1)(f_1834)` of residents are 18–34, versus `r label_percent(accuracy = 1)(va_1834)` statewide. Young adults tend to leave and interview participants identified that they do not typically return - a lack of viable positions and entry level housing (see @sec-market-ownership and @fig-employment).
+
+The county skews toward established working-age adults: 35–64-year-olds are its largest group, feeding demand for family-sized housing. Seniors are a modestly larger and growing share of Fauquier's population: `r label_percent(accuracy = 0.1)(f_65)` are 65+, edging above Virginia's `r label_percent(accuracy = 0.1)(va_65)` and rising, as the 35–64 cohort ages in place.
 
 ```{r}
 #| label: fig-age
@@ -166,16 +172,16 @@ ggplot(age_cv, aes(age_band, share, fill = geo)) +
   theme(legend.position = "none")
 ```
 
-- Fauquier has a **notably thin young-adult band**: just `r label_percent(accuracy = 1)(f_1834)` of residents are 18–34, versus `r label_percent(accuracy = 1)(va_1834)` statewide — consistent with the county's thin entry-level housing supply (@sec-market-ownership) and slower job growth (@fig-employment).
-- The county skews toward **established working age**: 35–64-year-olds are its largest group, feeding demand for family-sized housing.
-- Seniors are a **modestly larger and growing share**: `r label_percent(accuracy = 0.1)(f_65)` are 65+, edging above Virginia's `r label_percent(accuracy = 0.1)(va_65)` and rising as the 35–64 cohort ages in place.
+With a recognizably aging community, interview participants wondered how to recruit young people to move to Fauquier at the same time as how to help seniors age in place.
 
-::: {.callout-note}
+::: {.callout-tip}
 ## Town spotlight — two very different age profiles
-The towns diverge sharply. **Warrenton is the county's oldest community — about 18% are 65+ (High reliability)** — while **Bealeton is markedly younger, with roughly 7–8% seniors and a large under-18 share**, reflecting its role as a family-oriented growth node. *Source: ACS 2020–2024, Table B01001.*
+The towns diverge in age sharply. **Warrenton is the county's oldest community**: about 18% are 65 and older (High reliability). **Bealeton is markedly younger**, with roughly 7–8% seniors and a large under-18 share, reflecting its role as a family-oriented growth node.
 :::
 
 ## Households
+
+Married-couple families represent 60% of Fauquier's households, well above Virginia's 49%, with an average household size of 2.78, also larger than the state's 2.52.
 
 ```{r}
 #| label: fig-households
@@ -219,12 +225,18 @@ ggplot(hh, aes(share, geo, fill = type)) +
   guides(fill = guide_legend(nrow = 1, reverse = TRUE))
 ```
 
-- **Married-couple families are 60% of Fauquier's households** — well above Virginia's 49% — and average household size is **2.78**, larger than the state's 2.52.
-- **Warrenton looks structurally different:** people living alone are its single largest household type (**41%**), and its average household is just **2.49** — the profile of a small-town rental and senior center.
-- **Bealeton runs the other way** — family-heavy (54% married-couple) with the largest average household (**3.11**), pointing to demand for larger, family-sized homes.
-- *Reliability:* town composition shares are Medium reliability (CV 15–30%) for most categories — Bealeton's "other non-family" slice is Low (CV > 30%) — so read the town bars as broad profiles, not precise shares. Both towns' average household sizes are High reliability.
+Warrenton looks structurally different: people living alone are its single largest household type (41%), and its average household is just 2.49. This profiles Warrenton as a center for small-town rentals that can serve aging seniors.
+
+Bealeton runs the other way: family-heavy (54% married-couple) with the largest average household (3.11), pointing to demand for larger, family-sized homes.
+
+::: {.callout-warning}
+## Reliability
+Town composition shares are Medium reliability (CV 15–30%) for most categories — Bealeton's "other non-family" slice is Low (CV > 30%) — so read the town bars as broad profiles, not precise shares. Both towns' average household sizes are High reliability.
+:::
 
 ## Household income
+
+At $130,189 annually, Fauquier's median household income is the third-highest of its peer set, after Prince William and Loudoun. Fauquier is essentially tied with Prince William in median income and is far below fast-growing Loudoun ($181,765).
 
 ```{r}
 #| label: fig-income-levels
@@ -256,10 +268,12 @@ ggplot(lvls, aes(estimate, place, fill = is_fauq)) +
   theme_hda(flip_gridlines = TRUE)
 ```
 
-- At **$130,189**, Fauquier's median household income is **the third-highest of its peer set** — essentially tied with Prince William and far below fast-growing Loudoun ($181,765).
-- The **towns sit well below the county**: Warrenton's median ($83,331) is the lowest in the comparison and below the statewide $93,170, while Bealeton ($108,224) lands between the two.
-- High county-wide income coexists with a lower-income Warrenton core — Warrenton's median ($83k) sits below the statewide $93k, while Bealeton ($108k) tracks closer to the county — a spatial income gap that shapes where affordability pressure concentrates.
-- *Reliability:* Warrenton's median is High reliability (CV 5%); **Bealeton's is Medium** (CV 17%, ±$30,504), so its position relative to the county should be read as approximate.
+Conversely, Warrenton's median income, $83,331, is the lowest in the comparison and below the statewide median income of $93,170. Bealeton's median income of $108,224 lands between the two. High county-wide income coexists with a lower-income Warrenton core, while Bealeton tracks closer to the county: a spatial income gap that shapes where affordability pressure concentrates. Participants in the study interviews outlined that the county's wealth is held in its rural areas, and is concentrated in the northern-most part of the county - closest to highway systems that connect commuters to their higher wages in D.C.
+
+::: {.callout-warning}
+## Reliability
+Warrenton's median is High reliability (CV 5%); Bealeton's is Medium (CV 17%, ±$30,504), so its position relative to the county should be read as approximate.
+:::
 
 ```{r}
 #| label: fig-income-real
@@ -292,8 +306,9 @@ ggplot(real, aes(year, income, color = series)) +
   theme(legend.position = "none")
 ```
 
-- Nominal median income rose **55%** over 2010–2024 ($83,877 → $130,189), but most of that reflects inflation.
-- In constant 2024 dollars, **real income grew only about 15%** — real buying power has crept up, not surged, even as home prices climbed far faster (see @sec-market-ownership).
+Nominal median income rose 55% over 2010–2024 from $83,877 → $130,189, but most of that reflects inflation. In constant 2024 dollars, real income only grew about 15% with real buying power creeping up, not surging, even as home prices climbed far faster (see @sec-market-ownership).
+
+Fauquier as a whole is high-income: 44% of households earn $150,000 or more — nearly double Virginia's share of high earners. Warrenton is the lower-income town: about 27% of its households earn under $50,000 per year versus 17% of households county-wide. Warrenton also has the smallest share of earners in the top ($150k+) bracket.
 
 ```{r}
 #| label: fig-income-dist
@@ -329,17 +344,25 @@ ggplot(dist, aes(inc_band, share, fill = geo)) +
   guides(fill = guide_legend(nrow = 1))
 ```
 
-- **Warrenton is the lower-income town:** about **27% of its households earn under $50,000** versus 17% county-wide, and it has the smallest share in the top ($150k+) bracket.
-- **Bealeton mirrors the county more closely**, concentrated in the upper-middle and $150k+ brackets — consistent with its higher median income.
-- **Fauquier as a whole is high-income:** **44% of households earn $150,000 or more** — nearly double Virginia's share.
-- *Reliability:* Bealeton's three lowest income brackets carry coefficients of variation above 30% and are suppressed here; the shown Warrenton and Bealeton cells are Medium-to-High reliability.
+Bealeton mirrors the county more closely, concentrated in the upper-middle and $150k+ income brackets, consistent with its higher median income.
 
-::: {.callout-note}
-## Poverty — county low, town contrast
-Fauquier's **poverty rate is 6.8%** (about 5,000 people), below Virginia's 9.9%. The town rates are less certain and are best read as counts: roughly **950 people in poverty in Warrenton and 80 in Bealeton**, with margins too wide to publish reliable place-level rates (both CV > 30%). The takeaway is directional — poverty is low county-wide and modestly concentrated in Warrenton. *Source: ACS 2020–2024, Table S1701 (S1701_C01_001 universe, S1701_C02_001 count, S1701_C03_001 rate).*
+::: {.callout-warning}
+## Reliability
+Bealeton's three lowest income brackets carry coefficients of variation above 30% and are suppressed here; the shown Warrenton and Bealeton cells are Medium-to-High reliability.
 :::
 
+::: {.callout-tip}
+## Poverty — county low, town contrast
+Fauquier's overall **poverty rate** is 6.8% (about 5,000 people), which is below Virginia's 9.9%. The town rates are less certain and are best read as counts: roughly 950 people live in poverty in Warrenton and 80 in Bealeton, with margins too wide to publish reliable place-level rates (both CV > 30%). The takeaway is directional — poverty is low county-wide and modestly concentrated in Warrenton.[^acs-poverty]
+:::
+
+[^acs-poverty]: Source: ACS 2020–2024, Table S1701 (S1701_C01_001 universe, S1701_C02_001 count, S1701_C03_001 rate).
+
 ## Employment
+
+Employment and economic development was a frequent topic of conversation in study interviews. Participants see the interconnectedness of worker opportunity, housing, and economic development. The county is a modest job center relative to its neighbors to the north and east: it adds workers steadily, but has not captured the metro's fastest employment expansion. That said, Fauquier's at-place employment grew from 21,549 jobs in 2015 to 23,910 in 2025, a nearly 11% increase in real growth.
+
+This growth roughly matches the statewide pace, but is well behind Loudoun, which saw about a 33% increase in employment, alongside a 19% increase in employment for Prince William for the same time period.
 
 ```{r}
 #| label: fig-employment
@@ -368,9 +391,9 @@ ggplot(emp, aes(year, idx, color = area)) +
   theme(legend.position = "none")
 ```
 
-- Fauquier's at-place employment grew from **21,549 jobs in 2015 to 23,910 in 2025 (~+11%)** — real growth, but roughly matching the statewide pace and well behind Loudoun (~+33%) and Prince William (~+19%).
-- The county is a **modest job center relative to its neighbors**: it adds workers steadily but has not captured the metro's fastest employment expansion.
-- Slower job growth reinforces the **commute-out pattern** — many residents work in higher-growth counties to the east (see @fig-commute-out).
+Slower job growth reinforces the commute-out pattern — many residents work in higher-growth counties to the east (see @fig-commute-out). As an interviewee described: "Fauquier is a bedroom community - people live here and work elsewhere."
+
+Fauquier's all-jobs average pay was about $68,000 in 2025, which is mid-pack among its peers, with Culpeper at $57,600 and Prince William near $66,000, but far below Loudoun with $87,100.
 
 ```{r}
 #| label: fig-wages
@@ -407,16 +430,18 @@ ggplot(wages, aes(industry, pay, fill = area)) +
   theme(legend.position = "top")
 ```
 
-- Fauquier's **all-jobs average pay was about $68,000 in 2025** — mid-pack among its peers, above Culpeper (~$57,600) and Prince William (~$66,000) but far below Loudoun (~$87,100).
-- Its **largest employment sectors pay modestly**: health care averaged ~$60,100 and retail trade just ~$41,900 — the lowest-paying major sector in every county.
-- **Wage *growth* has kept pace** with neighbors (QCEW trend 2015→2025, not shown in the chart above: all four counties saw all-jobs pay rise ~42–48%); the gap is one of *level*, not trajectory — Fauquier simply has fewer of the high-wage jobs concentrated to its east.
+Local employers interviewed identified that the county's most active sectors are health care, local government - including the school systems, and retail. These sectors pay modestly: health care averaged $60,100 yearly and retail trade just $41,900, which is the lowest-paying major sector in every county. Wage growth has kept pace with neighbors, with all four counties seeing all-jobs pay rise 42–48% since 2015 (QCEW trend 2015→2025, not shown in the chart above).
 
-::: {.callout-note}
+Fauquier's residents and employers were concerned about the "high quality" and paying job opportunities that the county can sustain. These data show that wage growth has held along neighboring counties. The gap is one of level, not trajectory — Fauquier simply has fewer of the high-wage jobs concentrated to its east and little diversity in its employment sectors.
+
+::: {.callout-warning}
 ## A note on the wage figures
-FHFH-computed 2025 QCEW averages run modestly above the GP study's earlier $64,272 all-jobs figure (2023 vintage) — the difference is real wage growth between vintages, not a discrepancy. Small county-by-sector cells that BLS suppresses for disclosure are excluded, so only complete series (all jobs, health care, local government, retail trade) are shown.
+FHFH-computed 2025 QCEW averages run modestly above the Greater Piedmont REALTOR's study's earlier $64,272 all-jobs figure (2023 vintage) — the difference is real wage growth between vintages, not a discrepancy. Small county-by-sector cells that BLS suppresses for disclosure are excluded, so only complete series (all jobs, health care, local government, retail trade) are shown.
 :::
 
 ## Commuting
+
+It's widely recognized that those who live in Fauquier do not work in Fauquier, impacting the local economy and housing opportunities in both directions. Fully 76.4% of Fauquier's employed residents commute out of the county: just 8,266 of the county's 35,028 employed residents work in Fauquier itself. Separately, only 35.4% of jobs located in Fauquier are filled by county residents (8,266 of 23,349 Fauquier jobs), two measures of the same bedroom-community pattern. The largest outbound flows run east into the D.C. job market: nearly 8,200 to Fairfax, 5,400 to Prince William, and 3,000 to Loudoun.
 
 ```{r}
 #| label: fig-commute-out
@@ -445,9 +470,11 @@ ggplot(out, aes(workers, county)) +
   theme_hda(flip_gridlines = TRUE)
 ```
 
-- **76.4% of Fauquier's employed residents commute out** — just 8,266 of the county's 35,028 employed residents work in Fauquier itself. Separately, **only 35.4% of jobs located in Fauquier are filled by county residents** (8,266 of 23,349 Fauquier jobs) — two measures of the same bedroom-community pattern.
-- The largest outbound flows run east into the D.C. job market: **~8,200 to Fairfax, ~5,400 to Prince William, ~3,000 to Loudoun**.
-- Inbound commuting is the mirror image but smaller — the top in-commuter origins are **Culpeper (~2,400), Prince William (~2,300), and Fairfax (~1,300)** — filling local jobs Fauquier residents don't.
+Inbound commuting is the mirror image, but comparatively smaller for Fauquier. The top in-commuter origins are from Culpeper with 2,400 workers incoming daily, followed by Prince William with 2,300, and Fairfax at 1,300, filling local jobs Fauquier residents don't. The local government officials, teachers, nurses, and gas station attendants are typically driving in.
+
+A large share of Fauquier's working residents, 37%, commute 45 minutes or more daily. This is more than double Virginia's rate of those who commute that long - 18%. This is a direct consequence of the out-commuting pattern outlined in @fig-commute-out.
+
+Long commutes are a regional exurban trait: Culpeper has about 37% of its commuters traveling 45 minutes or more. Prince William looks similar at 36%, while inner-suburb Loudoun has lower rates of long commutes (24%).
 
 ```{r}
 #| label: fig-traveltime
@@ -481,15 +508,9 @@ ggplot(tt, aes(share, place, fill = is_fauq)) +
   theme_hda(flip_gridlines = TRUE)
 ```
 
-- **37% of Fauquier's workers commute 45 minutes or more** — more than double Virginia's 18% — a direct consequence of the out-commuting pattern in @fig-commute-out.
-- Long commutes are a **regional exurban trait**: Culpeper (37%) and Prince William (36%) look similar, while inner-suburb Loudoun (24%) is lower.
-- Within the county, **Bealeton commuters travel farthest (39%)** and Warrenton residents least (31%), reflecting Warrenton's greater share of local, in-town jobs.
+Within the county, Bealeton commuters travel the farthest, with 39% of commuters traveling 45 minutes or more. Only 31% of Warrenton residents travel that long for work, reflecting Warrenton's greater share of local, in-town jobs, as well as proximity to transportation.
 
-## What the interviews said vs. what the data shows
-
-::: {.callout-important}
-## Interview validation
-- **"Fauquier is a bedroom community — people live here and work elsewhere."** *Confirmed.* 76.4% of employed residents commute out of the county, with ~8,200 going to Fairfax alone; only 35.4% of local jobs are filled by county residents; and 37% of workers travel 45+ minutes (@fig-commute-out, @fig-traveltime).
-- **"Higher-paying employers have been pushed out; what's left pays less."** *Partly confirmed, with nuance.* Fauquier's wage base sits below high-wage Loudoun and its largest sectors (health care, retail) pay modestly — but wage *growth* has matched neighbors, so the issue is the *mix* of jobs, not falling pay (@fig-wages).
-- **Town contrast (required spotlight):** Warrenton and Bealeton are demographically opposite — Warrenton older, more single-person and renter households, and lower-income; Bealeton younger, family-heavy, and higher-income (@fig-households, @fig-income-dist). Affordability pressure and the demographic story both play out differently in the two places.
+::: {.callout-tip}
+## Town contrast: Warrenton and Bealeton
+**Warrenton and Bealeton are demographically opposite** — Warrenton is older, and has more single-person and renter households, paired with lower incomes. Bealeton is younger and family-heavy with higher income (@fig-households, @fig-income-dist). **Affordability pressure** and the **demographic story** both play out differently in the two places.
 :::

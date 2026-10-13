@@ -1,7 +1,7 @@
 # The Rental Market {#sec-market-rental}
 
 <!-- Purpose: rental-market dynamics — who rents, what they pay, the professional apartment market, FMRs, and the assisted-inventory preservation picture (PLAN.md §7 Ch 3b).
-     Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
+     Narrative: prose migrated from the team Google Doc draft (Oct 2026); numbers audited against the data. -->
 
 ```{r}
 #| label: setup
@@ -146,9 +146,14 @@ ggplot(f1, aes(share, geo)) +
   add_zero_line("x")
 ```
 
-- **Fauquier is overwhelmingly an ownership county** — only about `r label_percent(accuracy = 1)(rshare_county)` of households rent, below Virginia's `r label_percent(accuracy = 1)(rshare_va)`.
-- **Warrenton is the exception:** roughly `r label_percent(accuracy = 1)(rshare_warr)` of the town's `r format(round(b3$estimate[b3$GEOID=="5183136" & str_ends(b3$variable,"001")]), big.mark=",")` households rent — nearly double the county rate and the county's principal rental submarket.
-- **Bealeton tracks the county** (~`r label_percent(accuracy = 1)(rshare_beal)` renter); its renter count is small and carries Medium reliability, so it is read as a count, not a precise rate.
+Fauquier is overwhelmingly an ownership county: only about `r label_percent(accuracy = 1)(rshare_county)` of households rent. For context, `r label_percent(accuracy = 1)(rshare_va)` of Virginia's households are renters. Realtors, employers, and local government interviewees highlighted this, as well. Folks come to Fauquier to buy, and there is a limited rental market.
+
+Warrenton is the exception: roughly `r label_percent(accuracy = 1)(rshare_warr)` of the town's `r format(round(b3$estimate[b3$GEOID=="5183136" & str_ends(b3$variable,"001")]), big.mark=",")` households rent, nearly double the county rate. Warrenton represents the county's principal rental submarket. Bealeton, on the other hand, tracks with the county at about `r label_percent(accuracy = 1)(rshare_beal)` of its households renting.
+
+::: {.callout-warning}
+## Reliability
+Bealeton's renter count is small and carries Medium reliability, so it is read as a count, not a precise rate.
+:::
 
 ## What renters pay
 
@@ -199,9 +204,11 @@ ggplot() +
   theme(plot.subtitle = element_markdown())
 ```
 
-- The county's **median gross rent rose from $`r format(rent_13, big.mark=",")` (2013) to $`r format(rent_24, big.mark=",")` (2024)** — **+`r label_percent(accuracy=1)(rent_growth_nom)` nominal, +`r label_percent(accuracy=1)(rent_growth_real)` in real terms** — so renters have lost ground even after inflation.
-- **CoStar professional asking rents (~$`r format(round(cs_rent_adj), big.mark=",")`, adjusted) sit at or just above the ACS median**, consistent with a small stock of newer market-rate apartments pricing above the broader rental pool. This report uses the **ACS median gross rent** as its affordability benchmark (@sec-gaps) — it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
-- **Town rents track the county:** all Warrenton and Bealeton rent cells are High reliability, and both towns' 2024 medians sit within roughly $50–$200 of the county figure.
+The county's median gross rent, meaning all housing costs including lease rent and utilities, rose from $`r format(rent_13, big.mark=",")` in 2013 to $`r format(rent_24, big.mark=",")` in 2024, adding `r label_percent(accuracy=1)(rent_growth_nom)` in nominal, and +`r label_percent(accuracy=1)(rent_growth_real)` in real terms. Renters have lost ground even after inflation.
+
+In spring 2026, an interviewee shared that, "Only about 2 of 19 available rentals were priced under $1,700." CoStar professional asking rents, near $`r format(round(cs_rent_adj), big.mark=",")` (adjusted), sit at or just above the ACS median. This is consistent with a small stock of newer market-rate apartments pricing above the broader rental pool. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
+
+Town rents track the county: Warrenton and Bealeton median 2024 rent (High reliability) sits roughly within $50 to $200 of the county figure.
 
 ## Where the rental stock prices
 
@@ -258,9 +265,14 @@ ggplot(rd, aes(band, share, fill = geo)) +
   theme(legend.position = "top", axis.text.x = element_text(size = 8))
 ```
 
-- The **modal rent band is $1,500–1,999** (about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="$1,500–1,999"])` of county cash-rent renters); combined with the bands above it, **most renters now pay $1,500 or more**.
-- **Sub-$1,000 rentals are scarce** — only about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="<$1,000"])` of the county's renters — underscoring how little of the stock is affordable to lower-income households.
-- Place-level distributions are noisy; only the higher-count Warrenton bands survive the reliability screen, and they mirror the county's upward concentration.
+The modal rent band in the county is $1,500–1,999 and represents about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="$1,500–1,999"])` of county cash-rent renters. Combined with the bands above it, most renters now pay $1,500 or more. Under $1,000 monthly rentals are scarce, representing only about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="<$1,000"])` of the county's renters, underscoring how little of the stock is affordable to lower-income households.
+
+In 2025, the MLS recorded that only `r rent_u1700` of `r rent_n_2025` closed leases were under $1,700, about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`. These data identify a median county lease of $`r format(rent_median, big.mark=",")` monthly, consistent with the Greater Piedmont REALTOR's March 2026 study. This leaves a somewhat larger affordable share than the single snapshot of available rentals suggested, but the story is the same: sub-$1,700 rentals are scarce, and most of the rental market prices well above that (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median gross rent ($`r format(rent_24, big.mark=",")`) because MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
+
+::: {.callout-warning}
+## Data note: place-level distributions
+Place-level distributions are noisy; only the higher-count Warrenton bands survive the reliability screen, and they mirror the county's upward concentration.
+:::
 
 ## The professional apartment market
 
@@ -298,9 +310,9 @@ ggplot(cs_long, aes(date, value, color = series)) +
   theme(legend.position = "top")
 ```
 
-- The professional market is **tiny: about `r cs_units` market-rate units across `r cs_props` CoStar-tracked apartment properties** (roughly `r cs_props_total` multifamily properties appear in the broader CoStar inventory).
-- **Asking rent reached ~$`r format(round(cs_rent_nom), big.mark=",")`/unit (nominal, latest quarter)**; in constant 2025 dollars asking rents are roughly flat near **$`r format(round(cs_rent_adj), big.mark=",")`** — professional operators have kept pace with, not outrun, inflation.
-- **Vacancy is very low** — recently about `r label_percent(accuracy=0.1, scale=1)(cs_vac_recent)`, and under ~3% for most of the past decade — a persistently tight market with little slack.
+The professional rental market is tiny throughout the county. Roughly `r cs_props_total` multifamily properties appear in the broader CoStar inventory and there are about `r cs_units` market-rate units across `r cs_props` CoStar-tracked apartment properties. Asking rent in this professional apartment market reached roughly $`r format(round(cs_rent_nom), big.mark=",")` per unit in nominal terms (latest quarter). In constant 2025 dollars, asking rents are roughly flat, also near $`r format(round(cs_rent_adj), big.mark=",")`. Professional operators have kept pace with, not outrun, inflation in the local rental market.
+
+Fauquier has a persistently tight rental market with little slack. Vacancy for these apartments is very low, recently about `r label_percent(accuracy=0.1, scale=1)(cs_vac_recent)`, and under ~3% for most of the past decade.
 
 ## Rental stock by structure type
 
@@ -329,9 +341,11 @@ ggplot(rs, aes(share, cat)) +
   add_zero_line("x")
 ```
 
-- **Single-family homes are the backbone of the rental market:** detached and attached houses together are about **`r label_percent(accuracy=1)(sf_share)` of all renter-occupied units** — single-family detached alone is ~`r label_percent(accuracy=1)(r_struct$share[r_struct$cat=="Single-family detached"])`.
-- **Purpose-built apartments (5+ units) are only ~`r label_percent(accuracy=1)(apt_share)` of rentals** — the mirror image of @fig-costar's thin professional market, and why so much of the rental supply behaves like the for-sale market.
-- The reliance on scattered single-family rentals means renters compete for the same limited housing stock as buyers; place-level structure detail is too small to size reliably, so this is shown county-wide.
+Single-family homes are the backbone of the county's rental market, about `r label_percent(accuracy=1)(sf_share)` of all renter-occupied units (attached and detached). Single-family detached alone is roughly `r label_percent(accuracy=1)(r_struct$share[r_struct$cat=="Single-family detached"])` of the rental market.
+
+Purpose-built apartments (5+ units) are only about `r label_percent(accuracy=1)(apt_share)` of rentals, the mirror image of @fig-costar's thin professional market. This could be why so much of the rental supply behaves like the for-sale market: the reliance on scattered single-family rentals means renters compete for the same limited housing stock as buyers.[^rental-structure]
+
+[^rental-structure]: Place-level structure detail is too small to size reliably, so this is shown county-wide.
 
 ## Fair Market Rents vs. actual rents
 
@@ -378,9 +392,11 @@ ggplot(f6, aes(bedrooms)) +
   theme(legend.position = "none", plot.subtitle = element_markdown())
 ```
 
-- Because Fauquier is folded into the high-cost **Washington, D.C. metro FMR area, the county's 2BR FMR ($`r format(fmr_2br, big.mark=",")`) sits far above the actual ACS median 2BR rent ($`r format(acs_2br, big.mark=",")`)** — a gap of roughly $`r format(round((fmr_2br-acs_2br)/50)*50, big.mark=",")`.
-- **Small Area FMRs pull the benchmark toward local reality** but still land above the ACS median at every bedroom size: the town-ZIP 2BR SAFMR ranges $`r format(min(fmr$safmr$safmr_2br), big.mark=",")`–$`r format(max(fmr$safmr$safmr_2br), big.mark=",")`, with Bealeton (22712) lowest.
-- The practical implication is favorable for voucher holders — generous payment standards — but it means **FMRs overstate the going market and are a poor gauge of local affordability**; the ACS medians (@fig-rent-trend) are the better yardstick.
+Because Fauquier is folded into the high-cost Washington, D.C. metro FMR area, the county's two bedroom (2BR) FMR at $`r format(fmr_2br, big.mark=",")` sits far above the actual ACS median 2BR rent of $`r format(acs_2br, big.mark=",")`. This is a gap of roughly $`r format(round((fmr_2br-acs_2br)/50)*50, big.mark=",")`.
+
+Small Area FMRs (SAFMRs) pull the benchmark towards what locals actually experience, described as a high cost and scarce rental environment. SAFMRs still land above the ACS median rent at every bedroom size, with the Warrenton and Bealeton 2BR SAFMR ranges from $`r format(min(fmr$safmr$safmr_2br), big.mark=",")` to $`r format(max(fmr$safmr$safmr_2br), big.mark=",")`, with Bealeton (22712) at the lowest.
+
+The practical implication in the differences in FMR and ACS rents is ultimately favorable for voucher holders, with generous payment standards, something an interviewee pointed out, as well. However, this means FMRs overstate the going asking rental market and can be a poor gauge of local affordability. The ACS medians (@fig-rent-trend) are the better yardstick for rooting rents into local reality.
 
 ## Assisted inventory & preservation risk
 
@@ -417,21 +433,11 @@ nhpd_tbl |>
   )
 ```
 
-- Fauquier's assisted stock is **`r format(nhpd_assist, big.mark=",")` assisted units across `r nhpd_props` federally supported properties** — a small cushion against the market rents documented above.
-- **Preservation risk is real and near-term:** the soonest subsidy expiration is `r format(nhpd_soonest, "%B %Y")`, and **`r nhpd_10yr` of the `r nhpd_props` properties** have a subsidy expiring by 2036 — the window in which preservation decisions must be made.
-- The **program mix is dominated by Low-Income Housing Tax Credit** deals, with a handful of older project-based Section 8, PRAC/811 (elderly/disabled project rental assistance), and USDA Rural Housing (515) properties whose subsidies are the closest to expiring.
+Fauquier's assisted housing rental stock consists of `r format(nhpd_assist, big.mark=",")` units across `r nhpd_props` federally supported properties. This is a small cushion against the market rents documented above. The program mix locally is dominated by Low-Income Housing Tax Credit deals, with a handful of older project-based Section 8, PRAC/811 (elderly/disabled project rental assistance), and USDA Rural Housing (515) properties whose subsidies are the closest to expiring.
 
-::: {.callout-note}
+Rental affordability preservation at these properties is a real risk and near-term, with the soonest subsidy expiration in `r format(nhpd_soonest, "%B %Y")`. Additionally, `r nhpd_10yr` of the `r nhpd_props` properties have a subsidy expiring by 2036, the window in which preservation decisions must be made. As assistance units are aging, the quality of these rentals throughout the county is likely lower comparatively to the other aging single family rentals.
+
+::: {.callout-tip}
 ## Town spotlight — assisted units concentrate in and around Warrenton
-Most of the county's assisted properties sit in **Warrenton** (and nearby Remington), the same submarket that carries the county's highest renter share (@fig-renter-share). Bealeton has little to no dedicated assisted inventory in the NHPD record — so the affordable options there are effectively limited to whatever scattered single-family and market-rate units price low, which @fig-rent-distribution shows is a shrinking share.
-:::
-
-## What the interviews said vs. what the data shows
-
-::: {.callout-important}
-## Interview validation
-
-- **"Only about 2 of 19 available rentals were priced under $1,700 (spring 2026)."** *Confirmed and nuanced.* In 2025 the MLS recorded **`r rent_u1700` of `r rent_n_2025` closed leases under $1,700** (about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`), with a **median lease of $`r format(rent_median, big.mark=",")`** — a somewhat larger affordable share than the single snapshot suggested, but the same story: sub-$1,700 rentals are scarce and most of the market prices well above (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median rent — expected, since MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
-- **"There aren't enough apartments — most rentals are just houses."** *Confirmed.* Purpose-built apartments (5+ units) are only ~`r label_percent(accuracy=1)(apt_share)` of the rental stock and the professional market spans just `r cs_props` tracked properties (@fig-rental-structure, @fig-costar); single-family homes carry ~`r label_percent(accuracy=1)(sf_share)` of all rentals.
-- **"Affordable, subsidized units are limited and aging."** *Confirmed and nuanced.* Only `r format(nhpd_assist, big.mark=",")` assisted units exist county-wide (@tbl-nhpd), concentrated around Warrenton, and `r nhpd_10yr` of `r nhpd_props` assisted properties face subsidy expiration within about a decade — a preservation challenge layered on top of an already thin affordable supply.
+**Most of the county's assisted properties sit in Warrenton** (and nearby Remington), the same submarket that carries the county's highest renter share (@fig-renter-share). **Bealeton has little to no dedicated assisted inventory** in the NHPD record, so the affordable options there are effectively limited to whatever scattered single-family and market-rate units price low, which @fig-rent-distribution **shows is a shrinking share**.
 :::
