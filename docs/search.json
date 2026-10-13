@@ -14,7 +14,7 @@
     "href": "exec-sum.html",
     "title": "Executive summary",
     "section": "",
-    "text": "Skeleton only. Each bullet is the single headline finding from its chapter, with the key number inline and a cross-reference to the figure that carries it. Connecting prose, framing, and recommendations are written by hand.\n\nThe county builds one thing. Single-family detached homes are 85.1% of Fauquier’s housing stock (Virginia: 61.3%), and the 266 permits/year issued over 2020–2025 were almost entirely single-family — 2–4 unit “missing middle” production is effectively zero across the full 2000–2025 record (1  Current Inventory & Recent Production Trends, Figure 1.2, Figure 1.5).\nFauquier is a bedroom community with a lower-wage local job base. 76.4% of employed residents (26,762 of 35,028) commute out of the county, and the average local job pays $68,000 — a county median household income of $130,189 built on wages earned elsewhere (2  Demographic Shifts & Socioeconomic Factors, Figure 2.10, Figure 2.9).\nThe entry-level for-sale market has disappeared. The median sale price reached $650,000 in 2025, and just 3 of 218 active listings were priced under $350,000 — while monthly payments on the median home rose +152% since 2016 against a +81% price increase and +45% income growth (3  The For-Sale Market, Figure 3.4, Figure 3.3).\nRentals are mostly houses, and the subsidized stock is thin and aging. Single-family homes carry ~68% of all renter-occupied units and purpose-built apartments only ~20%; the county’s entire assisted inventory is 874 units across 13 properties, 8 of which have a subsidy expiring by 2036 (4  The Rental Market, Figure 4.5, Table 4.1).\nBurden is concentrated at the bottom, and the gap is structural. 40% of renters are cost-burdened versus 21% of owners; every AMI band runs a rental deficit for a net shortfall of ~3,315 units, and only 8 of 218 for-sale listings are affordable below 100% AMI — buying the median home requires $190,586, about $60,000 above the actual median income (5  Affordability Gaps, Figure 5.4, Figure 5.5, Figure 5.6).\nOlder adults are the most exposed group already in place. 32% of the county’s 9,173 senior households (2,922) are older adults living alone, and 41% of elderly renter households are cost-burdened — against a rental market with little dedicated senior product (6  Vulnerable Populations, Figure 6.1, Figure 6.3).\nProduction keeps pace with growth but not with need. The county is projected to add 6,795 households by 2050, requiring ~269 units/year — essentially level with the 266/year recent pace — but adding today’s affordability backlog and replacement of aging stock lifts full-scope need to 12,457 units (7  Projected Housing Needs, Figure 7.3, Figure 7.5).\nMeeting that need is not possible under current zoning. Remaining by-right capacity inside the eight service districts is plausibly 4,000–4,500 units today (from an 8,381-unit 2010 Comprehensive Plan baseline, net of ~15 years of permitting) — below even the ~7,000-unit headline need, forcing a choice among expanding service districts, increasing density, accepting unmet need, or absorbing rural spillover (8  Conclusions).",
+    "text": "Skeleton only. Each bullet is the single headline finding from its chapter, with the key number inline and a cross-reference to the figure that carries it. Connecting prose, framing, and recommendations are written by hand.\n\nThe county builds one thing. Single-family detached homes are 85.1% of Fauquier’s housing stock (Virginia: 61.3%), and the 266 permits/year issued over 2020–2025 were almost entirely single-family — 2–4 unit “missing middle” production is effectively zero across the full 2000–2025 record (1  Current Inventory and Production Trends, Figure 1.2, Figure 1.5).\nFauquier is a bedroom community with a lower-wage local job base. 76.4% of employed residents (26,762 of 35,028) commute out of the county, and the average local job pays $68,000 — a county median household income of $130,189 built on wages earned elsewhere (2  Demographic Shifts & Socioeconomic Factors, Figure 2.10, Figure 2.9).\nThe entry-level for-sale market has disappeared. The median sale price reached $650,000 in 2025, and just 3 of 218 active listings were priced under $350,000 — while monthly payments on the median home rose +152% since 2016 against a +81% price increase and +45% income growth (3  The For-Sale Market, Figure 3.4, Figure 3.3).\nRentals are mostly houses, and the subsidized stock is thin and aging. Single-family homes carry ~68% of all renter-occupied units and purpose-built apartments only ~20%; the county’s entire assisted inventory is 874 units across 13 properties, 8 of which have a subsidy expiring by 2036 (4  The Rental Market, Figure 4.5, Table 4.1).\nBurden is concentrated at the bottom, and the gap is structural. 40% of renters are cost-burdened versus 21% of owners; every AMI band runs a rental deficit for a net shortfall of ~3,315 units, and only 8 of 218 for-sale listings are affordable below 100% AMI — buying the median home requires $190,586, about $60,000 above the actual median income (5  Affordability Gaps, Figure 5.4, Figure 5.5, Figure 5.6).\nOlder adults are the most exposed group already in place. 32% of the county’s 9,173 senior households (2,922) are older adults living alone, and 41% of elderly renter households are cost-burdened — against a rental market with little dedicated senior product (6  Vulnerable Populations, Figure 6.1, Figure 6.3).\nProduction keeps pace with growth but not with need. The county is projected to add 6,795 households by 2050, requiring ~269 units/year — essentially level with the 266/year recent pace — but adding today’s affordability backlog and replacement of aging stock lifts full-scope need to 12,457 units (7  Projected Housing Needs, Figure 7.3, Figure 7.5).\nMeeting that need is not possible under current zoning. Remaining by-right capacity inside the eight service districts is plausibly 4,000–4,500 units today (from an 8,381-unit 2010 Comprehensive Plan baseline, net of ~15 years of permitting) — below even the ~7,000-unit headline need, forcing a choice among expanding service districts, increasing density, accepting unmet need, or absorbing rural spillover (8  Conclusions).",
     "crumbs": [
       "Executive summary"
     ]
@@ -22,91 +22,121 @@
   {
     "objectID": "inventory.html",
     "href": "inventory.html",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "",
     "text": "1.1 Study area\nFigure 1.1: Two small places anchor a large, rural county",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
     "objectID": "inventory.html#study-area",
     "href": "inventory.html#study-area",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "",
     "text": "Fauquier County covers roughly 648 square miles — a large, predominantly rural jurisdiction between the Piedmont and the outer Washington, D.C. suburbs.\nThe study zooms in on the county’s two population centers: the Town of Warrenton (the county seat, ~10,000 residents) near the center, and the unincorporated Bealeton CDP (~5,000) to the south along US-17.\nRoughly 90% of the county’s land lies outside its eight designated service districts, where public water and sewer — and therefore most new housing — are concentrated (see the land-constraint callout below).",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
     "objectID": "inventory.html#housing-stock-composition",
     "href": "inventory.html#housing-stock-composition",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "1.2 Housing stock composition",
     "text": "1.2 Housing stock composition\n\n\n\n\n\n\n\n\nFigure 1.2: Fauquier County much more suburban than rest of Virginia\n\n\n\n\n\n\nSingle-family detached homes are 85.1% of Fauquier’s housing stock — essentially matching the GP study’s 84.8% and far above Virginia’s 61.3%.\nThe county has proportionally little multifamily: units in 5+ structures are about 3% of the stock, versus roughly 18% statewide.\nBoth towns are more multifamily than the county overall — Warrenton in particular carries a larger share of attached and mid-size multifamily units — but the small place-level counts are statistically noisy (see the reliability caveat below).\n\n\n\n\n\nTable 1.1: Town housing units by structure type, with reliability (counts, not rates)\n\n\n\n\n \n  \n    Structure type \n    Warrenton \n    Bealeton \n  \n \n\n  \n    Single-family detached \n    1,110 (High) \n    2,096 (High) \n  \n  \n    Single-family attached \n    141 (Medium) \n    874 (Medium) \n  \n  \n    2–4 units \n    — \n    335 (Medium) \n  \n  \n    5–19 units \n    287 (Medium) \n    368 (Medium) \n  \n  \n    20+ units \n    — \n    287 (Medium) \n  \n  \n    Mobile home / other \n    — \n    — \n  \n\n\n Source: U.S. Census Bureau, 2020-2024 American Community Survey 5-year estimates, Table B25024. Cells with a coefficient of variation above 30% (Low reliability) are suppressed (—). High = CV ≤ 15%, Medium = CV 15–30%.\n\n\n\n\n\n\n\n\nOnly single-family detached counts are reliable (High) in both towns; most small-structure categories carry CV &gt; 30% and are suppressed — the towns are too small for ACS to size their multifamily and manufactured stock precisely.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
-    "objectID": "inventory.html#age-of-the-housing-stock",
-    "href": "inventory.html#age-of-the-housing-stock",
-    "title": "1  Current Inventory & Recent Production Trends",
-    "section": "1.3 Age of the housing stock",
-    "text": "1.3 Age of the housing stock\n\n\n\n\n\n\n\n\nFigure 1.3: Owner-occupied homes skew newer; the rental stock is older\n\n\n\n\n\n\nThe county’s median year built is 1987, and 56% of all homes were built before 1990 — an aging stock overall.\nOwned homes skew newer: 34% were built in 2000 or later, reflecting the county’s for-sale subdivision growth.\nThe rental stock skews older: about 32% of renter-occupied homes predate 1960, versus 12% of owner-occupied homes — the opposite of a “newer rental” pattern.\n\n\n\n\n\n\n\nNoteMedian year built — the towns\n\n\n\nWarrenton’s median year built (1987) matches the county, but Bealeton’s stock is meaningfully newer (median 1998) — consistent with its role as a recent growth node along US-17. Both town medians are High-reliability estimates.",
+    "objectID": "inventory.html#age-of-housing-stock",
+    "href": "inventory.html#age-of-housing-stock",
+    "title": "1  Current Inventory and Production Trends",
+    "section": "1.3 Age of housing stock",
+    "text": "1.3 Age of housing stock\n\n\n\n\n\n\n\n\nFigure 1.3: Owner-occupied homes skew newer; rental stock is older\n\n\n\n\n\n\nThe county’s median year built is 1987, and 56% of all homes were built before 1990 — an aging stock overall.\nOwned homes skew newer: 34% were built in 2000 or later, reflecting the county’s for-sale subdivision growth.\nThe rental stock skews older: about 32% of renter-occupied homes predate 1960, versus 12% of owner-occupied homes — the opposite of a “newer rental” pattern.\n\n\n\n\n\n\n\nNoteAge of housing in Warrenton and Bealeton\n\n\n\nWarrenton’s median year built (1987) matches the county, but Bealeton’s stock is meaningfully newer (median 1998) — consistent with its role as a recent growth node along US-17.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
     "objectID": "inventory.html#tenure",
     "href": "inventory.html#tenure",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "1.4 Tenure",
-    "text": "1.4 Tenure\n\n\n\n\n\n\n\n\nFigure 1.4: Warrenton’s homeownership rate consistently trails the county and Bealeton\n\n\n\n\n\n\nFauquier’s owner-occupied share has held in the high-70s to 80% across all four ACS estimates (80.1% in 2013 to 78.8% in 2024), and Bealeton tracks closely behind (77.8% to 78.7%, dipping to 71.1% in 2017).\nWarrenton is a consistent outlier, not just a 2024 snapshot: its owner-occupied share has held in a narrow 61–63% band across all four estimates — roughly 15 to 17 points below the county and Bealeton in every single year.\nReliability: every Warrenton cell is High reliability; Bealeton’s renter counts are Medium (CV 16–22%) in 2013, 2021, and 2024, so year-to-year wobble in its line is partly sampling noise rather than real change.",
+    "text": "1.4 Tenure\n\n\n\n\n\n\n\n\nFigure 1.4: Warrenton’s homeownership rate consistently trails the county and Bealeton\n\n\n\n\n\n\nFauquier’s owner-occupied share has held in the high-70s to 80% across all four ACS estimates (80.1% in 2013 to 78.8% in 2024), and Bealeton tracks closely behind (77.8% to 78.7%, dipping to 71.1% in 2017).\nWarrenton is a consistent outlier: its owner-occupied share has held in a narrow 61–63% band across all four estimates — roughly 15 to 17 points below the county and Bealeton in every single year.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
     "objectID": "inventory.html#residential-construction",
     "href": "inventory.html#residential-construction",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "1.5 Residential construction",
-    "text": "1.5 Residential construction\n\n\n\n\n\n\n\n\nFigure 1.5: Nearly every home permitted since 2000 has been single-family\n\n\n\n\n\n\nMissing middle is virtually nonexistent: just 10 total 2–4-unit permits were issued across the entire 2000–2025 period.\nMultifamily (5+) is rare and episodic — notable only in a few years (e.g. ~108 units in 2001, 48 in 2018).\nPermitting has averaged 266 units/year over 2020–2025, essentially all single-family (above the GP study’s earlier 241/yr benchmark).\nTown-level permits are not separable: the Census place-level BPS file timed out on retrieval (HTTP 524), so this figure is county-wide; Bealeton is unincorporated and issues through the county regardless.",
+    "text": "1.5 Residential construction\n\n\n\n\n\n\n\n\nFigure 1.5: Nearly every home permitted since 2000 has been single-family\n\n\n\n\n\n\nMissing middle is virtually nonexistent: just 10 total 2–4-unit permits were issued across the entire 2000–2025 period.\nMultifamily (5+) is rare and episodic — notable only in a few years (e.g. ~108 units in 2001, 48 in 2018).\nPermitting has averaged 266 units/year over 2020–2025, essentially all single-family.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
     "objectID": "inventory.html#new-construction-vs.-resale",
     "href": "inventory.html#new-construction-vs.-resale",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "1.6 New construction vs. resale",
-    "text": "1.6 New construction vs. resale\n\n\n\n\n\n\n\n\nFigure 1.6: New homes are larger and pricier than resales — but on smaller lots\n\n\n\n\n\n\nNew construction sold for a higher median price in 2025 (~$734,000 vs ~$635,000 for resales) and was larger (~2,854 vs ~2,484 sq ft).\nBut new homes sat on far smaller lots (~0.23 vs ~1.0 acre) — and new-construction lot sizes have shrunk sharply since 2022 (median ~1.68 acres then), as production has concentrated in service-district subdivisions.\nThe signal for the “missing middle” theme is not lot size but product type: new supply is larger detached houses, with no starter-scale or small-lot infill product entering the market.",
+    "text": "1.6 New construction vs. resale\n\n\n\n\n\n\n\n\nFigure 1.6: New homes are larger and pricier than resales — but on smaller lots\n\n\n\n\n\n\nNew construction sold for a higher median price in 2025 (~$734,000 vs ~$635,000 for resales) and was larger (~2,854 vs ~2,484 sq ft).\nBut new homes sat on far smaller lots (~0.23 vs ~1.0 acre) — and new-construction lot sizes have shrunk sharply since 2022 (median ~1.68 acres then), as production has concentrated in service-district subdivisions.\nThe signal for the “missing middle” theme is not lot size but product type: new supply is still larger detached houses, with no starter-scale or small-lot infill product entering the market.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
-    "objectID": "inventory.html#vacancy-manufactured-housing-land-constraints",
-    "href": "inventory.html#vacancy-manufactured-housing-land-constraints",
-    "title": "1  Current Inventory & Recent Production Trends",
-    "section": "1.7 Vacancy, manufactured housing & land constraints",
-    "text": "1.7 Vacancy, manufactured housing & land constraints\n\n\n\n\n\n\nNoteVacancy: a very tight market\n\n\n\nFauquier’s overall vacancy rate is about 6.6% (1,901 of 28,621 units), but most of that is not available housing: 550 units are seasonal/recreational and 883 are “other vacant” (held off-market). Only about 1.2% of all units are actually available — for rent (174) or for sale (178) — a sign of an extremely tight market. Source: ACS 2020–2024, Table B25004.\n\n\n\n\n\n\n\n\nNoteTown spotlight — Bealeton and manufactured housing\n\n\n\nInterviews flagged manufactured housing as a Bealeton-area concern, but the ACS place estimate cannot quantify it: Bealeton’s recorded mobile-home count is 0 with a coefficient of variation too high to use. County-wide, ACS records about 470 mobile homes (1.6% of the stock, Medium reliability). The manufactured-housing concentration described around Bealeton is real on the ground but falls below what ACS 5-year place estimates can reliably size — a data limitation, presented as counts, not rates. Source: ACS 2020–2024, Table B25024.\n\n\n\n\n\n\n\n\nNoteLand constraint — where housing can go\n\n\n\nFauquier’s Comprehensive Plan channels growth into eight service districts:\n\n~90% of the county’s land is rural, outside those districts and largely unavailable for dense development.\nAbout 8,381 units of unbuilt build-out capacity remain within the service districts.\n97% of permits issued 2001–2018 were single-family detached, reinforcing the low-density pattern.\n\nSource: Fauquier County Comprehensive Plan (Ch. 1 p. 11, Ch. 3 pp. 7–11).",
+    "objectID": "inventory.html#vacancy-manufactured-housing-and-land-constraints",
+    "href": "inventory.html#vacancy-manufactured-housing-and-land-constraints",
+    "title": "1  Current Inventory and Production Trends",
+    "section": "1.7 Vacancy, manufactured housing, and land constraints",
+    "text": "1.7 Vacancy, manufactured housing, and land constraints\n\nLow vacancy, few available units\nFauquier’s overall vacancy rate is about 6.6% (1,901 of 28,621 units), but most of that is not available housing: 550 units are seasonal/recreational and 883 are “other vacant” (held off-market). Only about 1.2% of all units are actually available — for rent (174) or for sale (178) — a sign of an extremely tight market.\nSource: ACS 2020–2024, Table B25004.\n\n\nManufactured homes concentration\nInterviews flagged manufactured housing as a concern in the Bealeton area. ACS estimates show no manufactured home units within the CDP itself. However, Marsh Run Manufactured Home Community sits just southeast of the CDP on Route 17 and contains approximately 350 units.\nNo other manufactured home communities could be identified in the county. Marsh Run therefore likely accounts for most of the 470 manufactured homes the ACS estimates for Fauquier County.\nSource: ACS 2020–2024, Table B25024.\n\n\nLand constraint — where housing can go\nFauquier’s Comprehensive Plan channels growth into eight service districts:\n\n~90% of the county’s land is rural, outside those districts and largely unavailable for dense development.\nAbout 8,381 units of unbuilt build-out capacity remain within the service districts.\n97% of permits issued 2001–2018 were single-family detached, reinforcing the low-density pattern.\n\nSource: Fauquier County Comprehensive Plan (Ch. 1 p. 11, Ch. 3 pp. 7–11).",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
+    ]
+  },
+  {
+    "objectID": "inventory.html#low-vacancy-few-available-units",
+    "href": "inventory.html#low-vacancy-few-available-units",
+    "title": "1  Current Inventory and Production Trends",
+    "section": "1.8 Low vacancy, few available units",
+    "text": "1.8 Low vacancy, few available units\nFauquier’s overall vacancy rate is about 6.6% (1,901 of 28,621 units), but most of that is not available housing: 550 units are seasonal/recreational and 883 are “other vacant” (held off-market). Only about 1.2% of all units are actually available — for rent (174) or for sale (178) — a sign of an extremely tight market.\nSource: ACS 2020–2024, Table B25004.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
+    ]
+  },
+  {
+    "objectID": "inventory.html#manufactured-homes-concentration",
+    "href": "inventory.html#manufactured-homes-concentration",
+    "title": "1  Current Inventory and Production Trends",
+    "section": "1.9 Manufactured homes concentration",
+    "text": "1.9 Manufactured homes concentration\nInterviews flagged manufactured housing as a concern in the Bealeton area. ACS estimates show no manufactured home units within the CDP itself. However, Marsh Run Manufactured Home Community sits just southeast of the CDP on Route 17 and contains approximately 350 units.\nNo other manufactured home communities could be identified in the county. Marsh Run therefore likely accounts for most of the 470 manufactured homes the ACS estimates for Fauquier County.\nSource: ACS 2020–2024, Table B25024.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
+    ]
+  },
+  {
+    "objectID": "inventory.html#land-constraint-where-housing-can-go",
+    "href": "inventory.html#land-constraint-where-housing-can-go",
+    "title": "1  Current Inventory and Production Trends",
+    "section": "1.10 Land constraint — where housing can go",
+    "text": "1.10 Land constraint — where housing can go\nFauquier’s Comprehensive Plan channels growth into eight service districts:\n\n~90% of the county’s land is rural, outside those districts and largely unavailable for dense development.\nAbout 8,381 units of unbuilt build-out capacity remain within the service districts.\n97% of permits issued 2001–2018 were single-family detached, reinforcing the low-density pattern.\n\nSource: Fauquier County Comprehensive Plan (Ch. 1 p. 11, Ch. 3 pp. 7–11).",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {
     "objectID": "inventory.html#what-the-interviews-said-vs.-what-the-data-shows",
     "href": "inventory.html#what-the-interviews-said-vs.-what-the-data-shows",
-    "title": "1  Current Inventory & Recent Production Trends",
+    "title": "1  Current Inventory and Production Trends",
     "section": "1.8 What the interviews said vs. what the data shows",
-    "text": "1.8 What the interviews said vs. what the data shows\n\n\n\n\n\n\nImportantInterview validation\n\n\n\n\n“Missing middle — only large homes on large lots, no starter product.” Confirmed and nuanced. Permits are ~all single-family (10 missing-middle permits in 25 years); new construction is larger and pricier than resale (Figure 1.6, Figure 1.5). The lot-size story has flipped, though: new homes are now on smaller lots as growth concentrates in service districts — the constraint is product type (no small/attached/starter homes), not lot size.\n“Conservation easements and rural zoning constrain developable land.” Confirmed. ~90% of county land is rural; developable capacity is a finite ~8,381 units inside the service districts (land-constraint callout).\nThe interview claim that only 3 for-sale listings under $350k existed (April 2026) is a market-pricing signal carried in the ownership-market chapter (Chapter 3).",
+    "text": "1.8 What the interviews said vs. what the data shows\n\n\n\n\n\n\nImportantInterview validation\n\n\n\n\n“Missing middle — only large homes on large lots, no starter product.” Confirmed but nuanced. Permits are ~all single-family (10 missing-middle permits in 25 years); new construction is larger and pricier than resale (Figure 1.6, Figure 1.5). The lot-size story has flipped, though: new homes are now on smaller lots as growth concentrates in service districts — the constraint is product type (no small/attached/starter homes), not lot size.\n“Conservation easements and rural zoning constrain developable land.” Confirmed. ~90% of county land is rural; developable capacity is a finite ~8,381 units inside the service districts (land-constraint callout).\nThe interview claim that only 3 for-sale listings under $350k existed (April 2026) is a market-pricing signal carried in the ownership-market chapter (Chapter 3).",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory & Recent Production Trends</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Current Inventory and Production Trends</span>"
     ]
   },
   {

@@ -1,4 +1,4 @@
-# Current Inventory & Recent Production Trends {#sec-inventory}
+# Current Inventory and Production Trends {#sec-inventory}
 
 <!-- Purpose: current housing stock + recent production trends for the study area (PLAN.md §7 Ch 1).
      Narrative rule: takeaway titles + bullet findings + callouts only — no drafted prose. -->
@@ -47,7 +47,7 @@ geo_label <- function(GEOID, geo_type) case_when(
 #| label: fig-studyarea
 #| fig-cap: "Two small places anchor a large, rural county"
 #| fig-alt: "Map of Fauquier County, Virginia shaded blue among its three benchmark neighbors — Loudoun, Prince William, and Culpeper counties, shown faint grey. The Town of Warrenton near the county's center and Bealeton to the south are marked in gold and labeled."
-#| fig-asp: 0.85
+#| fig-asp: 1.2
 
 county_sf <- geo$county |> mutate(is_fauq = GEOID == fauquier)
 place_sf  <- geo$place
@@ -79,7 +79,9 @@ ggplot() +
   theme(
     plot.title = element_text(face = "bold", size = 15),
     plot.subtitle = element_text(size = 11, color = "grey35"),
-    plot.caption = element_text(size = 9, color = "grey45", hjust = 0)
+    plot.caption = element_text(size = 9, color = "grey45", hjust = 0),
+    plot.title.position   = "plot",
+    plot.caption.position = "plot"
   )
 ```
 
@@ -166,11 +168,11 @@ town_struct |>
 
 - Only single-family detached counts are reliable (High) in both towns; most small-structure categories carry CV > 30% and are suppressed — the towns are too small for ACS to size their multifamily and manufactured stock precisely.
 
-## Age of the housing stock
+## Age of housing stock
 
 ```{r}
 #| label: fig-yearbuilt
-#| fig-cap: "Owner-occupied homes skew newer; the rental stock is older"
+#| fig-cap: "Owner-occupied homes skew newer; rental stock is older"
 #| fig-alt: "Grouped bar chart of the share of occupied homes by decade built, split by tenure, for Fauquier County. Owner-occupied homes peak in the 1980s–1990s and 2000s; renter-occupied homes are concentrated before 1960 and in the 1980s–1990s, skewing older overall."
 
 era_lvls <- c("Before 1960", "1960–1979", "1980–1999", "2000–2009", "2010 or later")
@@ -204,7 +206,7 @@ ggplot(yb, aes(x = era, y = share, fill = tenure)) +
   scale_fill_manual(values = c(Owner = blue, Renter = coral)) +
   labs(
     title = "Owner-occupied homes skew newer; the rental stock is older",
-    subtitle = "Share of occupied homes by decade built — <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span>",
+    subtitle = "Share of homes by decade built — <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span> occupied",
     caption = acs_cap("B25036"), x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -217,9 +219,9 @@ ggplot(yb, aes(x = era, y = share, fill = tenure)) +
 - **The rental stock skews older:** about 32% of renter-occupied homes predate 1960, versus 12% of owner-occupied homes — the opposite of a "newer rental" pattern.
 
 ::: {.callout-note}
-## Median year built — the towns
+## Age of housing in Warrenton and Bealeton
 
-Warrenton's median year built (1987) matches the county, but **Bealeton's stock is meaningfully newer (median 1998)** — consistent with its role as a recent growth node along US-17. Both town medians are High-reliability estimates.
+Warrenton's median year built (1987) matches the county, but **Bealeton's stock is meaningfully newer (median 1998)** — consistent with its role as a recent growth node along US-17.
 :::
 
 ## Tenure
@@ -266,8 +268,7 @@ ggplot(trend, aes(year, owner_share, color = geo_type)) +
 ```
 
 - Fauquier's **owner-occupied share has held in the high-70s to 80%** across all four ACS estimates (80.1% in 2013 to 78.8% in 2024), and **Bealeton tracks closely behind** (77.8% to 78.7%, dipping to 71.1% in 2017).
-- **Warrenton is a consistent outlier**, not just a 2024 snapshot: its owner-occupied share has held in a narrow 61–63% band across all four estimates — roughly 15 to 17 points below the county and Bealeton in every single year.
-- *Reliability:* every Warrenton cell is High reliability; Bealeton's renter counts are Medium (CV 16–22%) in 2013, 2021, and 2024, so year-to-year wobble in its line is partly sampling noise rather than real change.
+- **Warrenton is a consistent outlier**: its owner-occupied share has held in a narrow 61–63% band across all four estimates — roughly 15 to 17 points below the county and Bealeton in every single year.
 
 ## Residential construction
 
@@ -323,8 +324,7 @@ ggplot(perm, aes(year, units, fill = grp)) +
 
 - **Missing middle is virtually nonexistent:** just 10 total 2–4-unit permits were issued across the entire 2000–2025 period.
 - **Multifamily (5+) is rare and episodic** — notable only in a few years (e.g. ~108 units in 2001, 48 in 2018).
-- Permitting has averaged **266 units/year over 2020–2025**, essentially all single-family (above the GP study's earlier 241/yr benchmark).
-- **Town-level permits are not separable:** the Census place-level BPS file timed out on retrieval (HTTP 524), so this figure is county-wide; Bealeton is unincorporated and issues through the county regardless.
+- Permitting has averaged **266 units/year over 2020–2025**, essentially all single-family.
 
 ## New construction vs. resale
 
@@ -369,24 +369,25 @@ ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
 
 - **New construction sold for a higher median price** in 2025 (~$734,000 vs ~$635,000 for resales) and was **larger** (~2,854 vs ~2,484 sq ft).
 - But **new homes sat on far smaller lots** (~0.23 vs ~1.0 acre) — and new-construction lot sizes have shrunk sharply since 2022 (median ~1.68 acres then), as production has concentrated in service-district subdivisions.
-- The signal for the "missing middle" theme is not lot size but product type: new supply is **larger detached houses**, with no starter-scale or small-lot infill product entering the market.
+- The signal for the "missing middle" theme is not lot size but product type: new supply is still **larger detached houses**, with no starter-scale or small-lot infill product entering the market.
 
-## Vacancy, manufactured housing & land constraints
+## Vacancy, manufactured housing, and land constraints
 
-::: {.callout-note}
-## Vacancy: a very tight market
+### Low vacancy, few available units
 
-Fauquier's overall vacancy rate is about **6.6%** (1,901 of 28,621 units), but most of that is not available housing: **550 units are seasonal/recreational and 883 are "other vacant"** (held off-market). Only about **1.2% of all units are actually available** — for rent (174) or for sale (178) — a sign of an extremely tight market. *Source: ACS 2020–2024, Table B25004.*
-:::
+Fauquier's overall vacancy rate is about **6.6%** (1,901 of 28,621 units), but most of that is not available housing: **550 units are seasonal/recreational and 883 are "other vacant"** (held off-market). Only about **1.2% of all units are actually available** — for rent (174) or for sale (178) — a sign of an extremely tight market.
 
-::: {.callout-note}
-## Town spotlight — Bealeton and manufactured housing
+*Source: ACS 2020–2024, Table B25004.*
 
-Interviews flagged manufactured housing as a Bealeton-area concern, but **the ACS place estimate cannot quantify it**: Bealeton's recorded mobile-home count is 0 with a coefficient of variation too high to use. County-wide, ACS records about **470 mobile homes (1.6% of the stock, Medium reliability)**. The manufactured-housing concentration described around Bealeton is real on the ground but falls below what ACS 5-year place estimates can reliably size — a data limitation, presented as counts, not rates. *Source: ACS 2020–2024, Table B25024.*
-:::
+### Manufactured homes concentration
 
-::: {.callout-note}
-## Land constraint — where housing can go
+Interviews flagged manufactured housing as a concern in the Bealeton area. ACS estimates show no manufactured home units within the CDP itself. However, Marsh Run Manufactured Home Community sits just southeast of the CDP on Route 17 and contains approximately 350 units.
+
+No other manufactured home communities could be identified in the county. Marsh Run therefore likely accounts for most of the 470 manufactured homes the ACS estimates for Fauquier County.
+
+*Source: ACS 2020–2024, Table B25024.*
+
+### Land constraint — where housing can go
 
 Fauquier's Comprehensive Plan channels growth into eight service districts:
 
@@ -395,14 +396,13 @@ Fauquier's Comprehensive Plan channels growth into eight service districts:
 - **`r easements$value[easements$stat_name == "permits_sfd_share_2001_2018"]`% of permits issued 2001–2018 were single-family detached**, reinforcing the low-density pattern.
 
 *Source: Fauquier County Comprehensive Plan (Ch. 1 p. 11, Ch. 3 pp. 7–11).*
-:::
 
 ## What the interviews said vs. what the data shows
 
 ::: {.callout-important}
 ## Interview validation
 
-- **"Missing middle — only large homes on large lots, no starter product."** *Confirmed and nuanced.* Permits are ~all single-family (10 missing-middle permits in 25 years); new construction is larger and pricier than resale (@fig-newresale, @fig-permits). The lot-size story has flipped, though: new homes are now on *smaller* lots as growth concentrates in service districts — the constraint is product type (no small/attached/starter homes), not lot size.
+- **"Missing middle — only large homes on large lots, no starter product."** *Confirmed but nuanced.* Permits are ~all single-family (10 missing-middle permits in 25 years); new construction is larger and pricier than resale (@fig-newresale, @fig-permits). The lot-size story has flipped, though: new homes are now on *smaller* lots as growth concentrates in service districts — the constraint is product type (no small/attached/starter homes), not lot size.
 - **"Conservation easements and rural zoning constrain developable land."** *Confirmed.* ~90% of county land is rural; developable capacity is a finite ~8,381 units inside the service districts (land-constraint callout).
 - The interview claim that only 3 for-sale listings under $350k existed (April 2026) is a market-pricing signal carried in the ownership-market chapter (@sec-market-ownership).
 :::
