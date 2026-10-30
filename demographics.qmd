@@ -459,6 +459,126 @@ Interviewees saw worker opportunity, housing, and economic development as tightl
 FHFH-computed 2025 QCEW averages run modestly above the Greater Piedmont REALTOR's study's earlier $64,272 all-jobs figure (2023 vintage) — the difference is real wage growth between vintages, not a discrepancy. Small county-by-sector cells that BLS suppresses for disclosure are excluded, so only complete series (all jobs, health care, local government, retail trade) are shown.
 :::
 
+### Early 2026: jobs edge up, wages jump
+
+```{r}
+# Same-quarter comparison (2025 Q1 vs 2026 Q1); never mixed with the annual series above.
+# Annual wage = average weekly wage x 52.
+q <- qcew$quarterly |>
+  mutate(vintage = if_else(year == max(year), "new", "old"))
+stopifnot(length(unique(q$qtr)) == 1, n_distinct(q$year) == 2)
+q_new <- paste(max(q$year),     paste0("Q", unique(q$qtr)))
+q_old <- paste(max(q$year) - 1, paste0("Q", unique(q$qtr)))
+
+q_area <- q |>
+  filter(own_code == "0", agglvl_code %in% c("50", "70")) |>
+  select(area_fips, vintage, avg_emplvl, avg_wkly_wage) |>
+  pivot_wider(names_from = vintage, values_from = c(avg_emplvl, avg_wkly_wage)) |>
+  transmute(
+    area      = factor(area_lab(area_fips),
+                       levels = c("Fauquier", "Culpeper", "Prince William", "Loudoun", "Virginia")),
+    jobs      = avg_emplvl_new,
+    jobs_chg  = avg_emplvl_new - avg_emplvl_old,
+    jobs_pct  = avg_emplvl_new / avg_emplvl_old - 1,
+    wage      = avg_wkly_wage_new * 52,
+    wage_pct  = avg_wkly_wage_new / avg_wkly_wage_old - 1
+  ) |>
+  arrange(area)
+
+sector_names <- c(
+  "11" = "Agriculture", "22" = "Utilities", "23" = "Construction", "31-33" = "Manufacturing",
+  "42" = "Wholesale trade", "44-45" = "Retail trade", "48-49" = "Transportation and warehousing",
+  "51" = "Information", "52" = "Finance and insurance", "53" = "Real estate",
+  "54" = "Professional and technical services", "56" = "Administrative services",
+  "61" = "Educational services", "62" = "Health care", "71" = "Arts and recreation",
+  "72" = "Accommodation and food services", "81" = "Other services"
+)
+
+q_sector <- q |>
+  filter(area_fips == fauquier, own_code == "5", agglvl_code %in% c("54", "74"),
+         is.na(disclosure_code) | disclosure_code != "N") |>
+  select(industry_code, vintage, avg_emplvl, avg_wkly_wage) |>
+  pivot_wider(names_from = vintage, values_from = c(avg_emplvl, avg_wkly_wage)) |>
+  filter(!is.na(avg_emplvl_new), !is.na(avg_emplvl_old)) |>
+  transmute(
+    sector   = coalesce(unname(sector_names[industry_code]), industry_code),
+    code     = industry_code,
+    jobs     = avg_emplvl_new,
+    jobs_chg = avg_emplvl_new - avg_emplvl_old,
+    jobs_pct = avg_emplvl_new / avg_emplvl_old - 1,
+    wage     = avg_wkly_wage_new * 52,
+    wage_pct = avg_wkly_wage_new / avg_wkly_wage_old - 1
+  )
+
+fq  <- q_area |> filter(area == "Fauquier")
+cn  <- q_sector |> filter(code == "23")
+hc  <- q_sector |> filter(code == "62")
+pct <- label_percent(accuracy = 0.1)
+pct0 <- label_percent(accuracy = 1)
+```
+
+Fauquier added about `r label_comma(accuracy = 10)(fq$jobs_chg)` jobs between `r q_old` and `r q_new`, up `r pct(fq$jobs_pct)` to roughly `r label_comma(accuracy = 100)(fq$jobs)`. That outpaces Culpeper and Virginia, where employment was flat, but trails Prince William and Loudoun. The number of private and public establishments did not change.
+
+Average annual wages in Fauquier rose `r pct(fq$wage_pct)` over the same period, to `r label_dollar()(fq$wage)`, the fastest increase of any comparison area. Part of this reflects a few sectors. Construction wages rose `r pct0(cn$wage_pct)` as the sector added `r label_comma()(round(cn$jobs_chg))` jobs (`r pct0(cn$jobs_pct)`), the largest gain in the county and consistent with the rise in 2026 building permits (@sec-inventory). Health care went the other way, shedding about `r label_comma(accuracy = 10)(abs(hc$jobs_chg))` jobs (`r pct0(hc$jobs_pct)`), the largest loss.
+
+```{r}
+#| label: tbl-q-area
+#| tbl-cap: "Fauquier's jobs edged up while its wages rose faster than any neighbor's"
+#| fig-alt: "Table comparing jobs and annualized average wages in 2026 Q1 with 2025 Q1 for Fauquier, Culpeper, Prince William, Loudoun, and Virginia. Fauquier jobs rose 0.7 percent and wages 8.5 percent, the largest wage increase of the five areas."
+
+chg_cell <- \(x, txt) cell_spec(txt, color = if_else(x >= 0, blue, coral), escape = FALSE)
+
+q_area |>
+  transmute(
+    Area = as.character(area),
+    jobs = label_comma()(round(jobs)),
+    jobs_pct = chg_cell(jobs_pct, label_percent(accuracy = 0.1, style_positive = "plus", style_negative = "minus")(jobs_pct)),
+    wage = label_dollar()(round(wage)),
+    wage_pct = chg_cell(wage_pct, label_percent(accuracy = 0.1, style_positive = "plus", style_negative = "minus")(wage_pct))
+  ) |>
+  kbl(col.names = c("Area", q_new, paste("Change vs.", q_old), q_new, paste("Change vs.", q_old)),
+      align = "lrrrr", escape = FALSE) |>
+  add_header_above(c(" " = 1, "Jobs" = 2, "Annual wage" = 2)) |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE) |>
+  row_spec(1, bold = TRUE) |>
+  footnote(
+    general = tbl_note(paste0(
+      qcew_cap(paste(q_old, "and", q_new), annual = FALSE),
+      " Annual wage is the average weekly wage times 52. Figures are for a single quarter, ",
+      "are preliminary, and are not comparable to the annual pay averages above."
+    )),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
+  )
+```
+
+```{r}
+#| label: tbl-q-sector
+#| tbl-cap: "Construction added jobs in Fauquier while health care lost them"
+#| fig-alt: "Table of the five private-sector industries in Fauquier with the largest job changes between 2025 Q1 and 2026 Q1. Construction gained about 330 jobs; health care lost about 170, followed by retail trade, accommodation and food services, with a small gain in finance and insurance."
+
+q_sector |>
+  slice_max(abs(jobs_chg), n = 5) |>
+  arrange(desc(jobs_chg)) |>
+  transmute(
+    Sector = sector,
+    jobs = label_comma()(round(jobs)),
+    jobs_chg = chg_cell(jobs_chg, number(jobs_chg, accuracy = 1, style_positive = "plus", style_negative = "minus")),
+    wage = label_dollar()(round(wage))
+  ) |>
+  kbl(col.names = c("Sector", q_new, paste("Change vs.", q_old), q_new),
+      align = "lrrr", escape = FALSE) |>
+  add_header_above(c(" " = 1, "Jobs" = 2, "Annual wage" = 1)) |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE) |>
+  footnote(
+    general = tbl_note(paste0(
+      qcew_cap(paste(q_old, "and", q_new), annual = FALSE),
+      " Private ownership only; sectors with suppressed cells are omitted. ",
+      "Annual wage is the average weekly wage times 52."
+    )),
+    general_title = "", footnote_as_chunk = TRUE, escape = FALSE
+  )
+```
+
 ## Commuting
 
 It's widely recognized that those who live in Fauquier do not work in Fauquier, impacting the local economy and housing opportunities in both directions. Fully 76.4% of Fauquier's employed residents commute out of the county: just 8,266 of the county's 35,028 employed residents work in Fauquier itself. Separately, only 35.4% of jobs located in Fauquier are filled by county residents (8,266 of 23,349 Fauquier jobs), two measures of the same bedroom-community pattern. The largest outbound flows run east into the D.C. job market: nearly 8,200 to Fairfax, 5,400 to Prince William, and 3,000 to Loudoun.

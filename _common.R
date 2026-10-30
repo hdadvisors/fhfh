@@ -82,12 +82,12 @@ mls_cap <- function(year_range = NULL, through = TRUE) {
   paste0(base, ".")
 }
 
-qcew_cap <- function(year_range = "2015-2025") {
+qcew_cap <- function(year_range = "2015-2025", annual = TRUE) {
   paste0(
     "**Source:** U.S. Bureau of Labor Statistics, ",
     "Quarterly Census of Employment and Wages (QCEW), ",
     year_range,
-    " annual averages."
+    if (annual) " annual averages." else "."
   )
 }
 
