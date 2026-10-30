@@ -157,6 +157,37 @@ flag_reliability <- function(df, cv_col = cv) {
     ))
 }
 
+# Scope ladder of cumulative housing need through 2050 (projections @fig-scope-ladder).
+# Shared so exec-sum and conclusions quote the same totals as the projections chapter.
+scope_ladder <- function() {
+  wcoop <- readr::read_rds("data/wcoop.rds")
+  gaps  <- readr::read_rds("data/gaps.rds")
+  stock <- readr::read_rds("data/acs_stock.rds")
+  asm   <- wcoop$assumptions
+  horizon_yrs <- 2050 - asm$base_year
+
+  grow_units <- wcoop$households$growth_avgsize[wcoop$households$year == 2050]
+  vac_units  <- round(grow_units * asm$vacancy_allowance)
+  # Rung 3 backlog: rental sub-80% AMI deficit (data) + 1/3 of ownership sub-80% shortfall (assumed)
+  rg <- gaps$rental_gap
+  og <- gaps$ownership_gap
+  backlog_rent <- -sum(rg$surplus_deficit[rg$band %in% c("≤30% AMI", "30-50% AMI", "50-80% AMI")])
+  own_sub80    <- -sum(og$surplus_deficit[og$band %in% c("ami30", "ami50", "ami80")])
+  backlog_own  <- round(own_sub80 / 3)
+  # Rung 4 replacement: assumption-driven (no demolition data), 0.25%/yr of the current stock
+  total_units <- stock$b25001$estimate[stock$b25001$GEOID == fauquier]
+  repl_rate   <- 0.0025
+  repl_units  <- round(total_units * repl_rate * horizon_yrs)
+
+  list(horizon_yrs = horizon_yrs, grow_units = grow_units, vac_units = vac_units,
+       backlog_rent = backlog_rent, own_sub80 = own_sub80, backlog_own = backlog_own,
+       backlog_tot = backlog_rent + backlog_own, total_units = total_units,
+       repl_rate = repl_rate, repl_units = repl_units,
+       lad_c1 = grow_units, lad_c2 = grow_units + vac_units,
+       lad_c3 = grow_units + vac_units + backlog_rent + backlog_own,
+       lad_c4 = grow_units + vac_units + backlog_rent + backlog_own + repl_units)
+}
+
 # Special function to apply str_wrap() to ordered factors
 
 fct_wrap <- function(f, width) {

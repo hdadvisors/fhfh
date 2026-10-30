@@ -43,7 +43,7 @@ calc_affordable_sales <- function(
     )
   for (dwn in dwn_opts) {
     col  <- paste0("affordable_sales_", dwn)
-    data <- data |> mutate("{col}" := .pv_base * (1 - dwn))
+    data <- data |> mutate("{col}" := .pv_base / (1 - dwn))   # max loan → price (loan = price × (1 − down))
   }
   select(data, -.ho_monthly, -.pv_base)
 }

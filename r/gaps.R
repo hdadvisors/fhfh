@@ -43,8 +43,8 @@ med_rent  <- acs_costs$B25064 |>
   filter(GEOID == "51061", str_detect(variable, "_001")) |>
   pull(estimate)
 
-costar_rent <- costar$quarterly |>
-  filter(!is.na(asking_rent_adj)) |> slice_max(year * 10 + qtr, n = 1) |> pull(asking_rent_adj)
+costar_rent <- costar$quarterly_type |>                  # latest quarter, market-rate properties, nominal
+  filter(rent_type == "Market") |> slice_max(year * 10 + qtr, n = 1) |> pull(asking_rent_avg)
 mls_rent    <- mls$rentals |>
   filter(year == ref_year, between(lease_price, 200, 15000)) |>
   pull(lease_price) |> median(na.rm = TRUE)

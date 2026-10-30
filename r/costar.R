@@ -3,7 +3,7 @@
 #         aggregate to market-level quarterly series; CPI-adjust asking rents
 # Source: data/raw/costar/costar_market_quarterly.xlsx, data/raw/costar/costar_properties.xlsx
 # Source: FRED API — CUUR0000SEHA (CPI Rent of Primary Residence) for inflation adjustment
-# Output: data/costar.rds
+# Output: data/costar.rds (quarterly, quarterly_type [Market vs Affordable], quarterly_prop, properties)
 
 ## 1. Setup ----
 library(tidyverse)
@@ -85,6 +85,23 @@ props <- read_excel("data/raw/costar/costar_properties.xlsx") |>
 
 message("  Properties: ", nrow(props))
 
+## 4b. Quarterly series by rent type (Market vs Affordable) ----
+# rent_type from the properties file; "Market/Affordable" (mixed-income) counts as Affordable.
+# Nominal dollars only — chapters show what renters actually pay.
+qtr_type <- qtr_prop |>
+  left_join(props |> distinct(property_address, rent_type), by = c("address" = "property_address")) |>
+  filter(!is.na(rent_type), !is.na(units), units > 0, !is.na(asking_rent)) |>
+  mutate(rent_type = if_else(str_detect(rent_type, "Affordable"), "Affordable", "Market")) |>
+  summarize(
+    total_units     = sum(units),
+    asking_rent_avg = weighted.mean(asking_rent, units, na.rm = TRUE),
+    effective_rent  = weighted.mean(effective_rent, units, na.rm = TRUE),
+    vacancy_rate    = weighted.mean(vacancy, units, na.rm = TRUE),
+    n_properties    = n(),
+    .by = c(year, qtr, rent_type)
+  ) |>
+  arrange(rent_type, year, qtr)
+
 ## 5. CPI-adjust asking rents ----
 message("Pulling CPI Rent of Primary Residence (CUUR0000SEHA)...")
 
@@ -120,6 +137,7 @@ qtr_market_adj <- qtr_market |>
 write_rds(
   list(
     quarterly       = qtr_market_adj,
+    quarterly_type  = qtr_type,
     quarterly_prop  = qtr_prop,
     properties      = props,
     cpi_latest      = cpi_latest
@@ -133,7 +151,8 @@ out <- read_rds("data/costar.rds")
 stopifnot(
   nrow(out$quarterly) >= 20,
   nrow(out$properties) >= 1,
-  !is.na(out$cpi_latest)
+  !is.na(out$cpi_latest),
+  setequal(unique(out$quarterly_type$rent_type), c("Market", "Affordable"))
 )
 message("costar.R validation passed.")
 message("  Market quarterly periods: ", nrow(out$quarterly))

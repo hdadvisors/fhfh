@@ -93,6 +93,38 @@ active_pub_yago <- ms_fau$active_listings[ms_fau$date == latest_ms$date - years(
 # Volume is NOT re-based on either source.
 sales_pub_2025 <- sum(ms_fau$sales_n[ms_fau$year == 2025])
 sales_gap_pct  <- sales_pub_2025 / sales_2025 - 1
+
+# Town-boundary prices (Bright MLS published town statistics): annual sales-weighted average of
+# monthly medians, 2022+ (2026 = year to date). ZIP-based medians (mls$annual_zip) are context only.
+town_px <- ms |>
+  filter(geography != "Fauquier", sales_n > 0) |>
+  summarize(median_price = weighted.mean(median_price, sales_n), sales = sum(sales_n),
+            .by = c(geography, year)) |>
+  rename(town = geography)
+tp  <- \(t, y) town_px$median_price[town_px$town == t & town_px$year == y]
+zp  <- \(t, y) mls$annual_zip$median_price[mls$annual_zip$town == t & mls$annual_zip$year == y]
+med_2026 <- ann$median_price[ann$year == 2026]
+# Town months of supply: average listings ÷ average monthly sales (robust to thin-sales months)
+town_mos     <- \(t, y) with(ms[ms$geography == t & ms$year == y, ], mean(active_listings) / mean(sales_n))
+town_sales   <- \(t, y) mean(ms$sales_n[ms$geography == t & ms$year == y])
+town_active  <- \(t, y) mean(ms$active_listings[ms$geography == t & ms$year == y])
+bea_mos_2026 <- town_mos("Bealeton", 2026)
+
+# Mortgage rate: latest month, and the last month that was higher
+rate_now      <- fred$pmms_monthly |> filter(!is.na(mortgage_rate_30yr)) |> slice_max(date, n = 1)
+rate_prev_hi  <- fred$pmms_monthly |> filter(date < rate_now$date, mortgage_rate_30yr >= rate_now$mortgage_rate_30yr) |>
+  slice_max(date, n = 1)
+
+# Active for-sale snapshot profile
+act <- mls$active |> filter(!is.na(list_price), list_price > 0)
+act_med      <- median(act$list_price)
+act_750      <- mean(act$list_price > 750000)
+act_250_350  <- sum(act$list_price >= 250000 & act$list_price < 350000)
+is_new       <- str_detect(act$new_resale, "^New")
+act_new      <- mean(is_new, na.rm = TRUE)
+act_new_med  <- median(act$list_price[is_new])
+act_small    <- sum(act$number_bedrooms <= 2, na.rm = TRUE)
+act_distress <- sum(act$owned_by %in% c("REO", "Corporate"))
 ```
 
 ## Sales volume
@@ -139,27 +171,26 @@ Bright MLS's **published monthly summary** reports roughly **`r label_percent(ac
 ```{r}
 #| label: fig-price-trend
 #| fig-cap: "Prices climbed steeply — and kept rising even after inflation"
-#| fig-alt: "Line chart of Fauquier County median sold price from 2016 to 2025. The nominal monthly line rises from about $360,000 to $650,000; the inflation-adjusted line in 2025 dollars rises more gently from about $465,000 to $650,000. Two annual town-ZIP lines beginning in 2022 sit on either side of the county: Warrenton near $690,000 and Bealeton near $570,000 by 2025."
+#| fig-alt: !expr 'paste0("Line chart of Fauquier County median sold price from 2016 through ", ytd_thru, " 2026. The nominal monthly line rises from about $360,000 to about ", label_dollar(accuracy = 1000)(med_2026), " in 2026 to date; the inflation-adjusted line in 2025 dollars, which ends in 2025, rises more gently from about $465,000 to $650,000. Two annual town lines beginning in 2022 sit below the county: Warrenton near ", label_dollar(accuracy = 1000)(tp("Warrenton", 2026)), " and Bealeton near ", label_dollar(accuracy = 1000)(tp("Bealeton", 2026)), " in 2026 to date.")'
 
 cpi_j <- fred$cpi |> select(year, cpi_less_shelter)
 
 county_long <- mls$monthly |>
-  filter(year <= 2025) |>
   left_join(cpi_j, by = "year") |>
   transmute(date,
             Nominal = median_price,
-            `Real`  = median_price * cpi_base / cpi_less_shelter) |>
-  pivot_longer(-date, names_to = "series", values_to = "price")
+            `Real`  = median_price * cpi_base / cpi_less_shelter) |>   # NA after the last CPI year
+  pivot_longer(-date, names_to = "series", values_to = "price") |>
+  filter(!is.na(price))
 
-town_a <- mls$annual_zip |>
-  filter(year <= 2025) |>
+town_a <- town_px |>
   mutate(date = make_date(year, 7L, 1L))
 
 ggplot() +
   geom_line(data = county_long, aes(date, price, color = series, linewidth = series)) +
   geom_line(data = town_a, aes(date, median_price, group = town, color = town), linewidth = 0.8) +
   geom_point(data = town_a, aes(date, median_price, color = town), size = 1.6) +
-  geom_text(data = filter(town_a, year == 2025), aes(date, median_price, label = town, color = town),
+  geom_text(data = filter(town_a, year == max(year)), aes(date, median_price, label = town, color = town),
             hjust = 0, nudge_x = 40, size = 3, fontface = "bold") +
   scale_color_manual(values = c(Nominal = "grey70", `Real` = blue,
                                 Warrenton = coral, Bealeton = yellow), guide = "none") +
@@ -170,16 +201,18 @@ ggplot() +
                expand = expansion(c(0.02, 0.16))) +
   labs(
     title = "Prices climbed steeply — and kept rising even after inflation",
-    subtitle = "Median sold price — county <span style='color:#8a8a8a'>**nominal**</span> vs <span style='color:#445ca9'>**real (2025 $)**</span>; town ZIPs <span style='color:#e76f52'>**Warrenton**</span> / <span style='color:#e9ab3f'>**Bealeton**</span> (nominal, annual, 2022+)",
-    caption = paste0(mls_cap("2016–2025", through = FALSE), " ", cpi_cap()), x = NULL, y = NULL
+    subtitle = "Median sold price — county <span style='color:#8a8a8a'>**nominal**</span> vs <span style='color:#445ca9'>**real (2025 $)**</span><br>towns <span style='color:#e76f52'>**Warrenton**</span> / <span style='color:#e9ab3f'>**Bealeton**</span> (nominal, annual, 2022+; 2026 to date)",
+    caption = paste0(mls_cap("2016–2026"), "<br>Town lines use Bright MLS town-area statistics. ", cpi_cap()), x = NULL, y = NULL
   ) +
   theme_hda() +
   theme(plot.subtitle = element_markdown())
 ```
 
-The county's median sold price nearly doubled in nominal terms: about $`r round(p16/1e3)`k in 2016 to $`r round(med_2025/1e3)`k in 2025, an `r round(idx_price_2025 - 100)`% increase. Even after inflation, real prices rose from roughly $`r round(p16_real/1e3)`k to $`r round(med_2025/1e3)`k in 2025 dollars, a `r round(med_2025/p16_real*100 - 100)`% increase in genuine appreciation, not just inflation. The town ZIPs track the county: Warrenton (~$`r round(town_a$median_price[town_a$town=="Warrenton" & town_a$year==2025]/1e3)`k in 2025) runs above Bealeton (~$`r round(town_a$median_price[town_a$town=="Bealeton" & town_a$year==2025]/1e3)`k).[^town-zips]
+The county's median sold price nearly doubled in nominal terms: about $`r round(p16/1e3)`k in 2016 to $`r round(med_2025/1e3)`k in 2025, an `r round(idx_price_2025 - 100)`% increase. Even after inflation, real prices rose from roughly $`r round(p16_real/1e3)`k to $`r round(med_2025/1e3)`k in 2025 dollars, a `r round(med_2025/p16_real*100 - 100)`% increase in genuine appreciation, not just inflation. So far in 2026 (through `r ytd_thru`) the county median is $`r round(med_2026/1e3)`k.
 
-[^town-zips]: Town-ZIP series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only). These are ZIP-code cuts (20186/20187 for Warrenton, 22712 for Bealeton), not town boundaries — the Warrenton ZIPs in particular extend well beyond the town limits.
+Homes inside the two towns sell for less than the county as a whole. In 2026 to date, Warrenton's median runs about $`r round(tp("Warrenton", 2026)/1e3)`k and Bealeton's about $`r round(tp("Bealeton", 2026)/1e3)`k, against the county's $`r round(med_2026/1e3)`k; in 2025 the figures were about $`r round(tp("Warrenton", 2025)/1e3)`k and $`r round(tp("Bealeton", 2025)/1e3)`k. Bealeton's drop from 2025 to 2026 rests on about `r town_px$sales[town_px$town == "Bealeton" & town_px$year == 2026]` sales, so it may reflect the mix of homes sold rather than a real price decline.[^town-zips]
+
+[^town-zips]: Town series begin in 2022 because the county's 2016–2021 monthly series is VAR (county-only). They come from Bright MLS's published town-area statistics (annual figures are sales-weighted averages of monthly medians). The ZIP codes that carry the town names cover far more ground: the Warrenton ZIPs (20186/20187) had a 2026 median near $`r round(zp("Warrenton", 2026)/1e3)`k and Bealeton's 22712 near $`r round(zp("Bealeton", 2026)/1e3)`k, because they take in large rural parcels well beyond the town limits.
 
 ## Prices vs. payments vs. incomes
 
@@ -223,7 +256,7 @@ ggplot(idx, aes(year, index, color = series)) +
   theme(plot.subtitle = element_markdown())
 ```
 
-Over 2016–2025 the median home sales price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)` percent. This is likely a reflection of the 30-year rate that climbed from `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021])`% in 2021 to `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025])`% in 2025, compounding the price increase. Median household income rose only +`r round(idx_inc_2024 - 100)`% through 2024, far behind both. Buying power has fallen sharply.[^gp-fig9]
+Over 2016–2025 the median home sales price rose +`r round(idx_price_2025 - 100)`%, but the monthly payment on that home rose +`r round(idx_pay_2025 - 100)` percent. This is likely a reflection of the 30-year rate that climbed from `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2021])`% in 2021 to `r sprintf("%.2f", fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year==2025])`% in 2025, compounding the price increase. Rates have since climbed further, to `r sprintf("%.2f", rate_now$mortgage_rate_30yr)`% in `r format(rate_now$date, "%B %Y")`, the highest since `r format(rate_prev_hi$date, "%B %Y")`; at that rate the payment on the 2025 median home would be about $`r label_comma()(round(mortgage_pi(med_2025, rate_now$mortgage_rate_30yr), -1))` a month, versus $`r label_comma()(round(pay25, -1))` at the 2025 average. Median household income rose only +`r round(idx_inc_2024 - 100)`% through 2024, far behind both. Buying power has fallen sharply.[^gp-fig9]
 
 [^gp-fig9]: The pattern matches the GP study's Figure 9 direction (GP: price +79%, payment +127%, income +35%); FHFH's actuals run somewhat higher on all three but tell the same story — payments ≫ prices ≫ incomes.
 
@@ -266,6 +299,11 @@ The $750k+ home price band has surged to `r label_percent(accuracy = 1)(sh(2025,
 
 This is the tail end of a long collapse in the starter home market: the Greater Piedmont REALTOR's identified that under-$250k sales **fell from 27.8% in 2016 to 3.0% in 2021.** The MLS-only view here (2022+) shows the effective erosion of the market for entry level homes.
 
+::: {.callout-note}
+## What is listed for sale now
+As of `r active_asof`, the median asking price across the `r active_n` active for-sale listings is **$`r label_comma()(act_med)`**, well above the $`r round(med_2026/1e3)`k median sale so far in 2026. `r label_percent(accuracy = 1)(act_750)` of listings ask more than $750,000, and `r if (act_250_350 == 0) "none" else act_250_350` fall between $250,000 and $350,000. New construction makes up `r label_percent(accuracy = 1)(act_new)` of listings at a median of $`r label_comma()(act_new_med)`. Only `r act_small` listings have two or fewer bedrooms. Bank-owned and corporate-owned listings number just `r act_distress`, so there is no sign of distressed sales. As with the rental snapshot (@sec-market-rental), this is a single day's inventory, so read it as directional.
+:::
+
 ## Days on market & supply
 
 ```{r}
@@ -301,10 +339,9 @@ The monthly view exposes a strong seasonal rhythm that the annual averages can h
 ```{r}
 #| label: fig-supply-trend
 #| fig-cap: "Inventory has loosened from its pandemic lows — but supply is still tight"
-#| fig-alt: "Two-panel chart for 2022 through October 2026. The top panel shows active listings in Fauquier County rising from a 2022 low near 250 to a peak near 470 in spring 2026, then easing into fall, while Warrenton drifts up from the high 30s to about 50; the bottom panel shows months of supply climbing from about 3 to roughly 4 to 5 months for both the county and Warrenton, staying below the dashed six-month line that marks a balanced market."
+#| fig-alt: !expr 'paste0("Two-panel chart for 2022 through ", ytd_thru, " 2026. The top panel shows active listings in Fauquier County rising from a 2022 low near 250 to a peak near 470 in spring 2026, then easing into fall, while Warrenton drifts up from the high 30s to about 50 and Bealeton roughly doubles from about 20 to about 40; the bottom panel shows months of supply climbing from about 3 to roughly 4 to 5 months for the county and Warrenton, while Bealeton''s smoothed line rises from about 2 to about ", round(bea_mos_2026), " months by 2026, with a brief late-2026 spike when sales dipped; all stay mostly below the dashed six-month line that marks a balanced market.")'
 
 sup <- ms |>
-  filter(geography %in% c("Fauquier", "Warrenton")) |>
   arrange(geography, date) |>
   transmute(geography, date,
             `Active listings`  = active_listings,
@@ -313,22 +350,33 @@ sup <- ms |>
   mutate(metric = factor(metric, levels = c("Active listings", "Months of supply")),
          roll = roll3(value), .by = c(geography, metric))
 
+# Bealeton's thin monthly sales make its published months of supply swing wildly (one 2-sale month
+# reads 21 months), so its smoothed line is 3-month listings ÷ 3-month sales and its raw line is omitted
+bea_roll <- ms |> filter(geography == "Bealeton") |> arrange(date) |>
+  transmute(date, bea = roll3(active_listings) / roll3(sales_n))
+sup <- sup |>
+  left_join(bea_roll, by = "date") |>
+  mutate(roll  = if_else(geography == "Bealeton" & metric == "Months of supply", bea, roll),
+         value = if_else(geography == "Bealeton" & metric == "Months of supply", NA_real_, value)) |>
+  select(-bea)
+
 thresh <- tibble(metric = factor("Months of supply",
                                  levels = levels(sup$metric)), yint = 6)
 
 ggplot(sup, aes(date, value, color = geography)) +
   geom_hline(data = thresh, aes(yintercept = yint), linetype = "dashed", color = "grey55") +
-  geom_line(aes(alpha = "raw"), linewidth = 0.4) +
+  geom_line(aes(alpha = "raw"), linewidth = 0.4, na.rm = TRUE) +
   geom_line(aes(y = roll, alpha = "roll"), linewidth = 1) +
   facet_wrap(~ metric, ncol = 1, scales = "free_y") +
-  scale_color_manual(values = c(Fauquier = blue, Warrenton = coral), guide = "none") +
+  scale_color_manual(values = c(Fauquier = blue, Warrenton = coral, Bealeton = yellow), guide = "none") +
   scale_alpha_manual(values = c(raw = 0.3, roll = 1), guide = "none") +
   scale_y_continuous(expand = expansion(c(0, 0.08))) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = expansion(c(0.02, 0.04))) +
   labs(
     title = "Inventory has loosened from its pandemic lows — but supply is still tight",
-    subtitle = "Active listings and months of supply (3-month average) — <span style='color:#445ca9'>**Fauquier County**</span> and <span style='color:#e76f52'>**Warrenton**</span>",
-    caption = paste0(mls_cap("2022–2026 (monthly summary; October 2026 is a partial month)")), x = NULL, y = NULL
+    subtitle = "Active listings and months of supply (3-month average)<br><span style='color:#445ca9'>**Fauquier County**</span>, <span style='color:#e76f52'>**Warrenton**</span>, and <span style='color:#e9ab3f'>**Bealeton**</span>",
+    caption = paste0(mls_cap("2022–2026 (monthly summary; October 2026 is a partial month)"),
+                     "<br>Bealeton months of supply = 3-month listings ÷ 3-month sales; its monthly figures are too noisy to plot."), x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
@@ -339,6 +387,8 @@ Active for-sale inventory has climbed from a tight `r format(active_avg_2022, bi
 
 Even so, supply stays well below the roughly six-month mark that separates a seller's from a buyer's market: Fauquier remains a seller's market, just a less extreme one than at the 2021–22 peak.
 
+The towns are moving apart. Measured as average listings against average monthly sales, Warrenton holds about `r round(town_mos("Warrenton", 2026), 1)` months of supply in 2026, tighter than the county. Bealeton has loosened the most, from about `r round(town_mos("Bealeton", 2022), 1)` months in 2022 to about `r round(bea_mos_2026, 1)` in 2026: its active listings roughly doubled, from about `r round(town_active("Bealeton", 2022))` to `r round(town_active("Bealeton", 2026))`, while sales held near `r round(town_sales("Bealeton", 2026))` a month. Bealeton's small sales count makes its monthly figures swing widely, so the yearly averages are the better guide.
+
 ::: {.callout-tip}
 ## Inventory is recovering, not recovered
 Contrary to a point-in-time reading, the monthly Bright MLS series shows active listings and months of supply trending upward since 2022 (from ~`r round(mos_avg_2022, 1)` months in 2022 to ~`r round(mos_avg_2025, 1)` in 2025 and ~`r round(mos_avg_2026, 1)` in 2026 to date), though the climb has flattened since 2025, as higher rates slowed the frantic pace. Fauquier is still firmly a **seller's market**, with supply short of the ~6-month balance point, and homes selling within weeks for most of the year.
@@ -348,8 +398,8 @@ Contrary to a point-in-time reading, the monthly Bright MLS series shows active 
 
 ```{r}
 #| label: fig-income-to-buy
-#| fig-cap: "Buying the median home takes about $75,000 more than the median household earns"
-#| fig-alt: "Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $204,900, well above the actual median household income of about $130,200 — a gap of roughly $75,000."
+#| fig-cap: !expr 'paste0("Buying the median home takes about ", label_dollar()(round(income_gap, -3)), " more than the median household earns")'
+#| fig-alt: !expr 'paste0("Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about ", label_dollar()(round(buyer_income, -2)), ", well above the actual median household income of about ", label_dollar()(round(actual_income, -2)), " — a gap of roughly ", label_dollar()(round(income_gap, -3)), ".")'
 
 f6 <- tibble(
   what  = factor(c("Income needed to buy\nthe median home", "Actual median\nhousehold income"),
@@ -366,8 +416,8 @@ ggplot(f6, aes(value, what, fill = grp)) +
   scale_x_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
                      expand = expansion(c(0, 0.18))) +
   labs(
-    title = "Buying the median home takes about $75,000 more than the median household earns",
-    subtitle = "Income required for the $650k median home vs. Fauquier's actual median household income",
+    title = paste0("Buying the median home takes about ", label_dollar()(round(income_gap, -3)), " more than the median household earns"),
+    subtitle = paste0("Income required for the $", round(med_price / 1e3), "k median home vs. Fauquier's actual median household income"),
     caption = paste0("**Assumptions:** ", label_percent(accuracy = 0.01)(gaps$assumptions$mortgage_rate),
                      " 30-yr rate (PMMS, ", format(gaps$assumptions$rate_pull_date, "%b %Y"), "), ",
                      label_percent(accuracy = 1)(gaps$assumptions$down_payment), " down, ",

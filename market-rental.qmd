@@ -61,21 +61,45 @@ rent_c <- costs$trend_rent |> filter(GEOID == fauquier) |> select(year, rent = e
 rent_13 <- rent_c$rent[rent_c$year == 2013]
 rent_24 <- rent_c$rent[rent_c$year == 2024]
 cpi13   <- fred$cpi$cpi_less_shelter[fred$cpi$year == 2013]
-rent_13_real <- rent_13 * cpi_base / cpi13
 rent_growth_nom  <- rent_24 / rent_13 - 1
-rent_growth_real <- rent_24 / rent_13_real - 1
+cpi24            <- fred$cpi$cpi_less_shelter[fred$cpi$year == 2024]
+prices_growth_13_24 <- cpi24 / cpi13 - 1          # everyday prices (CPI less shelter), 2013–2024
 
-# CoStar professional market
-cs_latest <- costar$quarterly |> filter(!is.na(asking_rent_adj)) |> slice_max(year * 10 + qtr, n = 1)
+# CoStar professional market — nominal, split Market vs Affordable (rent_type from the property file)
+cs_q      <- costar$quarterly
+cs_t      <- costar$quarterly_type
+cs_latest <- cs_q |> slice_max(year * 10 + qtr, n = 1)
 cs_units  <- cs_latest$market_units
 cs_props  <- cs_latest$n_properties
-cs_rent_adj <- cs_latest$asking_rent_adj          # latest quarter, 2025 $
-cs_rent_nom <- costar$quarterly |> slice_max(year * 10 + qtr, n = 1) |> pull(asking_rent_avg)
-cs_vac_recent <- mean(tail(costar$quarterly$vacancy_rate, 4))   # last 4 quarters
-cs_vac_latest <- costar$quarterly |> slice_max(year * 10 + qtr, n = 1) |> pull(vacancy_rate)
-cs_vac_early  <- mean(costar$quarterly$vacancy_rate[costar$quarterly$year %in% 2019:2021])
-cs_vac_share_u3 <- mean(costar$quarterly$vacancy_rate < 3, na.rm = TRUE)    # share of quarters under 3%
+cs_vac_recent <- mean(tail(cs_q$vacancy_rate, 4))   # last 4 quarters
+cs_vac_latest <- cs_latest$vacancy_rate
+cs_vac_early  <- mean(cs_q$vacancy_rate[cs_q$year %in% 2019:2021])
+cs_vac_share_u3 <- mean(cs_q$vacancy_rate < 3, na.rm = TRUE)    # share of quarters under 3%
 cs_props_total <- nrow(costar$properties)         # properties in the broader CoStar inventory
+cs_tl  <- cs_t |> slice_max(year * 10 + qtr, n = 1, by = rent_type)
+cs_tv  <- \(type, col) cs_tl[[col]][cs_tl$rent_type == type]
+cs_t16 <- \(type) cs_t$asking_rent_avg[cs_t$rent_type == type & cs_t$year == 2016 & cs_t$qtr == 1]
+cs_growth <- \(type) cs_tv(type, "asking_rent_avg") / cs_t16(type) - 1
+cpi16 <- fred$cpi$cpi_less_shelter[fred$cpi$year == 2016]
+prices_growth_16_25 <- cpi_base / cpi16 - 1
+cs_vac_prev_yr <- \(type) cs_t$vacancy_rate[cs_t$rent_type == type & cs_t$year == cs_latest$year - 1 &
+                                              cs_t$qtr == cs_latest$qtr]
+
+# Property-level detail behind the latest vacancy reading
+cs_latest_prop <- costar$quarterly_prop |>
+  filter(year == cs_latest$year, qtr == cs_latest$qtr, !is.na(asking_rent), units > 0)
+cs_top_vac <- cs_latest_prop |> slice_max(vacancy * units, n = 1)
+cs_conc    <- costar$properties |> filter(property_address == cs_top_vac$address) |> pull(avg_concessions_percent)
+
+# Pipeline
+cs_pipe <- costar$properties |> filter(building_status != "Existing")
+
+# MLS closed leases by year (same lease-price screen as r/gaps.R)
+lease_yr <- mls$rentals |>
+  filter(between(lease_price, 200, 15000)) |>
+  summarize(median = median(lease_price), n = n(), u1700 = mean(lease_price < 1700), .by = year) |>
+  arrange(year)
+ly <- \(y, col) lease_yr[[col]][lease_yr$year == y]
 
 # Rental stock by structure (renter side)
 r_struct <- stock$b25032 |>
@@ -95,6 +119,8 @@ nhpd_props   <- nrow(nhpd$properties)
 nhpd_assist  <- sum(nhpd$properties$total_assisted_units, na.rm = TRUE)
 nhpd_soonest <- min(nhpd$properties$earliest_expiration, na.rm = TRUE)
 nhpd_10yr    <- sum(nhpd$properties$earliest_expiration <= as.Date("2036-12-31"), na.rm = TRUE)
+nhpd_city    <- nhpd$properties |> summarize(props = n(), units = sum(total_units), .by = city)
+nc <- \(c, col) nhpd_city[[col]][nhpd_city$city == c]
 
 # MLS rentals (2025) — interview validation anchors
 r25 <- mls$rentals |> filter(year == 2025)
@@ -173,18 +199,12 @@ Bealeton's renter count is small and carries Medium reliability, so it is read a
 
 ```{r}
 #| label: fig-rent-trend
-#| fig-cap: "Rents have climbed in real terms; professional asking rents sit at the top of the market"
-#| fig-alt: "Line chart of Fauquier County median gross rent from 2013 to 2024 shown nominal and inflation-adjusted, with CoStar professional asking rents overlaid quarterly from 2016 to 2026. Nominal median rent rises from about $1,140 to $1,610; the real line is roughly flat-to-up; CoStar adjusted asking rent hovers between about $1,550 and $1,620, roughly in line with the ACS median. Town points for Warrenton and Bealeton sit near the county line."
-
-cpi_j <- fred$cpi |> select(year, cpi_less_shelter)
+#| fig-cap: "Every measure of rent has climbed, and broker-placed leases run highest"
+#| fig-alt: !expr 'paste0("Line chart of Fauquier County rents in current dollars. The ACS median gross rent rises from about ", label_dollar()(rent_13), " in 2013 to ", label_dollar()(rent_24), " in 2024. CoStar asking rents, quarterly from 2016, climb at market-rate apartments to about ", label_dollar()(round(cs_tv("Market", "asking_rent_avg"))), " and at affordable (rent-restricted or subsidized) apartments to about ", label_dollar()(round(cs_tv("Affordable", "asking_rent_avg"))), ". The MLS median closed lease, mostly single-family homes and townhouses, runs highest, rising from ", label_dollar()(ly(2022, "median")), " in 2022 to ", label_dollar()(ly(max(lease_yr$year), "median")), " in 2026 to date. Town points for Warrenton and Bealeton sit near the county ACS line.")'
 
 county_rent <- costs$trend_rent |>
   filter(GEOID == fauquier) |>
-  left_join(cpi_j, by = "year") |>
-  transmute(date = make_date(year, 7L, 1L),
-            Nominal = estimate,
-            Real    = estimate * cpi_base / cpi_less_shelter) |>
-  pivot_longer(-date, names_to = "series", values_to = "rent")
+  transmute(date = make_date(year, 7L, 1L), rent = estimate, series = "ACS median gross rent")
 
 town_rent <- costs$trend_rent |>
   filter(geo_type == "place") |>
@@ -193,34 +213,41 @@ town_rent <- costs$trend_rent |>
          town = geo_label(GEOID, geo_type),
          date = make_date(year, 7L, 1L))
 
-costar_rent <- costar$quarterly |>
-  filter(!is.na(asking_rent_adj)) |>
-  transmute(date = make_date(year, (qtr - 1) * 3 + 1, 1L), rent = asking_rent_adj)
+costar_rent <- cs_t |>
+  transmute(date = make_date(year, (qtr - 1) * 3 + 1, 1L), rent = asking_rent_avg,
+            series = paste0("CoStar ", str_to_lower(rent_type), " apartments"))
 
-ggplot() +
-  geom_line(data = county_rent, aes(date, rent, color = series, linewidth = series)) +
-  geom_line(data = costar_rent, aes(date, rent), color = green, linewidth = 0.9) +
-  geom_point(data = town_rent, aes(date, rent, group = town), color = "grey45", size = 1.4) +
-  geom_text(data = filter(town_rent, year == 2024), aes(date, rent, label = town),
-            hjust = 0, nudge_x = 60, size = 2.9, color = "grey40") +
-  scale_color_manual(values = c(Nominal = "grey70", Real = blue), guide = "none") +
-  scale_linewidth_manual(values = c(Nominal = 0.7, Real = 1.1), guide = "none") +
+mls_rent <- lease_yr |>
+  transmute(date = make_date(year, 7L, 1L), rent = median, series = "MLS closed leases")
+
+rent_cols <- c("ACS median gross rent" = blue, "CoStar market apartments" = green,
+               "CoStar affordable apartments" = yellow, "MLS closed leases" = coral)
+
+ggplot(mapping = aes(date, rent, color = series)) +
+  geom_line(data = county_rent, linewidth = 1.1) +
+  geom_line(data = costar_rent, linewidth = 0.9) +
+  geom_line(data = mls_rent, linewidth = 0.9) +
+  geom_point(data = mls_rent, size = 1.8) +
+  geom_point(data = town_rent, aes(group = town), color = "grey45", size = 1.4) +
+  geom_text(data = filter(town_rent, year == 2024), aes(label = town),
+            color = "grey40", hjust = 0, nudge_x = 60, size = 2.9) +
+  scale_color_manual(values = rent_cols, guide = "none") +
   scale_y_continuous(labels = label_dollar(), expand = expansion(c(0.03, 0.06))) +
   scale_x_date(date_breaks = "2 years", date_labels = "%Y",
                expand = expansion(c(0.02, 0.14))) +
   labs(
-    title = "Rents have climbed in real terms; professional asking rents sit at the top of the market",
-    subtitle = "Median gross rent — county <span style='color:#8a8a8a'>**nominal**</span> vs <span style='color:#445ca9'>**real (2025 $)**</span>; <span style='color:#8baeaa'>**CoStar asking rent (adj.)**</span>; grey points = towns",
-    caption = paste0(acs_cap("B25064"), " ", costar_cap(), " ", cpi_cap()),
+    title = "Every measure of rent has climbed, and broker-placed leases run highest",
+    subtitle = "Monthly rent, current dollars — <span style='color:#445ca9'>**ACS median gross rent**</span> (grey points = towns)<br>CoStar asking rent at <span style='color:#8baeaa'>**market-rate**</span> and <span style='color:#e9ab3f'>**affordable**</span> apartments; <span style='color:#e76f52'>**MLS closed-lease median**</span>",
+    caption = paste0(acs_cap("B25064"), "<br>", costar_cap(), "<br>", mls_cap("2022–2026, 2026 year to date")),
     x = NULL, y = NULL
   ) +
   theme_hda() +
   theme(plot.subtitle = element_markdown())
 ```
 
-The county's median gross rent, meaning all housing costs including lease rent and utilities, rose from $`r format(rent_13, big.mark=",")` in 2013 to $`r format(rent_24, big.mark=",")` in 2024, adding `r label_percent(accuracy=1)(rent_growth_nom)` in nominal, and +`r label_percent(accuracy=1)(rent_growth_real)` in real terms. Renters have lost ground even after inflation.
+The county's median gross rent, meaning all housing costs including lease rent and utilities, rose from $`r format(rent_13, big.mark=",")` in 2013 to $`r format(rent_24, big.mark=",")` in 2024, an increase of `r label_percent(accuracy=1)(rent_growth_nom)`. Over the same years, prices for everyday goods and services other than housing rose about `r label_percent(accuracy=1)(prices_growth_13_24)`, so rents have outpaced general inflation and renters have lost ground.
 
-CoStar professional asking rents, near $`r format(round(cs_rent_adj), big.mark=",")` (adjusted, `r costar_through`), sit `r if (cs_rent_adj < rent_24) "just below" else "at or just above"` the ACS median of $`r format(rent_24, big.mark=",")`. This is consistent with a small stock of professionally managed apartments pricing in line with the broader rental pool, while the broker-leased houses and townhouses that dominate MLS rentals price well above it. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
+The other rent measures tell the same story at different price points. CoStar asking rents at the county's market-rate apartments reached about $`r format(round(cs_tv("Market", "asking_rent_avg")), big.mark=",")` in `r costar_through`, `r if (cs_tv("Market", "asking_rent_avg") > rent_24) "above" else "below"` the ACS median, while the larger set of affordable (rent-restricted or subsidized) apartments asked about $`r format(round(cs_tv("Affordable", "asking_rent_avg")), big.mark=",")`. The MLS median closed lease kept rising after the ACS series ends, from $`r format(ly(2022, "median"), big.mark=",")` in 2022 to $`r format(ly(max(lease_yr$year), "median"), big.mark=",")` in 2026 to date; these broker-placed leases skew toward single-family homes and townhouses and price well above the other measures. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally managed apartment communities.
 
 ::: {.callout-note title="What we heard"}
 In spring 2026, an interviewee shared that "Only about 2 of 19 available rentals were priced under $1,700."
@@ -289,7 +316,7 @@ The modal rent band in the county is $1,500–1,999 and represents about `r labe
 Realtors in particular recognized the challenges renters face, noting that the MLS median rent sits at $2,450: "It's an outrageously expensive market." Rental quality was a consistent topic as well, with interviewees reporting that quality is rarely reflected in the price.
 :::
 
-In 2025, the MLS recorded that only `r rent_u1700` of `r rent_n_2025` closed leases were under $1,700, about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`. These data identify a median county lease of $`r format(rent_median, big.mark=",")` monthly, consistent with the Greater Piedmont REALTOR's March 2026 study. This leaves a somewhat larger affordable share than the single snapshot of available rentals suggested, but the story is the same: sub-$1,700 rentals are scarce, and most of the rental market prices well above that (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median gross rent ($`r format(rent_24, big.mark=",")`) because MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
+In 2025, the MLS recorded that only `r rent_u1700` of `r rent_n_2025` closed leases were under $1,700, about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`. That share has shrunk quickly, from `r label_percent(accuracy=1)(ly(2022, "u1700"))` of leases in 2022 to `r label_percent(accuracy=1)(ly(max(lease_yr$year), "u1700"))` in 2026 to date. These data identify a median county lease of $`r format(rent_median, big.mark=",")` monthly, consistent with the Greater Piedmont REALTOR's March 2026 study. This leaves a somewhat larger affordable share than the single snapshot of available rentals suggested, but the story is the same: sub-$1,700 rentals are scarce, and most of the rental market prices well above that (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median gross rent ($`r format(rent_24, big.mark=",")`) because MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
 
 ::: {.callout-note}
 ## What is listed for rent now
@@ -305,41 +332,73 @@ Place-level distributions are noisy; only the higher-count Warrenton bands survi
 
 ```{r}
 #| label: fig-costar
-#| fig-cap: "A small, tight professional apartment market with steadily rising rents"
-#| fig-alt: "Two-panel time-series chart of Fauquier County's professional multifamily market from 2016 through the third quarter of 2026. The top panel shows nominal asking rent rising from about $1,060 to roughly $1,600 per unit while the inflation-adjusted line is roughly flat between $1,550 and $1,620. The bottom panel shows the vacancy rate falling from about 5% to near 1% around 2019–2021, then edging back up to roughly 3–4% in 2025–2026."
-#| fig-asp: 0.72
+#| fig-cap: "Apartment rents keep rising at market-rate and affordable properties"
+#| fig-alt: !expr 'paste0("Line chart of quarterly CoStar asking rent per unit in current dollars, Fauquier County, 2016 through ", costar_through, ", split by property type. Market-rate apartments rise from about ", label_dollar()(round(cs_t16("Market"))), " to about ", label_dollar()(round(cs_tv("Market", "asking_rent_avg"))), "; affordable (rent-restricted or subsidized) apartments rise from about ", label_dollar()(round(cs_t16("Affordable"))), " to about ", label_dollar()(round(cs_tv("Affordable", "asking_rent_avg"))), ", dipping slightly in the latest quarter.")'
 
-cs <- costar$quarterly |>
-  mutate(date = make_date(year, (qtr - 1) * 3 + 1, 1L))
+cs_rent <- cs_t |>
+  mutate(date = make_date(year, (qtr - 1) * 3 + 1, 1L),
+         rent_type = factor(rent_type, levels = c("Market", "Affordable")))
 
-cs_long <- bind_rows(
-  cs |> transmute(date, panel = "Asking rent ($/unit/mo)", series = "Nominal", value = asking_rent_avg),
-  cs |> transmute(date, panel = "Asking rent ($/unit/mo)", series = "Real (2025 $)", value = asking_rent_adj),
-  cs |> transmute(date, panel = "Vacancy rate", series = "Vacancy", value = vacancy_rate)
-) |>
-  filter(!is.na(value)) |>
-  mutate(panel = factor(panel, levels = c("Asking rent ($/unit/mo)", "Vacancy rate")))
-
-ggplot(cs_long, aes(date, value, color = series)) +
-  geom_line(linewidth = 0.9) +
-  facet_wrap(~ panel, ncol = 1, scales = "free_y") +
-  scale_color_manual(values = c(Nominal = "grey65", `Real (2025 $)` = blue, Vacancy = coral)) +
-  scale_y_continuous(labels = \(b) if_else(b >= 100, label_dollar()(b), label_percent(scale = 1, accuracy = 1)(b)),
-                     expand = expansion(c(0.05, 0.08))) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+ggplot(cs_rent, aes(date, asking_rent_avg, color = rent_type)) +
+  geom_line(linewidth = 1) +
+  geom_text(data = slice_max(cs_rent, date, by = rent_type),
+            aes(label = paste0(rent_type, "\n", label_dollar()(round(asking_rent_avg)))),
+            hjust = -0.1, size = 3, fontface = "bold", lineheight = 0.9) +
+  scale_color_manual(values = c(Market = green, Affordable = yellow), guide = "none") +
+  scale_y_continuous(labels = label_dollar(), limits = c(0, NA), expand = expansion(c(0, 0.08))) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y", expand = expansion(c(0.02, 0.14))) +
   labs(
-    title = "A small, tight professional apartment market with steadily rising rents",
-    subtitle = "CoStar-tracked market-rate multifamily, Fauquier County, 2016–2026",
-    caption = paste0(costar_cap(), " ", cpi_cap()),
-    x = NULL, y = NULL, color = NULL
+    title = "Apartment rents keep rising at market-rate and affordable properties",
+    subtitle = paste0("Average monthly asking rent per unit, current dollars<br><span style='color:#8baeaa'>**Market-rate**</span> (",
+                      cs_tv("Market", "total_units"), " units) and <span style='color:#e9ab3f'>**affordable**</span> (",
+                      cs_tv("Affordable", "total_units"), " units) CoStar-tracked properties"),
+    caption = paste0(costar_cap(), "<br>Affordable = rent-restricted, subsidized or mixed-income properties per CoStar."),
+    x = NULL, y = NULL
   ) +
   theme_hda() +
-  theme(legend.position = "top")
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
 ```
 
-The professional rental market is tiny throughout the county. Roughly `r cs_props_total` multifamily properties appear in the broader CoStar inventory and there are about `r cs_units` market-rate units across `r cs_props` CoStar-tracked apartment properties. Asking rent in this professional apartment market reached roughly $`r format(round(cs_rent_nom), big.mark=",")` per unit in nominal terms (latest quarter). In constant 2025 dollars, asking rents are roughly flat, also near $`r format(round(cs_rent_adj), big.mark=",")`. Professional operators have kept pace with, not outrun, inflation in the local rental market.
+The professional rental market is small. Roughly `r cs_props_total` multifamily properties appear in the broader CoStar inventory, and CoStar tracks quarterly rents at `r cs_props` apartment properties with about `r label_comma()(cs_units)` units. Most of those units, about `r label_comma()(cs_tv("Affordable", "total_units"))`, are at affordable properties that are rent-restricted or subsidized; only about `r cs_tv("Market", "total_units")` are at market-rate properties.
 
-Fauquier's professional rental market remains tight, though slack has crept in. Vacancy for these apartments averaged about `r label_percent(accuracy=0.1, scale=1)(cs_vac_recent)` over the last four quarters (`r label_percent(accuracy=0.1, scale=1)(cs_vac_latest)` in `r costar_through`), up from about `r label_percent(accuracy=0.1, scale=1)(cs_vac_early)` in 2019–2021. Even so, it has been under 3% in `r label_percent(accuracy=1)(cs_vac_share_u3)` of quarters since 2016.
+Asking rents at the market-rate properties averaged about $`r format(round(cs_tv("Market", "asking_rent_avg")), big.mark=",")` in `r costar_through`, up `r label_percent(accuracy=1)(cs_growth("Market"))` since early 2016. Affordable properties asked about $`r format(round(cs_tv("Affordable", "asking_rent_avg")), big.mark=",")`, up `r label_percent(accuracy=1)(cs_growth("Affordable"))`. For comparison, prices for everyday goods and services other than housing rose about `r label_percent(accuracy=1)(prices_growth_16_25)` from 2016 to 2025, so apartment rents of both kinds have outpaced general inflation.
+
+`r if (nrow(cs_pipe) > 0) paste0("New supply is on the way. ", cs_pipe$property_name[1], ", a ", cs_pipe$number_of_units[1], "-unit market-rate community in ", cs_pipe$city[1], ", is ", str_to_lower(cs_pipe$building_status[1]), " with asking rents near $", label_comma()(cs_pipe$avg_asking_unit[1]), ". That would nearly double the market-rate apartment units CoStar tracks, at rents well above the current market-rate average (@sec-inventory).") else ""`
+
+```{r}
+#| label: fig-costar-vacancy
+#| fig-cap: "Apartment vacancy has edged up, driven by affordable properties"
+#| fig-alt: !expr 'paste0("Line chart of quarterly CoStar vacancy rates, Fauquier County, 2016 through ", costar_through, ". The overall rate falls from about 5% to near 1% around 2019–2021, then rises to about ", label_percent(accuracy = 0.1, scale = 1)(cs_vac_latest), " in the latest quarter. Affordable properties drive the increase, reaching about ", label_percent(accuracy = 0.1, scale = 1)(cs_tv("Affordable", "vacancy_rate")), ", while market-rate properties stay near ", label_percent(accuracy = 0.1, scale = 1)(cs_tv("Market", "vacancy_rate")), ".")'
+
+cs_vac <- bind_rows(
+  cs_q |> transmute(year, qtr, series = "All tracked", vacancy_rate),
+  cs_t |> transmute(year, qtr, series = rent_type, vacancy_rate)
+) |>
+  filter(!is.na(vacancy_rate)) |>
+  mutate(date = make_date(year, (qtr - 1) * 3 + 1, 1L),
+         series = factor(series, levels = c("All tracked", "Market", "Affordable")))
+
+ggplot(cs_vac, aes(date, vacancy_rate, color = series, linewidth = series)) +
+  geom_line() +
+  geom_text(data = slice_max(cs_vac, date, by = series),
+            aes(label = series), hjust = -0.1, size = 3, fontface = "bold") +
+  scale_color_manual(values = c(`All tracked` = coral, Market = green, Affordable = yellow), guide = "none") +
+  scale_linewidth_manual(values = c(`All tracked` = 1.2, Market = 0.7, Affordable = 0.7), guide = "none") +
+  scale_y_continuous(labels = label_percent(scale = 1, accuracy = 1), limits = c(0, NA),
+                     breaks = seq(0, 12, 2), expand = expansion(c(0, 0.08))) +
+  scale_x_date(date_breaks = "2 years", date_labels = "%Y", expand = expansion(c(0.02, 0.14))) +
+  labs(
+    title = "Apartment vacancy has edged up, driven by affordable properties",
+    subtitle = "Unit-weighted vacancy rate, CoStar-tracked apartments<br><span style='color:#e76f52'>**All tracked**</span>, <span style='color:#8baeaa'>**market-rate**</span>, and <span style='color:#e9ab3f'>**affordable**</span> properties",
+    caption = costar_cap(), x = NULL, y = NULL
+  ) +
+  theme_hda() +
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
+```
+
+Fauquier's professional rental market remains tight, though slack has crept in. Vacancy across the tracked apartments averaged about `r label_percent(accuracy=0.1, scale=1)(cs_vac_recent)` over the last four quarters (`r label_percent(accuracy=0.1, scale=1)(cs_vac_latest)` in `r costar_through`), up from about `r label_percent(accuracy=0.1, scale=1)(cs_vac_early)` in 2019–2021. Even so, it has been under 3% in `r label_percent(accuracy=1)(cs_vac_share_u3)` of quarters since 2016. The increase sits at the affordable properties, where vacancy reached about `r label_percent(accuracy=0.1, scale=1)(cs_tv("Affordable", "vacancy_rate"))` (`r label_percent(accuracy=0.1, scale=1)(cs_vac_prev_yr("Affordable"))` a year earlier); market-rate vacancy is about `r label_percent(accuracy=0.1, scale=1)(cs_tv("Market", "vacancy_rate"))`. Much of it comes from one property: `r cs_top_vac$building` (`r cs_top_vac$units` units) reports `r cs_top_vac$vacancy`% vacancy and `r round(cs_conc, 1)`% concessions in the latest quarter.
 
 ## Rental stock by structure type
 
@@ -470,5 +529,5 @@ Rental affordability preservation at these properties is a real risk and near-te
 
 ::: {.callout-tip}
 ## Town spotlight — assisted units concentrate in and around Warrenton
-**Most of the county's assisted properties sit in Warrenton** (and nearby Remington), the same submarket that carries the county's highest renter share (@fig-renter-share). **Bealeton has little to no dedicated assisted inventory** in the NHPD record, so the affordable options there are effectively limited to whatever scattered single-family and market-rate units price low, which @fig-rent-distribution **shows is a shrinking share**.
+**Most of the county's assisted properties sit in Warrenton** (`r nc("Warrenton", "props")` of `r nhpd_props`, about `r nc("Warrenton", "units")` units), the same submarket that carries the county's highest renter share (@fig-renter-share). **Bealeton has a smaller assisted base** of `r nc("Bealeton", "props")` properties and about `r nc("Bealeton", "units")` units, including the Mintbrook senior apartments. Beyond those, affordable options in Bealeton depend on scattered single-family and market-rate units that price low, which @fig-rent-distribution **shows is a shrinking share**.`r if (nrow(cs_pipe) > 0 && cs_pipe$city[1] == "Bealeton") paste0(" The ", cs_pipe$number_of_units[1], "-unit ", cs_pipe$property_name[1], " will add market-rate apartments to the town, asking about $", label_comma()(cs_pipe$avg_asking_unit[1]), " a month.")`
 :::

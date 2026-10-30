@@ -20,13 +20,53 @@ gaps <- read_rds("data/gaps.rds")
 active_n    <- nrow(mls$active)                                    # active for-sale snapshot
 active_u350 <- sum(mls$active$list_price < 350000, na.rm = TRUE)
 og_below_100 <- sum(gaps$ownership_gap$listings_affordable[gaps$ownership_gap$band != "ami120"])
+
+bps       <- read_rds("data/bps.rds")
+qcew      <- read_rds("data/qcew.rds")
+fred      <- read_rds("data/fred.rds")
+inc       <- read_rds("data/acs_income.rds")
+wcoop     <- read_rds("data/wcoop.rds")
+easements <- read_rds("data/easements.rds")
+ladder    <- scope_ladder()
+
+# Permits
+perm_yr  <- bps$bps_county |> summarize(units = sum(units), .by = year)
+perm_avg <- mean(perm_yr$units[perm_yr$year %in% 2020:2025])
+perm_25  <- perm_yr$units[perm_yr$year == 2025]
+
+# Wages (QCEW 2025 annual)
+wage_all <- qcew$total$avg_annual_pay[qcew$total$area_fips == fauquier & qcew$total$own_code == "0" &
+                                        qcew$total$year == 2025]
+
+# Price / payment / income growth since 2016 (same method as the ownership chapter)
+ann <- mls$annual
+mortgage_pi <- function(price, annual_rate_pct, down = 0.10, n = 360) {
+  r <- annual_rate_pct / 100 / 12
+  price * (1 - down) * r * (1 + r)^n / ((1 + r)^n - 1)
+}
+rate_of <- \(y) fred$pmms_annual$mortgage_rate_30yr[fred$pmms_annual$year == y]
+p16 <- ann$median_price[ann$year == 2016]; p25 <- ann$median_price[ann$year == 2025]
+pay_growth   <- mortgage_pi(p25, rate_of(2025)) / mortgage_pi(p16, rate_of(2016)) - 1
+price_growth <- p25 / p16 - 1
+inc_b <- inc$b19013_trend |> filter(GEOID == fauquier)
+inc_growth   <- inc_b$estimate[inc_b$year == 2024] / inc_b$estimate[inc_b$year == 2016] - 1
+income_gap   <- gaps$income_needed$buyer_income - inc_b$estimate[inc_b$year == 2024]
+
+# Projections
+hh_growth <- wcoop$households$growth_avgsize[wcoop$households$year == 2050]
+need_yr   <- wcoop$production$units_per_year_avgsize[wcoop$production$horizon == 2050]
+
+# By-right capacity: 2010 Comprehensive Plan baseline net of permits issued since 2010
+cap_2010   <- easements$value[easements$stat_name == "units_unbuilt_capacity"]
+perm_since <- sum(perm_yr$units[perm_yr$year >= 2010]) +
+  sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == max(bps$bps_county_ytd$year)])
 ```
 
 ## Key findings {.unnumbered}
 
 ### Supply and structure {.unnumbered}
 
-**Housing choices are very limited.** Single-family detached homes are **85.1%** of Fauquier's housing stock, compared with 61.3% in Virginia. The 266 permits per year issued over 2020–2025 were almost entirely single-family, and 2–4 unit "missing middle" production is effectively zero across the full 2000–2025 record. [Inventory & Production →](@sec-inventory)
+**Housing choices are very limited.** Single-family detached homes are **85.1%** of Fauquier's housing stock, compared with 61.3% in Virginia. The `r round(perm_avg)` permits per year issued over 2020–2025 were almost entirely single-family, including a jump to `r perm_25` in 2025, and 2–4 unit "missing middle" production is effectively zero across the full 2000–2025 record. [Inventory & Production →](@sec-inventory)
 
 ::: {.column-margin}
 @fig-structure \
@@ -42,21 +82,21 @@ og_below_100 <- sum(gaps$ownership_gap$listings_affordable[gaps$ownership_gap$ba
 
 ### Affordability {.unnumbered}
 
-**Fauquier is a bedroom community with a lower-wage local job base.** **76.4%** of employed residents (26,762 of 35,028) commute out of the county, and the average local job pays $68,000. The county median household income of $130,189 is built on wages earned elsewhere. [Demographics & Socioeconomics →](@sec-demographics)
+**Fauquier is a bedroom community with a lower-wage local job base.** **76.4%** of employed residents (26,762 of 35,028) commute out of the county, and the average local job pays `r label_dollar()(round(wage_all, -3))`. The county median household income of `r label_dollar()(inc_b$estimate[inc_b$year == 2024])` is built on wages earned elsewhere. [Demographics & Socioeconomics →](@sec-demographics)
 
 ::: {.column-margin}
 @fig-commute-out \
 @fig-wages
 :::
 
-**The entry-level for-sale market has disappeared.** The median sale price reached $650,000 in 2025, and just **`r active_u350` of `r active_n`** active for-sale listings were priced under $350,000. Monthly payments on the median home rose 152% since 2016, against an 81% price increase and 43% income growth. [Ownership Market →](@sec-market-ownership)
+**The entry-level for-sale market has disappeared.** The median sale price reached `r label_dollar()(p25)` in 2025, and just **`r active_u350` of `r active_n`** active for-sale listings were priced under $350,000. Monthly payments on the median home rose `r label_percent(accuracy = 1)(pay_growth)` since 2016, against `r label_percent(accuracy = 1)(price_growth)` price growth and `r label_percent(accuracy = 1)(inc_growth)` income growth. [Ownership Market →](@sec-market-ownership)
 
 ::: {.column-margin}
 @fig-price-bands \
 @fig-price-payment-income
 :::
 
-**Housing cost burden is concentrated at lower incomes.** **40%** of renters are cost-burdened, versus 21% of owners. Every AMI band runs a rental deficit, for a net shortfall of about 3,315 units, and only `r og_below_100` of `r active_n` for-sale listings are affordable below 100% AMI. Buying the median home requires `r label_dollar()(round(gaps$income_needed$buyer_income))`, about $75,000 above the actual median income. [Affordability Gaps →](@sec-gaps)
+**Housing cost burden is concentrated at lower incomes.** **40%** of renters are cost-burdened, versus 21% of owners. Every AMI band runs a rental deficit, for a net shortfall of about `r label_comma()(abs(sum(gaps$rental_gap$surplus_deficit)))` units, and only `r og_below_100` of `r active_n` for-sale listings are affordable below 100% AMI. Buying the median home requires `r label_dollar()(round(gaps$income_needed$buyer_income))`, about `r label_dollar()(round(income_gap, -3))` above the actual median income. [Affordability Gaps →](@sec-gaps)
 
 ::: {.column-margin}
 @fig-rental-gap \
@@ -77,14 +117,14 @@ Interviewees identified resistance to growth as a barrier to both housing and em
 
 ### Need and capacity {.unnumbered}
 
-**Production keeps pace with growth but not with need.** The county is projected to add 6,795 households by 2050, requiring about 269 units per year, which is essentially level with the recent pace of 266 per year. Adding today's affordability backlog and replacement of aging stock lifts full-scope need to **12,457 units**. [Projected Needs →](@sec-projections)
+**Production keeps pace with growth but not with need.** The county is projected to add `r label_comma()(hh_growth)` households by 2050, requiring about `r round(need_yr)` units per year, which is essentially level with the 2020–2025 pace of `r round(perm_avg)` per year. Adding today's affordability backlog and replacement of aging stock lifts full-scope need to **`r label_comma()(ladder$lad_c4)` units**. [Projected Needs →](@sec-projections)
 
 ::: {.column-margin}
 @fig-production-need \
 @fig-scope-ladder
 :::
 
-**Meeting that need is not possible under current zoning.** Remaining by-right capacity inside the eight service districts is plausibly **4,000–4,500 units** today, down from an 8,381-unit baseline in the 2010 Comprehensive Plan and net of about 15 years of permitting. That is below even the roughly 7,000-unit headline need. The county must choose among expanding service districts, increasing density, accepting unmet need, or absorbing rural spillover. [Conclusions →](@sec-conclusions)
+**Meeting that need is not possible under current zoning.** Remaining by-right capacity inside the eight service districts is plausibly **4,000–4,500 units** today, down from the 2010 Comprehensive Plan's baseline of `r label_comma()(cap_2010)` units, after about `r label_comma()(round(perm_since, -2))` units permitted countywide since 2010. That is below even the roughly `r label_comma()(round(ladder$lad_c2, -3))`-unit headline need. The county must choose among expanding service districts, increasing density, accepting unmet need, or absorbing rural spillover. [Conclusions →](@sec-conclusions)
 
 ::: {.callout-note title="What we heard"}
 Interviewees highlighted the challenge of building housing in Fauquier given limited developable land and service districts, set against the large proportion of land held in conservation easements.

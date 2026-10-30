@@ -8,15 +8,34 @@
 source("_common.R")
 
 easements <- read_rds("data/easements.rds")
+bps       <- read_rds("data/bps.rds")
+costar    <- read_rds("data/costar.rds")
+mls       <- read_rds("data/mls.rds")
+ladder    <- scope_ladder()
+
+cap_2010   <- easements$value[easements$stat_name == "units_unbuilt_capacity"]
+perm_yr    <- bps$bps_county |> summarize(units = sum(units), .by = year)
+ytd_yr     <- max(bps$bps_county_ytd$year)
+perm_ytd   <- sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == ytd_yr])
+perm_since <- sum(perm_yr$units[perm_yr$year >= 2010]) + perm_ytd
+perm_since_pace <- perm_since / (ytd_yr - 2010 + lubridate::month(bps$ytd_through) / 12)
+cap_net    <- cap_2010 - perm_since
+perm_25    <- perm_yr$units[perm_yr$year == 2025]
+sf_only    <- all(c(bps$bps_county$units[bps$bps_county$year == 2025 & bps$bps_county$type != "1-unit"],
+                    bps$bps_county_ytd$units[bps$bps_county_ytd$year == ytd_yr & bps$bps_county_ytd$type != "1-unit"]) == 0)
+
+cs_vac   <- costar$quarterly |> slice_max(year * 10 + qtr, n = 1) |> pull(vacancy_rate)
+mos_2026 <- mean(mls$monthly_summary$months_supply[mls$monthly_summary$geography == "Fauquier" &
+                                                     mls$monthly_summary$year == 2026])
 ```
 
 Fauquier is growing, and accommodating the most vulnerable Fauquier residents means increasing estimated unit counts that cover more than just net in-migration. This is especially important to consider with an aging population, paired with aging infrastructure, as across both renter and owner households, those making less than 80% of AMI are likely cost-burdened. With less income, that cost-burden only increases across the board throughout the county - leaving those who work here unable to afford to live here.
 
 The average local wage narrowly covers the median rent, but wages in health care, local government, and retail fall below it, and no wage level reaches the cost of a median-priced home. Median rent is about $1,613 a month throughout the county, in homes that are mostly single family. However, vacancies for rentals priced below $1,700 a month are few and far between. Only 14% of rentals are priced under $1,000, adding to scarcity for the lowest income residents. The county's homeownership market is also mostly available to higher earning households, where "starter homes" and units to age in place are scarce. Units priced under $350,000 represent only about 6% of 2025 sales. Overall, 21% of Fauquier's households rent with a concentration of renters in Warrenton, where 37% of the town's households are renters.
 
-Who lives in Fauquier and who works in Fauquier is a completely different answer, as well. The majority of working households commute away from the county, with 37% of those working households commuting for 45 minutes or more a day. As such, in-county jobs pay modestly and most workers commute in, but live full time elsewhere. Rental and ownership vacancy is generally low throughout the county too.
+Who lives in Fauquier and who works in Fauquier is a completely different answer, as well. The majority of working households commute away from the county, with 37% of those working households commuting for 45 minutes or more a day. As such, in-county jobs pay modestly and most workers commute in, but live full time elsewhere. Vacancy remains low throughout the county, though it has loosened since the pandemic: apartment vacancy reached about `r label_percent(accuracy = 0.1, scale = 1)(cs_vac)` in `r costar_through`, and for-sale supply has averaged about `r round(mos_2026, 1)` months in 2026, still short of a balanced market.
 
-Missing middle housing, structures with two to four units, is virtually nonexistent in the study area. Presumably, gentle increases in density could house working households within the county, however, most permits approved in the county are for single family sale properties - emphasizing a market focus on upper income commuters that can afford the bigger builds compared with smaller resales.
+Missing middle housing, structures with two to four units, is virtually nonexistent in the study area. Presumably, gentle increases in density could house working households within the county, however, most permits approved in the county are for single family sale properties`r if (sf_only) paste0(", including all ", perm_25, " units permitted in 2025 and all ", perm_ytd, " so far in ", ytd_yr)` - emphasizing a market focus on upper income commuters that can afford the bigger builds compared with smaller resales.
 
 ::: {.callout-note title="What we heard"}
 Interviewees said that even on land that could accommodate housing, the local regulatory environment discourages production, and developers of both business and housing routinely conclude that Fauquier is not worth the effort. They expressed a consistent desire for moderate, gentle growth, and identified a need for coordinated messaging across sectors, visible and consistent public champions, and a concrete scorecard to track progress. Several described the opportunity and demand as present, with the constraints largely self-imposed.
@@ -26,11 +45,11 @@ Gaps such as these are identified throughout the study and offer opportunities f
 
 ## Projected need outpaces by-right service-district capacity
 
-The projections chapter's scope ladder (@fig-scope-ladder) shows the county needs between roughly **7,000 units** (housing projected household growth plus a vacancy allowance) and **12,457 units** (adding today's affordability backlog and replacement of aging stock) through 2050.
+The projections chapter's scope ladder (@fig-scope-ladder) shows the county needs between roughly **`r label_comma()(round(ladder$lad_c2, -3))` units** (housing projected household growth plus a vacancy allowance) and **`r label_comma()(ladder$lad_c4)` units** (adding today's affordability backlog and replacement of aging stock) through 2050.
 
 These figures should be read against a hard physical constraint documented in @sec-inventory: the county's Comprehensive Plan designates **eight service districts** where public water and sewer — and therefore virtually all new residential development — are permitted. The total by-right build-out capacity within those districts is approximately **`r format(easements$value[easements$stat_name == "units_unbuilt_capacity"], big.mark = ",")` units**, based on the Comprehensive Plan's own accounting.
 
-That `r format(easements$value[easements$stat_name == "units_unbuilt_capacity"], big.mark = ",")` figure is a 2010 baseline. At the county's ~266-unit annual permit pace since 2010, **remaining by-right capacity today is plausibly nearer 4,000–4,500 units** — well below even the headline 7,000-unit need, and far below the full-scope 12,457.
+That `r format(cap_2010, big.mark = ",")` figure is a 2010 baseline. The county has permitted about `r label_comma()(round(perm_since, -1))` units since 2010 (roughly `r round(perm_since_pace, -1)` a year, through `r format(bps$ytd_through, "%B %Y")`), which would leave about `r label_comma()(round(cap_net, -2))` if all of them fell inside the service districts. Allowing for permits outside the districts, **remaining by-right capacity today is plausibly nearer 4,000–4,500 units**, well below even the headline `r label_comma()(round(ladder$lad_c2, -3))`-unit need, and far below the full-scope `r label_comma()(ladder$lad_c4)`.
 
 Therefore, **meeting the county's projected housing need under current zoning and service-district boundaries is not physically possible.** Closing any meaningful share of the need requires one or more of the following:
 

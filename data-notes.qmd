@@ -10,6 +10,78 @@ source("_common.R")
 
 *Full appendix content to be drafted.*
 
+## Sources and vintages
+
+```{r}
+#| label: tbl-vintages
+#| tbl-cap: "Data sources and the most recent period each one covers in this report"
+
+v_bps   <- read_rds("data/bps.rds")
+v_pep   <- read_rds("data/pep.rds")
+v_qcew  <- read_rds("data/qcew.rds")
+v_fred  <- read_rds("data/fred.rds")
+v_cs    <- read_rds("data/costar.rds")
+v_lodes <- read_rds("data/lodes.rds")
+v_pit   <- read_rds("data/pit.rds")
+v_vdoe  <- read_rds("data/vdoe.rds")
+
+pmms_last <- v_fred$pmms_monthly |> filter(!is.na(mortgage_rate_30yr)) |> slice_max(date, n = 1)
+cpi_last  <- max(v_fred$cpi$year[!is.na(v_fred$cpi$cpi_less_shelter)])
+qcew_q    <- v_qcew$quarterly |> distinct(year, qtr) |> arrange(year) |> mutate(l = paste0(year, " Q", qtr)) |> pull(l)
+
+tribble(
+  ~Source, ~`Used for`, ~`Coverage in this report`,
+  "Bright MLS (transaction exports, monthly summaries, active listings)", "Sales, prices, supply, leases, listing snapshots",
+    paste0("Sales 2022 to ", mls_through, " (2016–2021 from GP/VAR); active listings as of ", mls_through),
+  "CoStar", "Apartment rents, vacancy, property inventory",
+    paste0("2016 Q1 to ", costar_through),
+  "Census Building Permits Survey", "Residential permits",
+    paste0("County 2000–", max(v_bps$bps_county$year), " annual, plus 2026 through ", format(v_bps$ytd_through, "%B"),
+           "; Warrenton same span; Bealeton not published"),
+  "Census Population Estimates Program", "Current population and components of change",
+    paste0("Vintage ", max(v_pep$pop$year), " (July 1, 2020–", max(v_pep$pop$year), "); county and Warrenton; Bealeton not published"),
+  "BLS QCEW", "Jobs and wages",
+    paste0("2015–", max(v_qcew$total$year), " annual averages; ", paste(qcew_q, collapse = " and "),
+           " (preliminary) for the early-2026 comparison only"),
+  "Freddie Mac PMMS via FRED", "Mortgage rates",
+    paste0("Monthly through ", format(pmms_last$date, "%B %Y"), " (", pmms_last$mortgage_rate_30yr, "%)"),
+  "BLS CPI-U less shelter via FRED", "Inflation comparisons",
+    paste0("Annual through ", cpi_last),
+  "American Community Survey", "Demographics, housing stock, incomes, rents, burden",
+    "2020–2024 5-year estimates (trend charts use earlier 5-year releases)",
+  "HUD CHAS", "Rental gap, households by income band, burden by AMI",
+    "2018–2022",
+  "HUD Income Limits and Fair Market Rents", "AMI bands, FMR and Small Area FMR",
+    "FY2026",
+  "Census LODES", "Commuting and job locations",
+    as.character(v_lodes$lodes_year),
+  "Decennial Census", "Long-run population",
+    "1990–2020",
+  "Weldon Cooper Center projections", "Population projections to 2050",
+    "July 1, 2025 release files",
+  "National Housing Preservation Database", "Federally assisted rental properties",
+    "Snapshot at time of download",
+  "Foothills Housing Network PIT count", "Homelessness",
+    paste0(min(v_pit$trend$year), "–", max(v_pit$trend$year)),
+  "VDOE McKinney-Vento counts", "Homeless students",
+    paste0(min(v_vdoe$fauquier$school_year), " to ", max(v_vdoe$fauquier$school_year))
+) |>
+  kbl(align = "lll") |>
+  kable_styling(c("condensed", "striped"), full_width = FALSE)
+```
+
+## Affordability calculations
+
+Maximum affordable rent is 30% of gross monthly income. Maximum affordable purchase price is the loan a household can carry at a `r label_percent(accuracy = 1)(0.28)` front-end ratio, after a fixed monthly allowance for taxes and insurance, divided by one minus the down payment (a 10% down payment means the loan covers 90% of the price). The mortgage rate is the latest monthly PMMS 30-year average. The same assumptions produce the income needed to buy the median home (@sec-gaps). An earlier version of this calculation multiplied the loan by 0.9 instead of dividing by it, which understated affordable prices by about a fifth; it was corrected in October 2026.
+
+## Town-level home prices
+
+Town prices in the ownership chapter come from Bright MLS's published town-area statistics for Warrenton and Bealeton. Annual figures are sales-weighted averages of monthly medians. The ZIP codes that carry the town names (20186/20187 and 22712) cover large rural areas outside the towns and run higher; they are noted for context only.
+
+## CoStar rent types
+
+CoStar classifies each property's rent type. Properties marked Affordable or Market/Affordable (rent-restricted, subsidized or mixed-income) are grouped as **affordable**; the rest are **market-rate**. Most of the units CoStar tracks with quarterly rents are at affordable properties. Rents in the rental chapter are shown in current dollars; inflation comparisons use CPI-U less shelter.
+
 ## Population series
 
 **Two population estimates appear in this report, a year apart.** The demographics chapter (@sec-demographics) leads with the U.S. Census Bureau Population Estimates Program (PEP) July 1, 2025 estimate (Vintage 2025) — **76,503** — because PEP is the current, point-in-time measure best suited to describing recent growth.

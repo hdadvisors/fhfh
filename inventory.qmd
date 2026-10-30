@@ -14,6 +14,28 @@ stock     <- read_rds("data/acs_stock.rds")
 bps       <- read_rds("data/bps.rds")
 mls       <- read_rds("data/mls.rds")
 easements <- read_rds("data/easements.rds")
+pep       <- read_rds("data/pep.rds")
+costar    <- read_rds("data/costar.rds")
+
+warr_pop <- pep$places |> filter(GEOID == towns[["warrenton"]]) |> slice_max(year, n = 1)
+
+# Permit scalars (annual BPS series 2000–2025)
+perm_yr   <- bps$bps_county |> summarize(units = sum(units), .by = year)
+perm_avg  <- mean(perm_yr$units[perm_yr$year %in% 2020:2025])
+perm_25   <- perm_yr$units[perm_yr$year == 2025]
+perm_prev_high_yr <- perm_yr |> filter(year < 2025, units >= perm_25) |> pull(year) |> max()   # last year that beat 2025
+mf_yr  <- bps$bps_county |> filter(type == "5+ units", units > 0) |> select(year, units)
+mf_peak <- slice_max(mf_yr, units, n = 1)
+mf_last <- slice_max(mf_yr, year, n = 1)
+mf_ytd  <- sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == max(bps$bps_county_ytd$year) &
+                                          bps$bps_county_ytd$type == "5+ units"])
+
+# Recent and pending rental projects in the CoStar property file
+cs_new <- costar$properties |>
+  filter(year_built >= 2020 | building_status != "Existing", number_of_units >= 20) |>
+  arrange(year_built)
+summit <- cs_new |> filter(str_detect(property_name, "Summit"))
+wchase <- cs_new |> filter(str_detect(property_name, "Warrenton Chase"))
 
 # Palette anchors (match ggtext subtitle spans to fills)
 blue   <- hda_pal[1]
@@ -43,7 +65,7 @@ geo_label <- function(GEOID, geo_type) case_when(
 
 ## Study area
 
-Fauquier County is a large, predominantly rural jurisdiction between the Piedmont and the outer Washington, D.C. suburbs with roughly `r format(round(geo$county$ALAND[geo$county$GEOID == fauquier] / 2589988), big.mark = ",")` square miles. This study zooms in on the county's two population centers: **the Town of Warrenton**, the county seat with nearly 10,000 residents, and to the south along US-17, the unincorporated **Bealeton Census Designated Place (CDP)** (~5,000).
+Fauquier County is a large, predominantly rural jurisdiction between the Piedmont and the outer Washington, D.C. suburbs with roughly `r format(round(geo$county$ALAND[geo$county$GEOID == fauquier] / 2589988), big.mark = ",")` square miles. This study zooms in on the county's two population centers: **the Town of Warrenton**, the county seat with about `r label_comma()(round(warr_pop$value, -2))` residents (`r warr_pop$year`), and to the south along US-17, the unincorporated **Bealeton Census Designated Place (CDP)** (~5,000).
 
 ```{r}
 #| label: fig-studyarea
@@ -313,9 +335,11 @@ Interviewees described a strong word-of-mouth housing market. Employers and work
 
 ## Residential construction
 
-Despite the perceived need that local workers face for units, over the last 20 years permits have overwhelmingly been for single family units. Permitting has averaged 266 units/year over 2020–2025, and is essentially all single-family. In the Greater Piedmont REALTOR's region, about 38.7% of permits were for Fauquier County, while 50% were in Culpeper and 11.6% combined in Madison and Rappahannock.[^gp-permits]
+Despite the perceived need that local workers face for units, over the last 20 years permits have overwhelmingly been for single family units. Permitting has averaged `r round(perm_avg)` units/year over 2020–2025, and is essentially all single-family. Activity jumped in 2025 to `r perm_25` units, about `r label_percent(accuracy = 1)(perm_25 / perm_avg - 1)` above that average and the most in any year since `r perm_prev_high_yr`. In the Greater Piedmont REALTOR's region, about 38.7% of permits were for Fauquier County, while 50% were in Culpeper and 11.6% combined in Madison and Rappahannock.[^gp-permits]
 
-Missing middle housing, structures with two to four units, is virtually nonexistent in the study area. Just 10 total 2–4-unit permits were issued across the entire 2000–2025 period. Multifamily (5+ units) is rare and episodic, notable only in a few years. There were roughly 108 multifamily units in 2001 and only 48 in 2018.
+Missing middle housing, structures with two to four units, is virtually nonexistent in the study area. Just 10 total 2–4-unit permits were issued across the entire 2000–2025 period. Multifamily (5+ units) is rare and episodic, notable only in a few years: the peak was `r mf_peak$units` units in `r mf_peak$year`, and the most recent was `r mf_last$units` in `r mf_last$year`. No 5+ unit permits have been issued since`r if (mf_ytd == 0) paste0(", including 2026 through ", format(bps$ytd_through, "%B"))`.
+
+The CoStar property inventory shows two recent rental projects that the permit categories above do not capture as multifamily. `r wchase$property_name` (`r wchase$number_of_units` units, `r wchase$year_built`) in Warrenton is built as single-family-style rentals, and `r summit$property_name` (`r summit$number_of_units` units, market-rate, `r str_to_lower(summit$building_status)` for `r summit$year_built`) is a new garden-apartment community in Bealeton. Together they would add about `r label_comma()(wchase$number_of_units + summit$number_of_units)` rental units to a professionally managed market of roughly 1,000 tracked apartments (@sec-market-rental).
 
 ```{r}
 # 2026 year-to-date vs the same months of 2025 (2026 is a partial year; not in the annual chart)
@@ -327,14 +351,14 @@ wr_full25 <- ytd_n(bps$bps_warrenton, 2025)
 fq26_sf <- sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == 2026 & bps$bps_county_ytd$type == "1-unit"])
 ```
 
-Permitting has continued at a similar pace in 2026. Through `r ytd_thru_lab`, the county issued `r fq26` residential permits (`r fq26_sf` single-family), `r label_percent(accuracy = 1)(fq26 / fq25 - 1)` more than the `r fq25` issued over the same months of 2025. The Town of Warrenton accounted for `r wr26` of them (`r label_percent(accuracy = 1)(wr26 / fq26)`), compared with `r wr25` through September 2025 and `r wr_full25` in all of 2025. Bealeton is an unincorporated CDP whose permits are issued by the county, so they cannot be separated out.
+Permitting has continued at a similar pace in 2026. Through `r ytd_thru_lab`, the county issued `r fq26` residential permits (`r if (fq26_sf == fq26) "all" else fq26_sf` single-family), `r label_percent(accuracy = 1)(fq26 / fq25 - 1)` more than the `r fq25` issued over the same months of 2025. The Town of Warrenton accounted for `r wr26` of them (`r label_percent(accuracy = 1)(wr26 / fq26)`), compared with `r wr25` through September 2025 and `r wr_full25` in all of 2025. Bealeton is an unincorporated CDP whose permits are issued by the county, so they cannot be separated out.
 
 [^gp-permits]: Source: Greater Piedmont REALTORS, Greater Piedmont Region Housing Gap Analysis (March 2026)
 
 ```{r}
 #| label: fig-permits
 #| fig-cap: "Nearly every home permitted since 2000 has been single-family"
-#| fig-alt: "Stacked column chart of Fauquier County residential building permits by structure type from 2000 to 2025. Single-family (1-unit) permits account for nearly all activity every year; missing-middle (2–4 unit) permits are essentially absent and multifamily (5+) permits appear only in a few years. A dashed line marks the 2020–2025 average of 266 permits per year."
+#| fig-alt: !expr 'paste0("Stacked column chart of Fauquier County residential building permits by structure type from 2000 to 2025. Single-family (1-unit) permits account for nearly all activity every year; missing-middle (2–4 unit) permits are essentially absent and multifamily (5+) permits appear only in a few years. A dashed line marks the 2020–2025 average of ", round(perm_avg), " permits per year; 2025 rises to ", perm_25, ".")'
 
 perm <- bps$bps_county |>
   mutate(grp = case_when(
@@ -349,12 +373,12 @@ perm <- bps$bps_county |>
 
 avg <- data.frame(
   x = 2011, y = 390,
-  label = "2020–2025 average: **266 permits/year**"
+  label = paste0("2020–2025 average: **", round(perm_avg), " permits/year**")
 )
 
 ggplot(perm, aes(year, units, fill = grp)) +
   geom_col(width = 0.8) +
-  geom_hline(yintercept = 266, linetype = "dashed", color = "grey35") +
+  geom_hline(yintercept = perm_avg, linetype = "dashed", color = "grey35") +
   geom_textbox(
     data = avg,
     aes(x, y, label = label),
@@ -389,12 +413,19 @@ Interviewees said the market lacks diversity: no accessory dwelling units, few t
 
 Of note is the difference in median home price for new construction versus resold homes, as well as lot size.
 
-New construction in the County sold for a higher median price in 2025 (~$734,000 vs ~$635,000 for resales) and was larger than resale homes. New construction had a median square footage of roughly 2,854 versus 370 less for resale homes.
+```{r}
+nvr25 <- mls$new_vs_resale |> filter(year == 2025)
+nv <- \(col, type) nvr25[[col]][nvr25$construction == type]
+nvr22_acres <- mls$new_vs_resale$median_acres[mls$new_vs_resale$year == 2022 &
+                                                mls$new_vs_resale$construction == "New construction"]
+```
+
+New construction in the County sold for a higher median price in 2025 (~`r label_dollar(accuracy = 1000)(nv("median_price", "New construction"))` vs ~`r label_dollar(accuracy = 1000)(nv("median_price", "Resale"))` for resales) and was larger than resale homes. New construction had a median square footage of roughly `r label_comma()(nv("median_sqft", "New construction"))` versus `r round(nv("median_sqft", "New construction") - nv("median_sqft", "Resale"), -1)` less for resale homes.
 
 ```{r}
 #| label: fig-newresale
 #| fig-cap: "New homes are larger and pricier than resales — but on smaller lots"
-#| fig-alt: "Three-panel bar chart comparing 2025 median price, size, and lot area of new-construction versus resale home sales in Fauquier County. New homes have a higher median price (about $734,000 vs $635,000) and are larger (about 2,854 vs 2,484 square feet), but sit on much smaller lots (about 0.23 vs 1.0 acre)."
+#| fig-alt: !expr 'paste0("Three-panel bar chart comparing 2025 median price, size, and lot area of new-construction versus resale home sales in Fauquier County. New homes have a higher median price (about ", label_dollar(accuracy = 1000)(nv("median_price", "New construction")), " vs ", label_dollar(accuracy = 1000)(nv("median_price", "Resale")), ") and are larger (about ", label_comma()(nv("median_sqft", "New construction")), " vs ", label_comma()(nv("median_sqft", "Resale")), " square feet), but sit on much smaller lots (about ", nv("median_acres", "New construction"), " vs ", nv("median_acres", "Resale"), " acre).")'
 #| fig-asp: 0.5
 
 nvr <- mls$new_vs_resale |>
@@ -422,7 +453,7 @@ ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
   labs(
     title = "New homes are larger and pricier than resales — but on smaller lots",
     subtitle = "Median attributes of <span style='color:#445ca9'>**new-construction**</span> vs <span style='color:#8baeaa'>**resale**</span> sales in Fauquier County",
-    caption = mls_cap("938 total sales from 2025", through = FALSE), x = NULL, y = NULL
+    caption = mls_cap(paste(label_comma()(sum(nvr25$n)), "total sales from 2025"), through = FALSE), x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
@@ -430,7 +461,7 @@ ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
         axis.text.y = element_blank())
 ```
 
-That said, in reality, newly constructed homes sit on far smaller lots, 0.23 versus 1.0 acre for resale. New-construction lot sizes have shrunk sharply since 2022, when the median acreage was near 1.68. As unit production has concentrated in service-district subdivisions, this study assumes that lot sizes have had to decrease.
+That said, in reality, newly constructed homes sit on far smaller lots, `r nv("median_acres", "New construction")` versus `r number(nv("median_acres", "Resale"), accuracy = 0.1)` acre for resale. New-construction lot sizes have shrunk sharply since 2022, when the median acreage was near `r nvr22_acres`. As unit production has concentrated in service-district subdivisions, this study assumes that lot sizes have had to decrease.
 
 Product type, more than lot size, signals the missing-middle gap. The county's new supply is made up of larger detached houses, with little to no starter-scale or small-lot infill product entering the market.
 

@@ -52,9 +52,16 @@ renv::restore()
   (latest CoStar quarter) are read from the rds files; `mls_cap(year_range, through = TRUE)` and
   `costar_cap()` append them to captions. Pass `through = FALSE` for charts that stop at a full year.
   Use inline R (not hardcoded numbers) for listing counts, YTD sales, latest-month and latest-quarter values.
-- **After any MLS/CoStar refresh:** re-run `r/mls.R`, `r/costar.R`, then **`r/gaps.R`** (it bakes
-  `mls$active` and rent medians into `gaps.rds`), and delete `_freeze/<chapter>` for the chapters that read
-  MLS/CoStar (freeze doesn't see data changes) before `quarto render`.
+- **After any MLS/CoStar/QCEW refresh:** re-run `r/mls.R`, `r/costar.R`, then **`r/gaps.R`** (it bakes
+  `mls$active`, rent medians and QCEW wages into `gaps.rds`), then **`r/wcoop.R`** (its needs allocation
+  reads `gaps.rds`), and delete `_freeze/<chapter>` for every chapter that reads those files (freeze
+  doesn't see data changes) before `quarto render`.
+- **`scope_ladder()`** — the projections scope-ladder totals (`lad_c1`–`lad_c4`, backlog, replacement)
+  in one place, so exec-sum and conclusions quote the same need totals as `projections.qmd`.
+- **Rents are shown in current dollars**; inflation comparisons are one plain sentence using CPI-U less
+  shelter (`fred$cpi`). CoStar rents are split Market vs Affordable (`costar$quarterly_type`).
+- **Chunk options built with `!expr`** must be single-quoted YAML (`#| fig-alt: !expr 'paste0(...)'`,
+  doubling any `'` inside), or a `: ` in the text breaks the YAML parse.
 - **`flag_reliability(df, cv_col = cv)`** — adds a `reliability` column (High ≤15 / Medium ≤30 /
   Low >30) from a **0–100** `cv`. Use this for place-level ACS, **not** `hdatools::add_reliability()`
   (which expects a `*_cv` column on a 0–1 scale and mislabels every town cell "Low"). Bealeton floor:
