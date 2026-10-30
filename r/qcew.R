@@ -3,6 +3,8 @@
 #         all-industry total, by ownership sector, 2-digit NAICS sector, 3-digit subsector
 # Source: BLS QCEW open-data CSVs (data.bls.gov/cew/data/api/) — Path A (script-fetch)
 # Output: data/qcew.rds
+#   $total / $ownership / $sector / $subsector — annual, 2015–2025
+#   $quarterly — 2026 Q1 and 2025 Q1 only (like-for-like), cuts 50/51/54 and 70/71/74
 # agglvl map (confirmed 2026-07-08 against 51061 annual file; expanded Session 6 2026-07-10):
 #   county: 70 = total all industries (own 0); 71 = by ownership sector;
 #           74 = 2-digit NAICS sector by ownership; 75 = 3-digit NAICS subsector by ownership
@@ -59,6 +61,34 @@ qcew_clean <- raw |>
   ) |>
   select(-any_of("year_fetched"))
 
+## 3b. Quarterly: same quarter, latest vs prior year ----
+# Quarterly files (/{year}/{qtr}/area/) carry month1-3 employment, quarterly wages and
+# avg weekly wage. Only a like-for-like quarter pair is kept, never mixed with annual series.
+q_latest <- c(year = 2026L, qtr = 1L)   # 2026 Q1 live on BLS 2026-10-30; Q2 not yet (404)
+q_pairs  <- list(q_latest, c(year = q_latest[["year"]] - 1L, qtr = q_latest[["qtr"]]))
+
+fetch_qcew_quarter <- function(year, qtr, area_code) {
+  url <- paste0("https://data.bls.gov/cew/data/api/", year, "/", qtr, "/area/",
+                toupper(area_code), ".csv")
+  message("Fetching: ", url)
+  tryCatch(read_csv(url, na = " ", show_col_types = FALSE, col_types = cols(.default = "c")),
+           error = function(e) { message("  Failed: ", conditionMessage(e)); NULL })
+}
+
+qcew_quarterly <- map(q_pairs, \(p)
+  map(area_codes, \(area) fetch_qcew_quarter(p[["year"]], p[["qtr"]], area)) |> compact()
+) |> list_flatten() |> list_rbind() |>
+  clean_names() |>
+  filter(area_fips %in% area_codes,
+         agglvl_code %in% c("50", "51", "54", "70", "71", "74")) |>
+  mutate(
+    across(c(year, qtr, qtrly_estabs, month1_emplvl, month2_emplvl, month3_emplvl,
+             total_qtrly_wages, avg_wkly_wage), as.numeric),
+    avg_emplvl = (month1_emplvl + month2_emplvl + month3_emplvl) / 3
+  ) |>
+  select(area_fips, own_code, industry_code, agglvl_code, year, qtr, disclosure_code,
+         qtrly_estabs, avg_emplvl, total_qtrly_wages, avg_wkly_wage)
+
 ## 4. Split into named list elements ----
 # total     = all industries, all ownership (own_code 0)
 # ownership = all industries, by ownership sector (own 1 fed / 2 state / 3 local / 5 private)
@@ -72,7 +102,8 @@ qcew_subsector <- qcew_clean |> filter(agglvl_code %in% c("55", "75"))
 ## 5. Write output ----
 write_rds(
   list(total = qcew_total, ownership = qcew_ownership,
-       sector = qcew_sector, subsector = qcew_subsector),
+       sector = qcew_sector, subsector = qcew_subsector,
+       quarterly = qcew_quarterly),
   "data/qcew.rds"
 )
 message("Wrote data/qcew.rds")
@@ -114,6 +145,14 @@ stopifnot(length(local_gov_wage) == 1, between(local_gov_wage, 30000, 100000))
 
 # All 5 areas present
 stopifnot(all(area_codes %in% unique(qcew$total$area_fips)))
+
+# Quarterly: both quarters present for all 5 areas, with the total-all-industries row
+q_chk <- qcew$quarterly |> filter(own_code == "0", agglvl_code %in% c("50", "70"))
+stopifnot(
+  setequal(unique(q_chk$year), c(q_latest[["year"]], q_latest[["year"]] - 1L)),
+  nrow(q_chk) == 2 * length(area_codes),
+  between(q_chk$avg_emplvl[q_chk$area_fips == fauquier & q_chk$year == q_latest[["year"]]], 17000, 33000)
+)
 
 message("qcew.R validation passed. Latest year: ", latest_yr,
         " | Fauquier jobs: ", round(fauquier_jobs, 0),
