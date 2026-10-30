@@ -1,9 +1,13 @@
 # Executive summary {#sec-exec-sum .unnumbered}
 
 <!-- Purpose: summary paragraph (migrated from the team's Google Doc draft, Oct 2026) plus a
-     headline-finding list — one per chapter, each sourced from that chapter's rendered figures. -->
+     headline-finding list — one per chapter, each sourced from that chapter's rendered figures.
+     Findings are grouped under H3 themes; figure refs sit in the margin; "What we heard" callouts
+     carry the stakeholder-interview material. -->
 
 Fauquier County has a highly priced housing market with a moderate working income environment, where the majority of residents commute away for work and those working within the county must commute in. The county is housing affluent households that commute elsewhere for high paying work, but it sustains short term and lower wage employment where workers must live elsewhere.
+
+Findings below draw on the data chapters. They are also informed by six interviews with nine people from employment, local government, development and real estate. Their perspectives appear in the "What we heard" notes.
 
 ```{r}
 #| label: setup
@@ -20,50 +24,68 @@ og_below_100 <- sum(gaps$ownership_gap$listings_affordable[gaps$ownership_gap$ba
 
 ## Key findings {.unnumbered}
 
+### Supply and structure {.unnumbered}
 
-- **Housing choices are very limited.** Single-family detached homes are **85.1%** of Fauquier's
-  housing stock (Virginia: 61.3%), and the **266 permits/year** issued over 2020–2025 were
-  almost entirely single-family — 2–4 unit "missing middle" production is effectively zero
-  across the full 2000–2025 record (@sec-inventory, @fig-structure, @fig-permits).
+**Housing choices are very limited.** Single-family detached homes are **85.1%** of Fauquier's housing stock, compared with 61.3% in Virginia. The 266 permits per year issued over 2020–2025 were almost entirely single-family, and 2–4 unit "missing middle" production is effectively zero across the full 2000–2025 record. [Inventory & Production →](@sec-inventory)
 
-- **Fauquier is a bedroom community with a lower-wage local job base.** **76.4%** of
-  employed residents (26,762 of 35,028) commute out of the county, and the average local
-  job pays **$68,000** — a county median household income of **$130,189** built on wages
-  earned elsewhere (@sec-demographics, @fig-commute-out, @fig-wages).
+::: {.column-margin}
+@fig-structure \
+@fig-permits
+:::
 
-- **The entry-level for-sale market has disappeared.** The median sale price reached
-  **$650,000** in 2025, and just **`r active_u350` of `r active_n`** active for-sale listings were priced under $350,000 —
-  while monthly payments on the median home rose **+152%** since 2016 against a **+81%**
-  price increase and **+43%** income growth (@sec-market-ownership, @fig-price-bands,
-  @fig-price-payment-income).
+**Rentals are mostly houses, and the subsidized stock is thin and aging.** Single-family homes make up about **68%** of renter-occupied units and purpose-built apartments about 20%. The county's entire assisted inventory is 874 units across 13 properties, and 8 of those have a subsidy expiring by 2036. [Rental Market →](@sec-market-rental)
 
-- **Rentals are mostly houses, and the subsidized stock is thin and aging.** Single-family
-  homes carry **~68%** of all renter-occupied units and purpose-built apartments only
-  **~20%**; the county's entire assisted inventory is **874 units across 13 properties**,
-  **8 of which** have a subsidy expiring by 2036 (@sec-market-rental, @fig-rental-structure,
-  @tbl-nhpd).
+::: {.column-margin}
+@fig-rental-structure \
+@tbl-nhpd
+:::
 
-- **Housing cost burden is concentrated at lower incomes.** **40%** of renters
-  are cost-burdened versus 21% of owners. Every AMI band runs a rental deficit for a net
-  shortfall of **~3,315 units**, and only **`r og_below_100` of `r active_n`** for-sale listings are affordable
-  below 100% AMI — buying the median home requires **$190,586**, about **$60,000** above
-  the actual median income (@sec-gaps, @fig-rental-gap, @fig-ownership-gap,
-  @fig-wages-costs).
+### Affordability {.unnumbered}
 
-- **Older adults are the most exposed group already in place.** **32%** of the county's
-  9,173 senior households (2,922) are older adults living alone, and **41%** of elderly
-  renter households are cost-burdened — against a rental market with little dedicated
-  senior product (@sec-populations, @fig-senior-alone, @fig-senior-burden).
+**Fauquier is a bedroom community with a lower-wage local job base.** **76.4%** of employed residents (26,762 of 35,028) commute out of the county, and the average local job pays $68,000. The county median household income of $130,189 is built on wages earned elsewhere. [Demographics & Socioeconomics →](@sec-demographics)
 
-- **Production keeps pace with growth but not with need.** The county is projected to add
-  **6,795 households by 2050**, requiring **~269 units/year** — essentially level with the
-  266/year recent pace — but adding today's affordability backlog and replacement of aging
-  stock lifts full-scope need to **12,457 units** (@sec-projections, @fig-production-need,
-  @fig-scope-ladder).
+::: {.column-margin}
+@fig-commute-out \
+@fig-wages
+:::
 
-- **Meeting that need is not possible under current zoning.** Remaining by-right capacity
-  inside the eight service districts is plausibly **4,000–4,500 units** today (from an
-  **8,381-unit** 2010 Comprehensive Plan baseline, net of ~15 years of permitting) — below
-  even the ~7,000-unit headline need, forcing a choice among expanding service districts,
-  increasing density, accepting unmet need, or absorbing rural spillover
-  (@sec-conclusions).
+**The entry-level for-sale market has disappeared.** The median sale price reached $650,000 in 2025, and just **`r active_u350` of `r active_n`** active for-sale listings were priced under $350,000. Monthly payments on the median home rose 152% since 2016, against an 81% price increase and 43% income growth. [Ownership Market →](@sec-market-ownership)
+
+::: {.column-margin}
+@fig-price-bands \
+@fig-price-payment-income
+:::
+
+**Housing cost burden is concentrated at lower incomes.** **40%** of renters are cost-burdened, versus 21% of owners. Every AMI band runs a rental deficit, for a net shortfall of about 3,315 units, and only `r og_below_100` of `r active_n` for-sale listings are affordable below 100% AMI. Buying the median home requires $190,586, about $60,000 above the actual median income. [Affordability Gaps →](@sec-gaps)
+
+::: {.column-margin}
+@fig-rental-gap \
+@fig-ownership-gap \
+@fig-wages-costs
+:::
+
+**Older adults are the most exposed group already in place.** **32%** of the county's 9,173 senior households (2,922) are older adults living alone, and 41% of elderly renter households are cost-burdened. The rental market offers little dedicated senior product. [Vulnerable Populations →](@sec-populations)
+
+::: {.column-margin}
+@fig-senior-alone \
+@fig-senior-burden
+:::
+
+::: {.callout-note title="What we heard"}
+Interviewees identified resistance to growth as a barrier to both housing and employment opportunities across the county. They described a disproportionate burden on the tax base, through rising property taxes and delayed infrastructure costs, that deepens housing affordability challenges.
+:::
+
+### Need and capacity {.unnumbered}
+
+**Production keeps pace with growth but not with need.** The county is projected to add 6,795 households by 2050, requiring about 269 units per year, which is essentially level with the recent pace of 266 per year. Adding today's affordability backlog and replacement of aging stock lifts full-scope need to **12,457 units**. [Projected Needs →](@sec-projections)
+
+::: {.column-margin}
+@fig-production-need \
+@fig-scope-ladder
+:::
+
+**Meeting that need is not possible under current zoning.** Remaining by-right capacity inside the eight service districts is plausibly **4,000–4,500 units** today, down from an 8,381-unit baseline in the 2010 Comprehensive Plan and net of about 15 years of permitting. That is below even the roughly 7,000-unit headline need. The county must choose among expanding service districts, increasing density, accepting unmet need, or absorbing rural spillover. [Conclusions →](@sec-conclusions)
+
+::: {.callout-note title="What we heard"}
+Interviewees highlighted the challenge of building housing in Fauquier given limited developable land and service districts, set against the large proportion of land held in conservation easements.
+:::
