@@ -48,6 +48,13 @@ renv::restore()
   `qcew_cap()`, `dec_cap()`, `pep_cap()`, `bps_cap()`, `lodes_cap()`, `cpi_cap()`,
   `costar_cap()`, `fmr_cap(year)`, `nhpd_cap()`, `pmms_cap()`, `compplan_cap(chapter, page)`,
   `ami_cap(year)`, `pit_cap()`, `vdoe_cap()`, `wc_cap(release)`.
+- **Vintage variables** (`_common.R`): `mls_through` (latest MLS snapshot date) and `costar_through`
+  (latest CoStar quarter) are read from the rds files; `mls_cap(year_range, through = TRUE)` and
+  `costar_cap()` append them to captions. Pass `through = FALSE` for charts that stop at a full year.
+  Use inline R (not hardcoded numbers) for listing counts, YTD sales, latest-month and latest-quarter values.
+- **After any MLS/CoStar refresh:** re-run `r/mls.R`, `r/costar.R`, then **`r/gaps.R`** (it bakes
+  `mls$active` and rent medians into `gaps.rds`), and delete `_freeze/<chapter>` for the chapters that read
+  MLS/CoStar (freeze doesn't see data changes) before `quarto render`.
 - **`flag_reliability(df, cv_col = cv)`** — adds a `reliability` column (High ≤15 / Medium ≤30 /
   Low >30) from a **0–100** `cv`. Use this for place-level ACS, **not** `hdatools::add_reliability()`
   (which expects a `*_cv` column on a 0–1 scale and mislabels every town cell "Low"). Bealeton floor:

@@ -392,7 +392,7 @@ ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
   labs(
     title = "New homes are larger and pricier than resales — but on smaller lots",
     subtitle = "Median attributes of <span style='color:#445ca9'>**new-construction**</span> vs <span style='color:#8baeaa'>**resale**</span> sales in Fauquier County",
-    caption = mls_cap("938 total sales from 2025"), x = NULL, y = NULL
+    caption = mls_cap("938 total sales from 2025", through = FALSE), x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +

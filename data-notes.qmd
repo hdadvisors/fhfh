@@ -21,3 +21,24 @@ The projections chapter (@sec-projections) bases its household-formation and for
 All figures and tables in this report that cite a single calendar year for American Community Survey data (e.g., "2024") are drawn from **ACS 5-year estimates** referenced by their **end year**. The "2024" estimates pool survey responses collected from 2020 through 2024.
 
 Five-year estimates are used throughout because Fauquier County and especially its two places (Warrenton, Bealeton) have populations too small for reliable 1-year ACS estimates. Readers should not interpret a "2024" ACS figure as a point-in-time 2024 value; it reflects conditions across the full five-year survey window, with the center of the period near 2022.
+
+## Bright MLS and CoStar vintages
+
+```{r}
+#| label: mls-costar-vintage
+#| include: false
+mls_d  <- read_rds("data/mls.rds")
+cs_d   <- read_rds("data/costar.rds")
+ms_d   <- mls_d$monthly_summary
+cs_rng <- cs_d$quarterly |> arrange(year, qtr) |> slice(c(1, n())) |> mutate(lbl = paste0(year, " Q", qtr)) |> pull(lbl)
+```
+
+**Bright MLS** transaction exports run through **`r mls_through`**. Annual sales counts for 2016–2021 come from the Greater Piedmont REALTOR / VAR series; 2022 onward come from the Bright MLS closed-sales exports. **2026 is a partial year** (`r format(mls_d$annual$sales_count[mls_d$annual$year == 2026], big.mark = ",")` closings through October); any 2026 comparison is made against the same months of 2025.
+
+**Two active-listing snapshots** are drawn from the same `r mls_through` export and kept separate: `r nrow(mls_d$active)` active **for-sale** listings (used for the listing counts in the ownership and affordability-gap chapters) and `r nrow(mls_d$active_rentals)` active **rental** listings (used only for the asking-rent comparison in the rental chapter). Rental listings are a small, single-day snapshot; read them as directional.
+
+**Monthly summary series** (published Bright MLS summaries, Fauquier, Warrenton, Bealeton) run January 2022 through `r format(max(ms_d$date), "%B %Y")`. The final month is partial and is labeled as such where it is quoted.
+
+**Published vs. transaction-derived counts.** The published monthly summary reports roughly 17–23% more sales than the transaction-level exports (a property-type filter in the exports). Median sale prices agree to about 0.1%. Sales volume is charted from the transaction export and the monthly summary is used for supply and days-on-market; neither source is re-based on the other, and the active-listing snapshot carries the same narrower definition as the export.
+
+**CoStar** multifamily quarterly data run **`r cs_rng[1]` through `r cs_rng[2]`**, covering `r max(cs_d$quarterly$n_properties, na.rm = TRUE)` tracked apartment properties (about `r format(max(cs_d$quarterly$market_units, na.rm = TRUE), big.mark = ",")` units) within a broader inventory of `r nrow(cs_d$properties)` multifamily properties. CoStar covers professionally managed apartments only and is supplemental to the ACS rent anchor used for affordability.

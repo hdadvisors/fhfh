@@ -41,7 +41,9 @@ Session 12.
 `dec_cap()`, `pep_cap()`, `bps_cap()`, `lodes_cap()`, `cpi_cap()`, `costar_cap()`, `fmr_cap()`,
 `nhpd_cap()`, `pmms_cap()`, `compplan_cap()`, `ami_cap()`, `pit_cap()`, `vdoe_cap()`, `wc_cap()` — and
 `flag_reliability()`, which tiers place-level ACS estimates High/Medium/Low from a 0–100 CV column
-(used instead of `hdatools::add_reliability()`, which assumes a 0–1 scale).
+(used instead of `hdatools::add_reliability()`, which assumes a 0–1 scale). `mls_cap()` / `costar_cap()`
+captions pick up the data vintage automatically (`mls_through`, `costar_through`). After refreshing MLS or
+CoStar data, re-run `r/gaps.R` and clear `_freeze/` for the market, gaps, inventory, and conclusions chapters.
 
 ## Data note
 

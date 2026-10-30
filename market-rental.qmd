@@ -69,10 +69,13 @@ rent_growth_real <- rent_24 / rent_13_real - 1
 cs_latest <- costar$quarterly |> filter(!is.na(asking_rent_adj)) |> slice_max(year * 10 + qtr, n = 1)
 cs_units  <- cs_latest$market_units
 cs_props  <- cs_latest$n_properties
-cs_rent_adj <- cs_latest$asking_rent_adj          # ~1604
+cs_rent_adj <- cs_latest$asking_rent_adj          # latest quarter, 2025 $
 cs_rent_nom <- costar$quarterly |> slice_max(year * 10 + qtr, n = 1) |> pull(asking_rent_avg)
-cs_vac_recent <- mean(tail(costar$quarterly$vacancy_rate, 4))   # last ~year
-cs_props_total <- nrow(costar$properties)         # 41
+cs_vac_recent <- mean(tail(costar$quarterly$vacancy_rate, 4))   # last 4 quarters
+cs_vac_latest <- costar$quarterly |> slice_max(year * 10 + qtr, n = 1) |> pull(vacancy_rate)
+cs_vac_early  <- mean(costar$quarterly$vacancy_rate[costar$quarterly$year %in% 2019:2021])
+cs_vac_share_u3 <- mean(costar$quarterly$vacancy_rate < 3, na.rm = TRUE)    # share of quarters under 3%
+cs_props_total <- nrow(costar$properties)         # properties in the broader CoStar inventory
 
 # Rental stock by structure (renter side)
 r_struct <- stock$b25032 |>
@@ -97,7 +100,18 @@ nhpd_10yr    <- sum(nhpd$properties$earliest_expiration <= as.Date("2036-12-31")
 r25 <- mls$rentals |> filter(year == 2025)
 rent_n_2025   <- nrow(r25)
 rent_u1700    <- sum(r25$lease_price < 1700, na.rm = TRUE)
-rent_median   <- median(r25$lease_price, na.rm = TRUE)   # 2450
+rent_median   <- median(r25$lease_price, na.rm = TRUE)
+
+# MLS rentals, 2026 year to date (closed leases) and the current active rental snapshot
+r26 <- mls$rentals |> filter(year == 2026)
+rent_n_2026   <- nrow(r26)
+rent_med_2026 <- median(r26$lease_price, na.rm = TRUE)
+rent_thru     <- format(max(r26$lease_date, na.rm = TRUE), "%B %Y")
+ar <- mls$active_rentals |> filter(!is.na(list_price), list_price > 0)
+ar_n      <- nrow(ar)
+ar_med    <- median(ar$list_price)
+ar_u1700  <- sum(ar$list_price < 1700)
+ar_asof   <- format(max(mls$active_rentals$snapshot_date), "%B %Y")
 ```
 
 ## Who rents
@@ -160,7 +174,7 @@ Bealeton's renter count is small and carries Medium reliability, so it is read a
 ```{r}
 #| label: fig-rent-trend
 #| fig-cap: "Rents have climbed in real terms; professional asking rents sit at the top of the market"
-#| fig-alt: "Line chart of Fauquier County median gross rent from 2013 to 2024 shown nominal and inflation-adjusted, with CoStar professional asking rents overlaid quarterly from 2016 to 2026. Nominal median rent rises from about $1,140 to $1,610; the real line is roughly flat-to-up; CoStar adjusted asking rent hovers near $1,550–$1,600, at or just above the ACS median. Town points for Warrenton and Bealeton sit near the county line."
+#| fig-alt: "Line chart of Fauquier County median gross rent from 2013 to 2024 shown nominal and inflation-adjusted, with CoStar professional asking rents overlaid quarterly from 2016 to 2026. Nominal median rent rises from about $1,140 to $1,610; the real line is roughly flat-to-up; CoStar adjusted asking rent hovers between about $1,550 and $1,620, roughly in line with the ACS median. Town points for Warrenton and Bealeton sit near the county line."
 
 cpi_j <- fred$cpi |> select(year, cpi_less_shelter)
 
@@ -206,7 +220,7 @@ ggplot() +
 
 The county's median gross rent, meaning all housing costs including lease rent and utilities, rose from $`r format(rent_13, big.mark=",")` in 2013 to $`r format(rent_24, big.mark=",")` in 2024, adding `r label_percent(accuracy=1)(rent_growth_nom)` in nominal, and +`r label_percent(accuracy=1)(rent_growth_real)` in real terms. Renters have lost ground even after inflation.
 
-In spring 2026, an interviewee shared that, "Only about 2 of 19 available rentals were priced under $1,700." CoStar professional asking rents, near $`r format(round(cs_rent_adj), big.mark=",")` (adjusted), sit at or just above the ACS median. This is consistent with a small stock of newer market-rate apartments pricing above the broader rental pool. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
+In spring 2026, an interviewee shared that, "Only about 2 of 19 available rentals were priced under $1,700." CoStar professional asking rents, near $`r format(round(cs_rent_adj), big.mark=",")` (adjusted, `r costar_through`), sit `r if (cs_rent_adj < rent_24) "just below" else "at or just above"` the ACS median of $`r format(rent_24, big.mark=",")`. This is consistent with a small stock of professionally managed apartments pricing in line with the broader rental pool, while the broker-leased houses and townhouses that dominate MLS rentals price well above it. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
 
 Town rents track the county: Warrenton and Bealeton median 2024 rent (High reliability) sits roughly within $50 to $200 of the county figure.
 
@@ -269,6 +283,11 @@ The modal rent band in the county is $1,500–1,999 and represents about `r labe
 
 In 2025, the MLS recorded that only `r rent_u1700` of `r rent_n_2025` closed leases were under $1,700, about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`. These data identify a median county lease of $`r format(rent_median, big.mark=",")` monthly, consistent with the Greater Piedmont REALTOR's March 2026 study. This leaves a somewhat larger affordable share than the single snapshot of available rentals suggested, but the story is the same: sub-$1,700 rentals are scarce, and most of the rental market prices well above that (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median gross rent ($`r format(rent_24, big.mark=",")`) because MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
 
+::: {.callout-note}
+## What is listed for rent now
+As of `r ar_asof`, the MLS shows **`r ar_n` active rental listings** with a median asking rent of **$`r format(ar_med, big.mark=",")`**, well above the 2025 closed-lease median of $`r format(rent_median, big.mark=",")` and the $`r format(rent_med_2026, big.mark=",")` median across `r rent_n_2026` leases closed so far in 2026 (through `r rent_thru`). Only `r ar_u1700` listings (`r label_percent(accuracy=0.1)(ar_u1700/ar_n)`) ask under $1,700, fewer in share than the 2025 closed leases (`r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`) and consistent with the interview report that very few available rentals price below that line. Asking rents run above closed leases and this is a small single-day snapshot, so read it as directional rather than as a market-wide rent.
+:::
+
 ::: {.callout-warning}
 ## Data note: place-level distributions
 Place-level distributions are noisy; only the higher-count Warrenton bands survive the reliability screen, and they mirror the county's upward concentration.
@@ -279,7 +298,7 @@ Place-level distributions are noisy; only the higher-count Warrenton bands survi
 ```{r}
 #| label: fig-costar
 #| fig-cap: "A small, tight professional apartment market with steadily rising rents"
-#| fig-alt: "Two-panel time-series chart of Fauquier County's professional multifamily market from 2016 to 2026. The top panel shows nominal asking rent rising from about $1,060 to $1,600 per unit while the inflation-adjusted line is roughly flat near $1,550–$1,600. The bottom panel shows the vacancy rate falling from about 5% to near 1% around 2019–2021, then edging back up to roughly 2–3%."
+#| fig-alt: "Two-panel time-series chart of Fauquier County's professional multifamily market from 2016 through the third quarter of 2026. The top panel shows nominal asking rent rising from about $1,060 to roughly $1,600 per unit while the inflation-adjusted line is roughly flat between $1,550 and $1,620. The bottom panel shows the vacancy rate falling from about 5% to near 1% around 2019–2021, then edging back up to roughly 3–4% in 2025–2026."
 #| fig-asp: 0.72
 
 cs <- costar$quarterly |>
@@ -312,7 +331,7 @@ ggplot(cs_long, aes(date, value, color = series)) +
 
 The professional rental market is tiny throughout the county. Roughly `r cs_props_total` multifamily properties appear in the broader CoStar inventory and there are about `r cs_units` market-rate units across `r cs_props` CoStar-tracked apartment properties. Asking rent in this professional apartment market reached roughly $`r format(round(cs_rent_nom), big.mark=",")` per unit in nominal terms (latest quarter). In constant 2025 dollars, asking rents are roughly flat, also near $`r format(round(cs_rent_adj), big.mark=",")`. Professional operators have kept pace with, not outrun, inflation in the local rental market.
 
-Fauquier has a persistently tight rental market with little slack. Vacancy for these apartments is very low, recently about `r label_percent(accuracy=0.1, scale=1)(cs_vac_recent)`, and under ~3% for most of the past decade.
+Fauquier's professional rental market remains tight, though slack has crept in. Vacancy for these apartments averaged about `r label_percent(accuracy=0.1, scale=1)(cs_vac_recent)` over the last four quarters (`r label_percent(accuracy=0.1, scale=1)(cs_vac_latest)` in `r costar_through`), up from about `r label_percent(accuracy=0.1, scale=1)(cs_vac_early)` in 2019–2021. Even so, it has been under 3% in `r label_percent(accuracy=1)(cs_vac_share_u3)` of quarters since 2016.
 
 ## Rental stock by structure type
 

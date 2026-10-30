@@ -5,6 +5,19 @@
 
 Fauquier County has a highly priced housing market with a moderate working income environment, where the majority of residents commute away for work and those working within the county must commute in. The county is housing affluent households that commute elsewhere for high paying work, but it sustains short term and lower wage employment where workers must live elsewhere.
 
+```{r}
+#| label: setup
+#| include: false
+source("_common.R")
+
+mls  <- read_rds("data/mls.rds")
+gaps <- read_rds("data/gaps.rds")
+
+active_n    <- nrow(mls$active)                                    # active for-sale snapshot
+active_u350 <- sum(mls$active$list_price < 350000, na.rm = TRUE)
+og_below_100 <- sum(gaps$ownership_gap$listings_affordable[gaps$ownership_gap$band != "ami120"])
+```
+
 ## Key findings {.unnumbered}
 
 
@@ -19,7 +32,7 @@ Fauquier County has a highly priced housing market with a moderate working incom
   earned elsewhere (@sec-demographics, @fig-commute-out, @fig-wages).
 
 - **The entry-level for-sale market has disappeared.** The median sale price reached
-  **$650,000** in 2025, and just **3 of 218** active listings were priced under $350,000 —
+  **$650,000** in 2025, and just **`r active_u350` of `r active_n`** active for-sale listings were priced under $350,000 —
   while monthly payments on the median home rose **+152%** since 2016 against a **+81%**
   price increase and **+43%** income growth (@sec-market-ownership, @fig-price-bands,
   @fig-price-payment-income).
@@ -32,7 +45,7 @@ Fauquier County has a highly priced housing market with a moderate working incom
 
 - **Housing cost burden is concentrated at lower incomes.** **40%** of renters
   are cost-burdened versus 21% of owners. Every AMI band runs a rental deficit for a net
-  shortfall of **~3,315 units**, and only **8 of 218** for-sale listings are affordable
+  shortfall of **~3,315 units**, and only **`r og_below_100` of `r active_n`** for-sale listings are affordable
   below 100% AMI — buying the median home requires **$190,586**, about **$60,000** above
   the actual median income (@sec-gaps, @fig-rental-gap, @fig-ownership-gap,
   @fig-wages-costs).

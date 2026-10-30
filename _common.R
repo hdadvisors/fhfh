@@ -67,9 +67,19 @@ chas_cap <- function(table, year = "2018-2022") {
   )
 }
 
-mls_cap <- function(year_range = NULL) {
+# Data vintages — read once from the rds files so captions/prose never go stale after a refresh.
+# mls_through = date of the latest MLS snapshot; costar_through = latest CoStar quarter.
+mls_through <- format(max(readr::read_rds("data/mls.rds")$active$snapshot_date), "%m/%d/%Y")
+costar_through <- readr::read_rds("data/costar.rds")$quarterly |>
+  dplyr::slice_max(year * 10 + qtr, n = 1) |>
+  dplyr::mutate(lbl = paste(year, paste0("Q", qtr))) |>
+  dplyr::pull(lbl)
+
+mls_cap <- function(year_range = NULL, through = TRUE) {
   base <- "**Source:** Bright MLS closed sales data"
-  if (!is.null(year_range)) paste0(base, ", ", year_range, ".") else paste0(base, ".")
+  if (!is.null(year_range)) base <- paste0(base, ", ", year_range)
+  if (through) base <- paste0(base, " (data through ", mls_through, ")")
+  paste0(base, ".")
 }
 
 qcew_cap <- function(year_range = "2015-2025") {
@@ -98,7 +108,7 @@ cpi_cap <- function()
   "Inflation-adjusted to the latest period using BLS CPI-U via FRED."
 
 costar_cap <- function()
-  "**Source:** CoStar multifamily market data, quarterly."
+  paste0("**Source:** CoStar multifamily market data, quarterly, through ", costar_through, ".")
 
 fmr_cap <- function(year = "FY2026")
   paste0("**Source:** HUD Fair Market Rents and Small Area FMRs, ", year, ".")
