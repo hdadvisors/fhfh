@@ -10,7 +10,7 @@ library(FinCal)
 ## Authoritative rate/tax/ins are passed explicitly from r/gaps.R; these are library fallbacks.
 ## GP-mirrored so the ownership gap reconciles with GP Figs 27-28 / the Fauquier fact sheet.
 
-.int_rate_default  <- 0.0649  # 30-yr PMMS monthly avg, 2026-06 (data/fred.rds, last non-NA) — was 0.0694 (2024-05-23)
+.int_rate_default  <- 0.0733  # 30-yr PMMS monthly avg, 2026-10 (data/fred.rds, last non-NA) — was 0.0649 (2026-06)
 .tax_ins_monthly   <- 697     # combined RE tax + insurance proxy (GP-mirrored). Reverse-engineered to
                               # reproduce GP's ~$183k income-needed on the $645,250 median home at 6.1%/
                               # 10% down/28% via this engine (~1.3% of value/yr). GP published no itemized

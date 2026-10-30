@@ -1,12 +1,18 @@
 # bps.R ----
-# What:   Building Permits Survey — Fauquier County 2000–2025 by structure type.
-#         Place-level check for Town of Warrenton (Bealeton is a CDP — county-issued only).
-# Source: Census Bureau BPS annual text files https://www2.census.gov/econ/bps/
+# What:   Building Permits Survey — Fauquier County 2000–2025 by structure type, plus
+#         2026 year-to-date (Jan–Sep) vs the same months of 2025.
+#         Place-level series for Town of Warrenton (Bealeton is a CDP — county-issued only).
+# Source: Census Bureau BPS text files https://www2.census.gov/econ/bps/
 #         Approved per PLAN.md §3: census.gov text files
+#         County/co{yyyy}a.txt (annual), County/co{yymm}y.txt (YTD),
+#         Place/South Region/so{yyyy}a.txt, so{yymm}y.txt
 # Output: data/bps.rds
-#   $bps_county      tibble — GEOID / year / type / units (4 structure types × 26 years)
-#   $bps_warrenton   tibble or NULL — same structure if Warrenton found in place files
-#   $warrenton_in_bps  logical or NA — FALSE/TRUE if checked; NA if place file fetch failed
+#   $bps_county        tibble — geoid / year / type / units (4 structure types × 26 years)
+#   $bps_county_ytd    tibble — geoid / year / type / units, Jan–`ytd_month` of 2025 and 2026
+#   $bps_warrenton     tibble — year / type / units, 2000–2025 (annual)
+#   $bps_warrenton_ytd tibble — year / type / units, Jan–`ytd_month` of 2025 and 2026
+#   $warrenton_in_bps  logical — TRUE if Warrenton found in the place files
+#   $ytd_through       Date — last day of the YTD month
 
 ## 1. Setup ----
 library(tidyverse)
@@ -17,10 +23,15 @@ dir.create("data", showWarnings = FALSE, recursive = TRUE)
 
 fauquier        <- "51061"
 bps_base_county <- "https://www2.census.gov/econ/bps/County"
-bps_base_place  <- "https://www2.census.gov/econ/bps/Place"
-bps_years       <- 2000:2025  # co2025a.txt confirmed live 2026-07-08
+bps_base_place  <- "https://www2.census.gov/econ/bps/Place/South%20Region"
+bps_years       <- 2000:2025
+ytd_year        <- 2026   # latest YTD file: co2609y.txt (through Sep 2026)
+ytd_month       <- 9
+ytd_through     <- ceiling_date(make_date(ytd_year, ytd_month, 1), "month") - 1
 
-## 2. Header-parsing helper ----
+bps_types <- c("1-unit", "2-units", "3-4 units", "5+ units")
+
+## 2. Header-parsing helper (county files) ----
 # BPS files have 2 header rows: row 1 = group name (FIPS, 1-unit, 2-units…),
 # row 2 = sub-name (State, County, Bldgs, Units, Value…).
 # Transpose, fill group name down, concatenate → "FIPS: State", "1-unit: Bldgs", etc.
@@ -38,125 +49,84 @@ parse_bps_col_names <- function(url) {
 
 county_col_names <- parse_bps_col_names(glue("{bps_base_county}/co2024a.txt"))
 
-## 3. Fetch county files 2000–2025 ----
-cbps_raw <- map_dfr(bps_years, \(yr) {
-  read_csv(
-    glue("{bps_base_county}/co{yr}a.txt"),
-    skip = 2, col_names = FALSE, show_col_types = FALSE
-  ) |>
+# One county file → Fauquier rows, long by structure type
+read_county_file <- function(file, yr) {
+  read_csv(glue("{bps_base_county}/{file}"), skip = 2, col_names = FALSE,
+           show_col_types = FALSE) |>
     select(X1:X18) |>
     set_names(county_col_names) |>
-    mutate(`Survey: Date` = yr)
-})
-
-## 4. Filter to Fauquier and reshape ----
-bps_county <- cbps_raw |>
-  mutate(
-    year  = `Survey: Date`,
-    GEOID = paste0(
-      str_pad(as.character(`FIPS: State`),  2, pad = "0"),
-      str_pad(as.character(`FIPS: County`), 3, pad = "0")
-    )
-  ) |>
-  filter(GEOID == fauquier) |>
-  select(GEOID, year, `1-unit: Bldgs`:`5+ units: Value`) |>
-  pivot_longer(`1-unit: Bldgs`:`5+ units: Value`,
-               names_to = "type_col", values_to = "value") |>
-  separate(type_col, into = c("type", "col"), sep = ": ") |>
-  pivot_wider(names_from = col, values_from = value) |>
-  clean_names() |>
-  select(geoid, year, type, units)
-
-## 5. Warrenton place-level check ----
-# BPS place file column layout inspected from pl2024a.txt.
-# Wrapped in tryCatch — 524 timeouts are possible on census.gov BPS place files.
-warrenton_place_result <- tryCatch({
-  place_col_names <- parse_bps_col_names(glue("{bps_base_place}/pl2024a.txt"))
-
-  pbps_2024 <- read_csv(
-    glue("{bps_base_place}/pl2024a.txt"),
-    skip = 2, col_names = FALSE, show_col_types = FALSE
-  ) |>
-    set_names(place_col_names[seq_len(ncol(.))])
-
-  # Show column names for §11 logging
-  message("Place file ncol: ", ncol(pbps_2024))
-  message("Place file col names (first 6): ",
-          paste(names(pbps_2024)[1:min(6, ncol(pbps_2024))], collapse = ", "))
-
-  # Filter Virginia rows; search all columns for "Warrenton"
-  warrenton_rows <- pbps_2024 |>
-    filter(str_pad(as.character(.[[1]]), 2, pad = "0") == "51") |>
-    filter(if_any(everything(),
-                  \(x) str_detect(as.character(x), regex("warrenton", ignore_case = TRUE))))
-
-  warrenton_found <- nrow(warrenton_rows) > 0
-  message("Warrenton in BPS 2024 place file: ", warrenton_found)
-
-  if (warrenton_found) {
-    message("Warrenton row col 1–6: ",
-            paste(as.character(warrenton_rows[1, 1:min(6, ncol(warrenton_rows))]), collapse = " | "))
-  }
-
-  list(found = warrenton_found, rows = warrenton_rows)
-}, error = function(e) {
-  message("Place file fetch failed (", conditionMessage(e), ") — skipping Warrenton check")
-  list(found = NA, rows = NULL)
-})
-
-warrenton_found <- warrenton_place_result$found
-warrenton_rows  <- warrenton_place_result$rows
-
-## 6. Fetch Warrenton place series if found ----
-# place_id_col: inspect warrenton_rows column names to confirm; logged in §11.
-bps_warrenton <- if (isTRUE(warrenton_found)) {
-  place_col_names <- parse_bps_col_names(glue("{bps_base_place}/pl2024a.txt"))
-
-  place_id_col <- 2  # verify by inspecting warrenton_rows column names logged above
-  warrenton_id <- warrenton_rows[[place_id_col]][1]
-
-  tryCatch(
-    map_dfr(bps_years, \(yr) {
-      read_csv(
-        glue("{bps_base_place}/pl{yr}a.txt"),
-        skip = 2, col_names = FALSE, show_col_types = FALSE
-      ) |>
-        set_names(place_col_names[seq_len(ncol(.))]) |>
-        filter(
-          str_pad(as.character(.[[1]]), 2, pad = "0") == "51",
-          .[[place_id_col]] == warrenton_id
-        ) |>
-        mutate(`Survey: Date` = yr)
-    }) |>
-      select(`Survey: Date`, `1-unit: Bldgs`:`5+ units: Value`) |>
-      pivot_longer(`1-unit: Bldgs`:`5+ units: Value`,
-                   names_to = "type_col", values_to = "value") |>
-      separate(type_col, into = c("type", "col"), sep = ": ") |>
-      pivot_wider(names_from = col, values_from = value) |>
-      clean_names() |>
-      rename(year = survey_date) |>
-      select(year, type, units),
-    error = function(e) {
-      message("Warrenton series fetch failed: ", conditionMessage(e))
-      NULL
-    }
-  )
-} else {
-  NULL
+    mutate(
+      GEOID = paste0(
+        str_pad(as.character(`FIPS: State`),  2, pad = "0"),
+        str_pad(as.character(`FIPS: County`), 3, pad = "0")
+      )
+    ) |>
+    filter(GEOID == fauquier) |>
+    select(GEOID, `1-unit: Bldgs`:`5+ units: Value`) |>
+    pivot_longer(`1-unit: Bldgs`:`5+ units: Value`,
+                 names_to = "type_col", values_to = "value") |>
+    separate(type_col, into = c("type", "col"), sep = ": ") |>
+    pivot_wider(names_from = col, values_from = value) |>
+    clean_names() |>
+    mutate(year = yr) |>
+    select(geoid, year, type, units)
 }
 
-## 7. Write output ----
+## 3. County annual 2000–2025 ----
+bps_county <- map_dfr(bps_years, \(yr) read_county_file(glue("co{yr}a.txt"), yr))
+
+## 4. County year-to-date (this year vs same months last year) ----
+ytd_file <- \(yr) glue("co{str_sub(yr, 3, 4)}{str_pad(ytd_month, 2, pad = '0')}y.txt")
+bps_county_ytd <- map_dfr(c(ytd_year - 1, ytd_year), \(yr) read_county_file(ytd_file(yr), yr))
+
+## 5. Warrenton place series ----
+# Place files have 17 ID columns before the permit blocks; the layout is fixed:
+#   col 2 = state FIPS, col 17 = place name, then Bldgs/Units/Value for 1-unit,
+#   2-units, 3-4 units, 5+ units starting at col 18. Units are cols 19, 22, 25, 28.
+# Warrenton (state 51) is matched by name — place codes changed across years.
+read_place_file <- function(file, yr) {
+  raw <- read_csv(glue("{bps_base_place}/{file}"), skip = 2, col_names = FALSE,
+                  col_types = cols(.default = "c"))
+  # 2000–2006 files carry 3 fewer ID columns: name in col 14, units at 16/19/22/25
+  name_col <- if (yr <= 2006) 14 else 17
+  unit_cols <- paste0("X", name_col + 2 + 3 * 0:3)
+  row <- raw |>
+    filter(str_trim(X2) == "51",
+           str_detect(str_trim(.data[[paste0("X", name_col)]]),
+                      regex("^warrenton", ignore_case = TRUE))) |>
+    slice(1)
+  if (nrow(row) == 0) stop("Warrenton row not found")
+  tibble(year = yr, type = bps_types, units = as.numeric(unlist(row[unit_cols])))
+}
+
+safe_place <- \(file, yr) tryCatch(read_place_file(file, yr), error = function(e) {
+  message("  Place file ", file, " failed: ", conditionMessage(e))
+  NULL
+})
+
+bps_warrenton <- map_dfr(bps_years, \(yr) safe_place(glue("so{yr}a.txt"), yr))
+bps_warrenton_ytd <- map_dfr(c(ytd_year - 1, ytd_year),
+                             \(yr) safe_place(str_replace(ytd_file(yr), "^co", "so"), yr))
+
+warrenton_found <- nrow(bps_warrenton) > 0
+message("Warrenton place series years: ",
+        paste(sort(unique(bps_warrenton$year)), collapse = ", "))
+
+## 6. Write output ----
 write_rds(
   list(
-    bps_county       = bps_county,
-    bps_warrenton    = bps_warrenton,
-    warrenton_in_bps = warrenton_found   # TRUE/FALSE/NA (NA = network error)
+    bps_county        = bps_county,
+    bps_county_ytd    = bps_county_ytd,
+    bps_warrenton     = bps_warrenton,
+    bps_warrenton_ytd = bps_warrenton_ytd,
+    warrenton_in_bps  = warrenton_found,
+    ytd_through       = ytd_through
   ),
   "data/bps.rds"
 )
 message("Wrote data/bps.rds — warrenton_in_bps: ", warrenton_found)
 
-## 8. Validate ----
+## 7. Validate ----
 bps <- read_rds("data/bps.rds")
 
 n_years <- bps$bps_county |> distinct(year) |> nrow()
@@ -173,9 +143,21 @@ avg_2020_25 <- bps$bps_county |>
   pull(avg)
 
 if (!between(avg_2020_25, 100, 500)) {
-  warning(glue("BPS avg permits 2020-25: {round(avg_2020_25)} — expected ~241/yr (GP benchmark)"))
+  warning(glue("BPS avg permits 2020-25: {round(avg_2020_25)} — expected ~266/yr"))
 } else {
   message("BPS avg permits 2020-25: ", round(avg_2020_25), " (within expected range)")
 }
 
+stopifnot(
+  setequal(unique(bps$bps_county_ytd$year), c(ytd_year - 1, ytd_year)),
+  nrow(bps$bps_county_ytd) == 8,
+  isTRUE(bps$warrenton_in_bps),
+  setequal(unique(bps$bps_warrenton$year), bps_years),
+  setequal(unique(bps$bps_warrenton_ytd$year), c(ytd_year - 1, ytd_year))
+)
+
+message("BPS ", ytd_year, " YTD (through ", format(ytd_through, "%b %Y"), "): ",
+        sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == ytd_year]), " county units vs ",
+        sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == ytd_year - 1]), " same months ",
+        ytd_year - 1)
 message("bps.R validation passed.")
