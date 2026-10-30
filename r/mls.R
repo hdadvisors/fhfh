@@ -2,9 +2,12 @@
 # What:   Tidy Bright MLS sales + listings + rentals; splice VAR/GP sources for 2016–2021;
 #         ingest Bright MLS published monthly summary stats (2022+, 3 geographies)
 # Source: data/raw/mls/mls_sales_*.csv (2022+), data/raw/mls/var_*.xlsx (2016–2021),
-#         data/gp_appendix.rds ($sales), data/raw/mls/mls_active_*.csv, mls_rentals_*.csv,
+#         data/gp_appendix.rds ($sales), data/raw/mls/mls_active_for-sale_*.csv,
+#         mls_active_rentals_*.csv (point-in-time snapshots; keep only the latest of each),
+#         mls_rentals_*.csv,
 #         data/raw/mls/mls_monthly_{sales,listings,inventory}_{fauquier,warrenton,bealeton}.csv
-# Output: data/mls.rds (frames incl. monthly_summary — Bright MLS monthly summary, 2022+)
+# Output: data/mls.rds (frames incl. active, active_rentals, monthly_summary — Bright MLS
+#         monthly summary, 2022+)
 
 ## 1. Setup ----
 library(tidyverse)
@@ -26,7 +29,8 @@ sales_raw <- map_dfr(sales_files, \(f) {
   read_csv(f, show_col_types = FALSE) |>
     mutate(source_file = basename(f))
 }) |>
-  clean_names()
+  clean_names() |>
+  distinct(ml_number, .keep_all = TRUE)   # safe if export date ranges overlap
 
 message("  Transactions loaded: ", nrow(sales_raw))
 message("  Columns: ", paste(names(sales_raw)[1:min(12, ncol(sales_raw))], collapse = ", "))
@@ -139,21 +143,31 @@ annual <- bind_rows(
 message("  Annual rows: ", nrow(annual),
         " (", min(annual$year), "–", max(annual$year), ")")
 
-## 6. Active listings snapshot ----
-message("Reading active listings snapshot...")
+## 6. Active listings snapshots ----
+message("Reading active listings snapshots...")
 
-active_files <- list.files("data/raw/mls", pattern = "mls_active", full.names = TRUE)
-active_raw   <- map_dfr(active_files, \(f) read_csv(f, show_col_types = FALSE)) |>
-  clean_names()
+# Two point-in-time exports (for-sale and rental), date-stamped in the filename. Keep only the
+# latest snapshot of each type in the folder or they will be stacked.
+read_active <- function(pattern) {
+  files <- list.files("data/raw/mls", pattern = pattern, full.names = TRUE)
+  message("  Files found: ", paste(basename(files), collapse = ", "))
+  map_dfr(files, \(f) {
+    read_csv(f, show_col_types = FALSE) |>
+      mutate(snapshot_date = ymd(str_extract(basename(f), "\\d{8}")))
+  }) |>
+    clean_names() |>
+    distinct(ml_number, .keep_all = TRUE) |>
+    mutate(list_price = parse_number(as.character(list_price))) |>
+    filter(!is.na(list_price), list_price > 0)
+}
 
-active <- active_raw |>
-  mutate(
-    list_price = parse_number(as.character(list_price)),
-    list_date  = mdy(sales_date)   # in active file sales_date = listing date
-  ) |>
-  filter(!is.na(list_price), list_price > 0)
+active         <- read_active("mls_active_for-sale_.*\\.csv")
+active_rentals <- read_active("mls_active_rentals_.*\\.csv")
 
-message("  Active listings: ", nrow(active), " (benchmark ~218)")
+message("  Active for-sale listings: ", nrow(active),
+        " (snapshot ", format(max(active$snapshot_date)), ")")
+message("  Active rental listings:   ", nrow(active_rentals),
+        " (snapshot ", format(max(active_rentals$snapshot_date)), ")")
 
 ## 7. Rental transactions ----
 message("Reading rental CSVs...")
@@ -164,7 +178,8 @@ rentals_raw <- map_dfr(rental_files, \(f) {
   read_csv(f, show_col_types = FALSE) |>
     mutate(source_file = basename(f))
 }) |>
-  clean_names()
+  clean_names() |>
+  distinct(ml_number, .keep_all = TRUE)
 
 rentals <- rentals_raw |>
   mutate(
@@ -285,7 +300,8 @@ message("  annual_zip rows: ", nrow(annual_zip),
 
 ## 9. Write output ----
 write_rds(
-  list(monthly = monthly, annual = annual, active = active, rentals = rentals,
+  list(monthly = monthly, annual = annual, active = active, active_rentals = active_rentals,
+       rentals = rentals,
        new_vs_resale = new_vs_resale,
        annual_zip = annual_zip, dom_annual = dom_annual, sales_bands = sales_bands,
        monthly_summary = monthly_summary),
@@ -299,7 +315,8 @@ out <- read_rds("data/mls.rds")
 stopifnot(
   min(out$monthly$year) == 2016,
   max(out$monthly$year) >= 2025,
-  nrow(out$active) >= 100
+  nrow(out$active) >= 100,
+  nrow(out$active_rentals) > 0
 )
 
 # new_vs_resale: both groups present in recent years; New larger/pricier than Resale
@@ -353,13 +370,13 @@ message("  sales_bands: bands sum to 1 per year = ", all(abs(band_sums$s - 1) < 
 ms <- out$monthly_summary
 stopifnot(
   setequal(unique(ms$geography), c("Fauquier", "Warrenton", "Bealeton")),
-  nrow(ms) == 162,                              # 3 geographies × 54 months
   min(ms$date) == as.Date("2022-01-01"),
-  max(ms$date) == as.Date("2026-06-01")
+  max(ms$date) >= as.Date("2026-06-01"),
+  nrow(ms) == 3 * n_distinct(ms$date),          # every geography has every month
+  n_distinct(ms$date) == interval(min(ms$date), max(ms$date)) %/% months(1) + 1   # no gaps
 )
 fau_ms <- ms |> filter(geography == "Fauquier")
 stopifnot(
-  nrow(fau_ms) == 54,
   !anyNA(fau_ms$sales_n),
   !anyNA(fau_ms$active_listings),
   !anyNA(fau_ms$months_supply)
@@ -397,7 +414,8 @@ message(sprintf("  monthly_summary median-price mean abs %% diff vs derived: %.1
 message("mls.R validation passed.")
 message("  Monthly rows: ", nrow(out$monthly))
 message("  Annual rows:  ", nrow(out$annual))
-message("  Active listings: ", nrow(out$active))
+message("  Active for-sale listings: ", nrow(out$active))
+message("  Active rental listings:   ", nrow(out$active_rentals))
 message("  Rental records:  ", nrow(out$rentals))
 message("  Monthly summary rows: ", nrow(out$monthly_summary), " (",
         paste(sort(unique(out$monthly_summary$geography)), collapse = "/"), ")")
