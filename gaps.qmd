@@ -90,7 +90,7 @@ wage_retail <- wc$avg_wage[wc$category == "Retail Trade"]
 wage_health <- wc$avg_wage[wc$category == "Health Care"]
 wage_gov    <- wc$avg_wage[wc$category == "Local Government"]
 inc_rent <- gaps$income_needed$renter_income   # 64,520 (ACS-anchored)
-inc_buy  <- gaps$income_needed$buyer_income    # 190,586
+inc_buy  <- gaps$income_needed$buyer_income    # 204,891
 
 # T7 total occupied households (detail-sum benchmark ≈ 25,944)
 t7_total_hh <- chas$t7 |> filter(geo_code == fauquier) |> pull(estimate) |> sum()

@@ -94,7 +94,7 @@ qcew_cap <- function(year_range = "2015-2025") {
 dec_cap <- function(years = "1990–2020")
   paste0("**Source:** U.S. Census Bureau, Decennial Census, ", years, ".")
 
-pep_cap <- function(vintage = 2024)
+pep_cap <- function(vintage = 2025)
   paste0("**Source:** U.S. Census Bureau, Population Estimates Program, Vintage ", vintage, ".")
 
 bps_cap <- function(years = "2000–2025")

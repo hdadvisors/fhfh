@@ -317,6 +317,18 @@ Despite the perceived need that local workers face for units, over the last 20 y
 
 Missing middle housing, structures with two to four units, is virtually nonexistent in the study area. Just 10 total 2–4-unit permits were issued across the entire 2000–2025 period. Multifamily (5+ units) is rare and episodic, notable only in a few years. There were roughly 108 multifamily units in 2001 and only 48 in 2018.
 
+```{r}
+# 2026 year-to-date vs the same months of 2025 (2026 is a partial year; not in the annual chart)
+ytd_n <- \(df, yr) sum(df$units[df$year == yr])
+ytd_thru_lab <- format(bps$ytd_through, "%B %Y")
+fq26 <- ytd_n(bps$bps_county_ytd, 2026); fq25 <- ytd_n(bps$bps_county_ytd, 2025)
+wr26 <- ytd_n(bps$bps_warrenton_ytd, 2026); wr25 <- ytd_n(bps$bps_warrenton_ytd, 2025)
+wr_full25 <- ytd_n(bps$bps_warrenton, 2025)
+fq26_sf <- sum(bps$bps_county_ytd$units[bps$bps_county_ytd$year == 2026 & bps$bps_county_ytd$type == "1-unit"])
+```
+
+Permitting has continued at a similar pace in 2026. Through `r ytd_thru_lab`, the county issued `r fq26` residential permits (`r fq26_sf` single-family), `r label_percent(accuracy = 1)(fq26 / fq25 - 1)` more than the `r fq25` issued over the same months of 2025. The Town of Warrenton accounted for `r wr26` of them (`r label_percent(accuracy = 1)(wr26 / fq26)`), compared with `r wr25` through September 2025 and `r wr_full25` in all of 2025. Bealeton is an unincorporated CDP whose permits are issued by the county, so they cannot be separated out.
+
 [^gp-permits]: Source: Greater Piedmont REALTORS, Greater Piedmont Region Housing Gap Analysis (March 2026)
 
 ```{r}

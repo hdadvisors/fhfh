@@ -56,7 +56,7 @@ og_below_100 <- sum(gaps$ownership_gap$listings_affordable[gaps$ownership_gap$ba
 @fig-price-payment-income
 :::
 
-**Housing cost burden is concentrated at lower incomes.** **40%** of renters are cost-burdened, versus 21% of owners. Every AMI band runs a rental deficit, for a net shortfall of about 3,315 units, and only `r og_below_100` of `r active_n` for-sale listings are affordable below 100% AMI. Buying the median home requires $190,586, about $60,000 above the actual median income. [Affordability Gaps →](@sec-gaps)
+**Housing cost burden is concentrated at lower incomes.** **40%** of renters are cost-burdened, versus 21% of owners. Every AMI band runs a rental deficit, for a net shortfall of about 3,315 units, and only `r og_below_100` of `r active_n` for-sale listings are affordable below 100% AMI. Buying the median home requires `r label_dollar()(round(gaps$income_needed$buyer_income))`, about $75,000 above the actual median income. [Affordability Gaps →](@sec-gaps)
 
 ::: {.column-margin}
 @fig-rental-gap \

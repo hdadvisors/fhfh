@@ -53,10 +53,10 @@ inc24 <- inc$b19013_trend$estimate[inc$b19013_trend$GEOID == fauquier & inc$b190
 idx_inc_2024 <- inc24 / inc16 * 100
 
 # F6 affordability — reused from gaps.rds (NOT recomputed)
-buyer_income  <- gaps$income_needed$buyer_income   # 190586
+buyer_income  <- gaps$income_needed$buyer_income   # 204891 (7.33% PMMS, Oct 2026)
 med_price     <- gaps$income_needed$med_price      # 650000
 actual_income <- inc24                             # 130189 (Fauquier 2024 median HH income)
-income_gap    <- buyer_income - actual_income      # ~60397
+income_gap    <- buyer_income - actual_income      # ~74702
 
 # F5 / F7 snapshot scalars (single for-sale active-listing snapshot, transaction export;
 # rental listings are split out in mls$active_rentals)
@@ -348,8 +348,8 @@ Contrary to a point-in-time reading, the monthly Bright MLS series shows active 
 
 ```{r}
 #| label: fig-income-to-buy
-#| fig-cap: "Buying the median home takes about $60,000 more than the median household earns"
-#| fig-alt: "Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $190,600, well above the actual median household income of about $130,200 — a gap of roughly $60,000."
+#| fig-cap: "Buying the median home takes about $75,000 more than the median household earns"
+#| fig-alt: "Two-bar comparison for Fauquier County. The income needed to afford the median-priced home is about $204,900, well above the actual median household income of about $130,200 — a gap of roughly $75,000."
 
 f6 <- tibble(
   what  = factor(c("Income needed to buy\nthe median home", "Actual median\nhousehold income"),
@@ -366,7 +366,7 @@ ggplot(f6, aes(value, what, fill = grp)) +
   scale_x_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
                      expand = expansion(c(0, 0.18))) +
   labs(
-    title = "Buying the median home takes about $60,000 more than the median household earns",
+    title = "Buying the median home takes about $75,000 more than the median household earns",
     subtitle = "Income required for the $650k median home vs. Fauquier's actual median household income",
     caption = paste0("**Assumptions:** ", label_percent(accuracy = 0.01)(gaps$assumptions$mortgage_rate),
                      " 30-yr rate (PMMS, ", format(gaps$assumptions$rate_pull_date, "%b %Y"), "), ",

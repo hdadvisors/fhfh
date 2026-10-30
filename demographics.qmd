@@ -43,19 +43,19 @@ va_65   <- sum(age$share[age$GEOID == virginia & age$age_band %in% c("65-74", "7
 
 ## Population growth
 
-Fauquier has seen steady population growth over the last 35 years, despite consistent descriptions of the county's similarities over time. Those that grew up in Fauquier still recognize it as the place where they were raised. Fauquier's population climbed from 48,741 in 1990 to about 75,900 in 2024, a 56% increase, adding some 27,000 residents over 34 years.
+Fauquier has seen steady population growth over the last 35 years, despite consistent descriptions of the county's similarities over time. Those that grew up in Fauquier still recognize it as the place where they were raised. Fauquier's population climbed from 48,741 in 1990 to about 76,500 in 2025, a 57% increase, adding some 27,800 residents over 35 years.
 
-Growth throughout has been steady rather than explosive: the county gained about 600 to 1,000 residents a year across the 2020–2024 estimates. Warrenton grew to about 10,200 people and Bealeton to nearly 5,000 by 2024. Both towns together hold about a fifth of the county's residents, but most growth has occurred in the unincorporated county.
+Growth throughout has been steady rather than explosive: the county gained about 600 to 1,000 residents a year across the 2021–2025 estimates. Warrenton grew to about 10,200 people by 2025 and Bealeton to nearly 5,000 by 2024. Both towns together hold about a fifth of the county's residents, but most growth has occurred in the unincorporated county.
 
 ::: {.callout-warning}
 ## Caveat: mixed sources and universes
-The county line splices decennial 100% counts (April 1: 1990, 2000, 2010, 2020) with Population Estimates Program figures (July 1: 2021–2024); the 2024 town points are ACS 5-year estimates. These are different universes and reference dates — small level differences between series are expected, not real change. Bealeton has no 2000 decennial place record and is not published in the PEP, so its line starts in 2010. Documented in @sec-data-notes.
+The county line splices decennial 100% counts (April 1: 1990, 2000, 2010, 2020) with Population Estimates Program figures (July 1: 2021–2025); Warrenton's recent points are also PEP, while Bealeton's 2024 point is an ACS 5-year estimate. These are different universes and reference dates — small level differences between series are expected, not real change. Bealeton has no 2000 decennial place record and is not published in the PEP, so its line starts in 2010. Documented in @sec-data-notes.
 :::
 
 ```{r}
 #| label: fig-population
 #| fig-cap: "Fauquier has grown steadily for three decades"
-#| fig-alt: "Line chart of Fauquier County's population from 1990 to 2024, rising from about 48,700 to 75,900 across decennial counts and annual estimates. Two lower lines track the towns: Warrenton climbs from about 6,700 to 10,200 and Bealeton from about 4,400 to 5,000."
+#| fig-alt: "Line chart of Fauquier County's population from 1990 to 2025, rising from about 48,700 to 76,500 across decennial counts and annual estimates. Two lower lines track the towns: Warrenton climbs from about 6,700 to 10,200 and Bealeton from about 4,400 to 5,000."
 
 county_line <- bind_rows(
   decennial$pop |> filter(GEOID == fauquier) |>
@@ -67,8 +67,10 @@ county_line <- bind_rows(
 towns_line <- bind_rows(
   decennial$pop |> filter(geo_type == "place", year %in% c(2010, 2020)) |>
     transmute(GEOID, year, pop = value),
-  demo$b01003 |> filter(geo_type == "place") |>
-    transmute(GEOID, year = 2024L, pop = estimate)
+  demo$b01003 |> filter(geo_type == "place", GEOID == towns[["bealeton"]]) |>
+    transmute(GEOID, year = 2024L, pop = estimate),
+  pep$places |> filter(year > 2020) |>
+    transmute(GEOID, year, pop = value)
 ) |> mutate(geo = if_else(GEOID == "5183136", "Warrenton", "Bealeton")) |> arrange(year)
 
 ggplot(mapping = aes(year, pop)) +
@@ -76,10 +78,10 @@ ggplot(mapping = aes(year, pop)) +
   geom_point(data = county_line, aes(shape = src), color = blue, size = 2.4) +
   geom_line(data = towns_line, aes(group = geo), color = coral, linewidth = 0.7) +
   geom_point(data = towns_line, color = coral, size = 2) +
-  geom_text(data = filter(county_line, year == 2024),
+  geom_text(data = filter(county_line, year == max(year)),
             aes(label = "Fauquier County"), color = blue, fontface = "bold",
             hjust = 1, vjust = -0.9, size = 3.4) +
-  geom_text(data = filter(towns_line, year == 2024), aes(label = geo),
+  geom_text(data = slice_max(towns_line, year, by = geo), aes(label = geo),
             color = coral, hjust = -0.15, size = 3, fontface = "bold") +
   scale_shape_manual(values = c("Decennial count" = 16, "Population estimate" = 1)) +
   scale_y_continuous(labels = label_comma(), limits = c(0, 82000),
@@ -88,7 +90,7 @@ ggplot(mapping = aes(year, pop)) +
   labs(
     title = "Fauquier has grown steadily for three decades",
     subtitle = "Total population, decennial counts (solid) and July-1 estimates (open) — county and towns",
-    caption = paste0(dec_cap("1990–2020"), " ", pep_cap(2024), " ", acs_cap("B01003")),
+    caption = paste0(dec_cap("1990–2020"), " ", pep_cap(2025), " ", acs_cap("B01003")),
     x = NULL, y = NULL, shape = NULL
   ) +
   theme_hda() +
@@ -96,18 +98,26 @@ ggplot(mapping = aes(year, pop)) +
   theme(legend.position = "top")
 ```
 
-With 600 to 1,000 residents gained yearly from 2020–2024 and limited residential development areas, the sensation of housing scarcity is felt by newer and long-term residents alike.
+With 600 to 1,000 residents gained yearly from 2021–2025 and limited residential development areas, the sensation of housing scarcity is felt by newer and long-term residents alike.
 
 ## Components of change
 
-Net migration, people moving in from elsewhere, far outweighs natural change, births within the county compared with deaths, as the county's growth engine. The county grows chiefly because more people move in (+474) than are born there (+138). Natural increase is thin and shrinking: 755 births barely exceeded 617 deaths, which is consistent with an aging population.
+```{r}
+# Latest-year components (pep$components is a 2020–2025 series)
+comp_25 <- pep$components |> filter(year == max(year))
+cv <- \(v) comp_25$value[comp_25$variable == v]
+nat_prev <- pep$components$value[pep$components$variable == "NATURALCHG" &
+                                   pep$components$year == max(pep$components$year) - 1]
+```
+
+Net migration, people moving in from elsewhere, far outweighs natural change, births within the county compared with deaths, as the county's growth engine. The county grows chiefly because more people move in (+`r cv("NETMIG")`) than are born there (+`r cv("NATURALCHG")`). Natural increase is thin and shrinking: `r cv("BIRTHS")` births barely exceeded `r cv("DEATHS")` deaths, down from a natural gain of `r nat_prev` the year before, which is consistent with an aging population.
 
 ```{r}
 #| label: fig-components
 #| fig-cap: "Migration, not natural increase, drives Fauquier's growth"
-#| fig-alt: "Diverging horizontal bar chart of Fauquier County's components of population change for the year ending July 2024. Births add about 755 and deaths subtract about 617, for a small natural gain; domestic migration adds 305 and international migration 169, for net migration of 474 — the larger driver."
+#| fig-alt: "Diverging horizontal bar chart of Fauquier County's components of population change for the year ending July 2025. Births add about 722 and deaths subtract about 665, for a small natural gain; domestic migration adds 539 and international migration 47, for net migration of 586 — the larger driver."
 
-comp <- pep$components |>
+comp <- comp_25 |>
   filter(variable %in% c("BIRTHS", "DEATHS", "DOMESTICMIG", "INTERNATIONALMIG")) |>
   mutate(
     value = if_else(variable == "DEATHS", -value, value),
@@ -129,15 +139,15 @@ ggplot(comp, aes(value, label, fill = sign)) +
   scale_x_continuous(limits = c(-750, 900), expand = expansion(c(0.08, 0.12))) +
   labs(
     title = "Migration, not natural increase, drives Fauquier's growth",
-    subtitle = "Components of population change, one year ending July 1, 2024",
-    caption = pep_cap(2024), x = NULL, y = NULL, fill = NULL
+    subtitle = "Components of population change, one year ending July 1, 2025",
+    caption = pep_cap(2025), x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
   add_zero_line("x") +
   theme(legend.position = "top")
 ```
 
-Migration is overwhelmingly domestic (+305) with a smaller international component (+169). People relocate to Fauquier from elsewhere in the U.S., largely the D.C. metro.
+Migration is overwhelmingly domestic (+`r cv("DOMESTICMIG")`) with a smaller international component (+`r cv("INTERNATIONALMIG")`). People relocate to Fauquier from elsewhere in the U.S., largely the D.C. metro.
 
 ## Age structure
 

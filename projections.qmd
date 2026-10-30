@@ -153,7 +153,7 @@ lad_c4 <- lad_c3 + repl_units                                   # 12,457
 
 Fauquier is undoubtedly growing, even when its growth has been stable since 2000. Fauquier's population is projected to grow from `r label_comma()(base_pop)` residents in `r base_year`[^base-pop] to `r label_comma()(fq_2050)` by 2050, an increase of about `r label_comma()(fq_grow_26)` residents. This `r label_percent(accuracy = 0.1)(fq_pct_26)` increase in population drives every downstream housing-need estimate in this chapter.
 
-[^base-pop]: The base population is the ACS 2020–2024 5-year estimate, which runs modestly below the PEP July-2024 point-in-time estimate (~75,865) used in @sec-demographics; see @sec-data-notes for the reconciliation.
+[^base-pop]: The base population is the ACS 2020–2024 5-year estimate, which runs modestly below the PEP July-2025 point-in-time estimate (~76,503) used in @sec-demographics; see @sec-data-notes for the reconciliation.
 
 ```{r}
 #| label: fig-pop-projection
