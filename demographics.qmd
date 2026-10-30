@@ -71,41 +71,45 @@ county_line <- bind_rows(
   decennial$pop |> filter(GEOID == fauquier) |>
     transmute(year, pop = value, src = "Decennial count"),
   pep$pop |> filter(GEOID == fauquier, variable == "POPESTIMATE", year > 2020) |>
-    transmute(year, pop = value, src = "Population estimate")
+    transmute(year, pop = value, src = "Estimate")
 ) |> arrange(year)
 
 towns_line <- bind_rows(
   decennial$pop |> filter(geo_type == "place", year %in% c(2010, 2020)) |>
-    transmute(GEOID, year, pop = value),
+    transmute(GEOID, year, pop = value, src = "Decennial count"),
   demo$b01003 |> filter(geo_type == "place", GEOID == towns[["bealeton"]]) |>
-    transmute(GEOID, year = 2024L, pop = estimate),
+    transmute(GEOID, year = 2024L, pop = estimate, src = "Estimate"),
   pep$places |> filter(year > 2020) |>
-    transmute(GEOID, year, pop = value)
+    transmute(GEOID, year, pop = value, src = "Estimate")
 ) |> mutate(geo = if_else(GEOID == "5183136", "Warrenton", "Bealeton")) |> arrange(year)
 
 ggplot(mapping = aes(year, pop)) +
   geom_line(data = county_line, color = blue, linewidth = 1) +
   geom_point(data = county_line, aes(shape = src), color = blue, size = 2.4) +
   geom_line(data = towns_line, aes(group = geo), color = coral, linewidth = 0.7) +
-  geom_point(data = towns_line, color = coral, size = 2) +
+  geom_point(data = towns_line, aes(shape = src), color = coral, size = 2) +
   geom_text(data = filter(county_line, year == max(year)),
             aes(label = "Fauquier County"), color = blue, fontface = "bold",
-            hjust = 1, vjust = -0.9, size = 3.4) +
+            hjust = 1, vjust = -1.3, size = 3.4) +
   geom_text(data = slice_max(towns_line, year, by = geo), aes(label = geo),
             color = coral, hjust = -0.15, size = 3, fontface = "bold") +
-  scale_shape_manual(values = c("Decennial count" = 16, "Population estimate" = 1)) +
-  scale_y_continuous(labels = label_comma(), limits = c(0, 82000),
+  scale_shape_manual(values = c("Decennial count" = 16, "Estimate" = 1)) +
+  scale_y_continuous(labels = label_comma(), limits = c(0, 88000),
                      expand = expansion(c(0, 0.05))) +
   scale_x_continuous(limits = c(1990, 2028), breaks = c(seq(1990, 2020, 10), 2025)) +
   labs(
     title = "Fauquier has grown steadily for three decades",
-    subtitle = "Total population, decennial counts (solid) and July-1 estimates (open) — county and towns",
-    caption = paste0(dec_cap("1990–2020"), " ", pep_cap(2025), " ", acs_cap("B01003")),
-    x = NULL, y = NULL, shape = NULL
+    subtitle = "Total population: decennial counts are solid points and estimates are open points",
+    caption = paste0(
+      "**Sources:** U.S. Census Bureau, Decennial Census, 1990–2020. ",
+      "Population Estimates Program, Vintage 2025. 2020–2024 American Community Survey 5-year estimates.",
+      "<br>**Note:** Bealeton 2024 is an ACS 5-year estimate (Table B01003)."
+    ),
+    x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
-  theme(legend.position = "top")
+  theme(legend.position = "none")
 ```
 
 With roughly `r label_comma()(round(chg_recent, -2))` or more residents gained yearly since 2021 and limited residential development areas, the sensation of housing scarcity is felt by newer and long-term residents alike.
@@ -124,8 +128,8 @@ Net migration, people moving in from elsewhere, far outweighs natural change, bi
 
 ```{r}
 #| label: fig-components
-#| fig-cap: "Migration, not natural increase, drives Fauquier's growth"
-#| fig-alt: "Diverging horizontal bar chart of Fauquier County's components of population change for the year ending July 2025. Births add about 722 and deaths subtract about 665, for a small natural gain; domestic migration adds 539 and international migration 47, for net migration of 586 — the larger driver."
+#| fig-cap: "Migration drives Fauquier's growth more than natural increase"
+#| fig-alt: "Diverging horizontal bar chart of Fauquier County's components of population change for the year ending July 2025. Births add about 722 and deaths subtract about 665, for a small natural gain of 57; domestic migration adds 539 and international migration 47, for net migration of 586, the larger driver."
 
 comp <- comp_25 |>
   filter(variable %in% c("BIRTHS", "DEATHS", "DOMESTICMIG", "INTERNATIONALMIG")) |>
@@ -146,10 +150,11 @@ ggplot(comp, aes(value, label, fill = sign)) +
   geom_text(aes(label = number(value, accuracy = 1, style_positive = "plus")),
             hjust = ifelse(comp$value >= 0, -0.15, 1.15), size = 3.2, color = "grey20") +
   scale_fill_manual(values = c("Adds population" = green, "Reduces population" = coral)) +
-  scale_x_continuous(limits = c(-750, 900), expand = expansion(c(0.08, 0.12))) +
+  scale_x_continuous(labels = label_comma(), limits = c(-750, 900), expand = expansion(c(0.08, 0.12))) +
   labs(
-    title = "Migration, not natural increase, drives Fauquier's growth",
-    subtitle = "Components of population change, one year ending July 1, 2025",
+    title = "Migration drives Fauquier's growth more than natural increase",
+    subtitle = paste0("Net migration of +", cv("NETMIG"), " vs natural change of +", cv("NATURALCHG"),
+                      ", one year ending July 1, 2025"),
     caption = pep_cap(2025), x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
@@ -167,24 +172,24 @@ The county skews toward established working-age adults: 35–64-year-olds are it
 
 ```{r}
 #| label: fig-age
-#| fig-cap: "Fauquier has fewer young adults and a growing senior share"
-#| fig-alt: "Grouped bar chart comparing the age distribution of Fauquier County and Virginia. Fauquier has a smaller share of adults 18 to 34 and larger shares of those 35 to 64 and 65 and older than the state."
+#| fig-cap: "Fauquier has fewer young adults than Virginia"
+#| fig-alt: "Grouped bar chart comparing the age distribution of Fauquier County and Virginia. Fauquier has a smaller share of adults 18 to 34 (13% versus 16% statewide) and slightly larger shares of children and of adults 35 to 64. Shares of residents 65 to 74 and 75 and older are nearly identical."
 
-age_lvls <- c("Under 18", "18-34", "35-64", "65-74", "75+")
+age_lvls <- c("Under 18", "18–34", "35–64", "65–74", "75+")
 age_cv <- age |>
   filter(geo_type %in% c("county", "state")) |>
   mutate(geo = if_else(GEOID == fauquier, "Fauquier County", "Virginia"),
-         age_band = factor(age_band, levels = age_lvls))
+         age_band = factor(str_replace(age_band, "-", "–"), levels = age_lvls))
 
 ggplot(age_cv, aes(age_band, share, fill = geo)) +
   geom_col(position = "dodge", width = 0.72) +
   geom_text(aes(label = label_percent(accuracy = 1)(share)),
             position = position_dodge(width = 0.72), vjust = -0.4, size = 2.9, color = "grey25") +
   scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.08))) +
-  scale_fill_manual(values = c("Fauquier County" = blue, "Virginia" = green)) +
+  scale_fill_manual(values = c("Fauquier County" = blue, "Virginia" = "grey70")) +
   labs(
-    title = "Fauquier has fewer young adults and a growing senior share",
-    subtitle = "Share of population by age group — <span style='color:#445ca9'>**Fauquier County**</span> vs <span style='color:#8baeaa'>**Virginia**</span>, 2024",
+    title = "Fauquier has fewer young adults than Virginia",
+    subtitle = "Share of population by age group, <span style='color:#445ca9'>**Fauquier County**</span> vs <span style='color:#b3b3b3'>**Virginia**</span>, 2024",
     caption = acs_cap("B01001"), x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -207,8 +212,8 @@ Married-couple families represent 60% of Fauquier's households, well above Virgi
 
 ```{r}
 #| label: fig-households
-#| fig-cap: "Fauquier is family-heavy; its towns hold more people living alone"
-#| fig-alt: "Stacked bar chart of household composition for Fauquier County, its two towns, and Virginia. Married-couple families are the largest share in Fauquier and Bealeton, while in Warrenton people living alone are the single largest group."
+#| fig-cap: "Warrenton has far more people living alone than the county"
+#| fig-alt: "Stacked bar chart of household composition for Fauquier County, its two towns, and Virginia. Married-couple families are the largest share in Fauquier, Bealeton, and Virginia, while in Warrenton people living alone are the single largest group at about 41%, nearly double the county share of 22%."
 
 hh_lab <- c(B11001_003 = "Married-couple family", B11001_004 = "Other family",
             B11001_008 = "Living alone",          B11001_009 = "Other non-family")
@@ -231,16 +236,22 @@ size_lab <- demo$b25010 |>
                             GEOID == "5105336" ~ "Bealeton", GEOID == virginia ~ "Virginia"),
             avg = estimate)
 
+hh_fill <- c("Married-couple family" = blue, "Other family" = green,
+             "Living alone" = coral, "Other non-family" = "grey75")
+
 ggplot(hh, aes(share, geo, fill = type)) +
   geom_col(width = 0.7) +
-  geom_text(data = size_lab, aes(x = 1.02, y = geo, label = paste0(number(avg, accuracy = 0.01), " avg")),
+  geom_text(data = size_lab, aes(x = 1.02, y = geo, label = paste0(number(avg, accuracy = 0.01), " people")),
             inherit.aes = FALSE, hjust = 0, size = 2.9, color = "grey35") +
-  scale_x_continuous(labels = label_percent(), expand = expansion(c(0, 0.16))) +
-  scale_fill_hda() +
+  scale_x_continuous(labels = label_percent(), breaks = seq(0, 1, 0.25),
+                     expand = expansion(c(0, 0.2))) +
+  scale_fill_manual(values = hh_fill) +
   labs(
-    title = "Fauquier is family-heavy; its towns hold more people living alone",
+    title = "Warrenton has far more people living alone than the county",
     subtitle = "Household composition by type, with average household size, 2024",
-    caption = paste0(acs_cap("B11001"), " ", acs_cap("B25010")), fill = NULL
+    caption = paste0("**Source:** U.S. Census Bureau, 2020–2024 American Community Survey ",
+                     "5-year estimates, Tables B11001 and B25010."),
+    x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
   theme(legend.position = "top") +
@@ -262,8 +273,8 @@ At $130,189 annually, Fauquier's median household income is the third-highest of
 
 ```{r}
 #| label: fig-income-levels
-#| fig-cap: "Fauquier's median income trails only Loudoun among its peers"
-#| fig-alt: "Horizontal bar chart of 2024 median household income. Loudoun leads at about $182,000, followed by Prince William and Fauquier near $130,000, then Bealeton, Culpeper, Virginia, and Warrenton at about $83,000."
+#| fig-cap: "Fauquier's median income ranks third among its peers"
+#| fig-alt: "Horizontal bar chart of 2024 median household income. Loudoun leads at about $182,000, followed by Prince William at $131,000 and Fauquier at $130,000, then Bealeton ($108,000), Culpeper ($100,000), Virginia ($93,000), and Warrenton ($83,000)."
 
 lvls <- inc$b19013_trend |>
   filter(year == 2024) |>
@@ -272,19 +283,20 @@ lvls <- inc$b19013_trend |>
                            GEOID == "51107" ~ "Loudoun", GEOID == "51047" ~ "Culpeper",
                            GEOID == "5183136" ~ "Warrenton", GEOID == "5105336" ~ "Bealeton",
                            GEOID == virginia ~ "Virginia"),
-         is_fauq = GEOID == fauquier) |>
+         grp = case_when(GEOID == fauquier ~ "Fauquier",
+                         GEOID %in% unname(towns) ~ "Town", .default = "Other")) |>
   mutate(place = fct_reorder(place, estimate))
 
-ggplot(lvls, aes(estimate, place, fill = is_fauq)) +
+ggplot(lvls, aes(estimate, place, fill = grp)) +
   geom_col(width = 0.72) +
   geom_text(aes(label = label_dollar(accuracy = 1000)(estimate)),
             hjust = -0.1, size = 3, color = "grey25") +
   scale_x_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
                      expand = expansion(c(0, 0.18))) +
-  scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "grey75"), guide = "none") +
+  scale_fill_manual(values = c(Fauquier = blue, Town = coral, Other = "grey75"), guide = "none") +
   labs(
-    title = "Fauquier's median income trails only Loudoun among its peers",
-    subtitle = "Median household income, 2024 — Fauquier (blue), benchmark counties, towns, and Virginia",
+    title = "Fauquier's median income ranks third among its peers",
+    subtitle = "Median household income, 2024: <span style='color:#445ca9'>**Fauquier**</span> and <span style='color:#e76f52'>**study towns**</span> vs benchmarks",
     caption = acs_cap("B19013"), x = NULL, y = NULL
   ) +
   theme_hda(flip_gridlines = TRUE)
@@ -303,7 +315,7 @@ Warrenton's median is High reliability (CV 5%); Bealeton's is Medium (CV 17%, ±
 
 ```{r}
 #| label: fig-income-real
-#| fig-cap: "Adjusted for inflation, real incomes have risen only modestly"
+#| fig-cap: "Real incomes have risen only modestly after adjusting for inflation"
 #| fig-alt: "Line chart of Fauquier County median household income from 2010 to 2024. The nominal line rises steeply from about $84,000 to $130,000, while the inflation-adjusted line in 2024 dollars rises much more gently from about $114,000 to $130,000."
 
 cpi24 <- fred$cpi$cpi_less_shelter[fred$cpi$year == 2024]
@@ -318,14 +330,14 @@ real <- inc$b19013_trend |>
 ggplot(real, aes(year, income, color = series)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.8) +
-  scale_color_manual(values = c("Nominal" = "grey65", "Real (2024 $)" = blue)) +
-  scale_y_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"), limits = c(0, 140000),
+  scale_color_manual(values = c("Nominal" = "grey55", "Real (2024 $)" = blue)) +
+  scale_y_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"), limits = c(0, 140000), breaks = seq(0, 140000, 20000),
                      expand = expansion(c(0, 0.05))) +
   scale_x_continuous(breaks = seq(2010, 2024, 2)) +
   labs(
-    title = "Adjusted for inflation, real incomes have risen only modestly",
-    subtitle = "Fauquier median household income — <span style='color:#8a8a8a'>**nominal**</span> vs <span style='color:#445ca9'>**inflation-adjusted (2024 $)**</span>, 2010–2024",
-    caption = paste0(acs_cap("B19013"), " ", cpi_cap()), x = NULL, y = NULL
+    title = "Real incomes have risen only modestly after adjusting for inflation",
+    subtitle = "Fauquier median household income, <span style='color:#8c8c8c'>**nominal**</span> vs <span style='color:#445ca9'>**inflation-adjusted (2024 $)**</span>, 2010–2024",
+    caption = paste0(acs_cap("B19013", "2006–2010 through 2020–2024"), "<br>**Note:** ", cpi_cap()), x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
@@ -341,14 +353,16 @@ Fauquier as a whole is high-income: 44% of households earn $150,000 or more — 
 #| fig-cap: "Warrenton households skew lower-income than Bealeton or the county"
 #| fig-alt: "Grouped bar chart of household income distribution across six brackets for Fauquier County, Warrenton, Bealeton, and Virginia. Warrenton has the largest share of households under $50,000, while Fauquier and Bealeton concentrate in the $150,000-and-up bracket. Bealeton's lowest three brackets are suppressed for low reliability."
 
-band_lvls <- c("< $25k", "$25-50k", "$50-75k", "$75-100k", "$100-150k", "$150k+")
+band_lvls <- c("< $25k", "$25–50k", "$50–75k", "$75–100k", "$100–150k", "$150k+")
+geo_lvls  <- c("Fauquier County", "Warrenton", "Bealeton", "Virginia")
 dist <- inc$b19001 |>
   mutate(share = estimate / sum(estimate), .by = GEOID) |>
   flag_reliability() |>
   mutate(
-    geo = case_when(GEOID == fauquier ~ "Fauquier County", GEOID == "5183136" ~ "Warrenton",
-                    GEOID == "5105336" ~ "Bealeton", GEOID == virginia ~ "Virginia"),
-    inc_band = factor(inc_band, levels = band_lvls),
+    geo = factor(case_when(GEOID == fauquier ~ "Fauquier County", GEOID == "5183136" ~ "Warrenton",
+                           GEOID == "5105336" ~ "Bealeton", GEOID == virginia ~ "Virginia"),
+                 levels = geo_lvls),
+    inc_band = factor(str_replace(inc_band, "-", "–"), levels = band_lvls),
     # Bealeton floor: suppress Low-reliability (CV > 30%) cells
     share = if_else(reliability == "Low", NA_real_, share)
   ) |>
@@ -361,13 +375,18 @@ ggplot(dist, aes(inc_band, share, fill = geo)) +
                                "Bealeton" = yellow, "Virginia" = "grey70")) +
   labs(
     title = "Warrenton households skew lower-income than Bealeton or the county",
-    subtitle = "Share of households by income bracket, 2024",
-    caption = acs_cap("B19001"), x = NULL, y = NULL, fill = NULL
+    subtitle = paste0("Share of households by income bracket, 2024:<br>",
+                      "<span style='color:#445ca9'>**Fauquier County**</span>, ",
+                      "<span style='color:#e76f52'>**Warrenton**</span>, ",
+                      "<span style='color:#e9ab3f'>**Bealeton**</span>, and ",
+                      "<span style='color:#b3b3b3'>**Virginia**</span>"),
+    caption = paste0(acs_cap("B19001"),
+                     "<br>**Note:** Bealeton's three lowest brackets are suppressed (CV above 30%) and appear as gaps."),
+    x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
-  theme(legend.position = "top") +
-  guides(fill = guide_legend(nrow = 1))
+  theme(legend.position = "none")
 ```
 
 Bealeton mirrors the county more closely, concentrated in the upper-middle and $150k+ income brackets, consistent with its higher median income.
@@ -404,7 +423,7 @@ This growth roughly matches the statewide pace, but is well behind Loudoun, whic
 
 ```{r}
 #| label: fig-employment
-#| fig-cap: "Fauquier's job base has grown, but slower than its metro neighbors"
+#| fig-cap: "Fauquier's job base has grown but slower than its metro neighbors"
 #| fig-alt: "Indexed line chart of at-place employment from 2015 to 2025, set to 100 in 2015. Loudoun rises fastest to about 133, Prince William to 119, while Fauquier and Virginia track together near 111 and Culpeper trails at about 105."
 
 emp <- qcew$total |>
@@ -412,17 +431,21 @@ emp <- qcew$total |>
   mutate(area = area_lab(area_fips)) |>
   mutate(idx = annual_avg_emplvl / annual_avg_emplvl[year == 2015] * 100, .by = area_fips)
 
+# End labels: Fauquier and Virginia finish within 0.1 of each other, so nudge them apart
+emp_lab <- emp |> filter(year == 2025) |>
+  mutate(idx_lab = idx + case_when(area == "Fauquier" ~ -1.3, area == "Virginia" ~ 1.3, .default = 0))
+
 ggplot(emp, aes(year, idx, color = area)) +
   geom_hline(yintercept = 100, linetype = "dashed", color = "grey60") +
   geom_line(aes(linewidth = area == "Fauquier")) +
-  geom_text(data = filter(emp, year == 2025), aes(label = area), hjust = -0.05, size = 3, fontface = "bold") +
-  scale_color_manual(values = c("Fauquier" = blue, "Culpeper" = coral, "Prince William" = green,
-                                "Loudoun" = yellow, "Virginia" = "grey55")) +
+  geom_text(data = emp_lab, aes(y = idx_lab, label = area), hjust = -0.05, size = 3, fontface = "bold") +
+  scale_color_manual(values = c("Fauquier" = blue, "Culpeper" = "grey70", "Prince William" = "grey70",
+                                "Loudoun" = "grey70", "Virginia" = "grey45")) +
   scale_linewidth_manual(values = c(`TRUE` = 1.3, `FALSE` = 0.7), guide = "none") +
   scale_x_continuous(breaks = seq(2015, 2025, 2), limits = c(2015, 2028)) +
   labs(
-    title = "Fauquier's job base has grown, but slower than its metro neighbors",
-    subtitle = "At-place employment indexed to 2015 = 100 — Fauquier vs benchmark counties and Virginia",
+    title = "Fauquier's job base has grown but slower than its metro neighbors",
+    subtitle = "At-place employment indexed to 2015 = 100 for Fauquier and comparison areas",
     caption = qcew_cap("2015–2025"), x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -435,8 +458,8 @@ Fauquier's all-jobs average pay was about `r label_dollar()(round(pay_all(fauqui
 
 ```{r}
 #| label: fig-wages
-#| fig-cap: "Fauquier's wage base sits below its high-wage neighbors"
-#| fig-alt: "Grouped bar chart of 2025 average annual pay by industry for Fauquier and three benchmark counties. Across all jobs, health care, local government, and retail, Loudoun pays the most; Fauquier lands in the middle of the pack and retail trade is the lowest-paying sector everywhere."
+#| fig-cap: "Only Loudoun outpays Fauquier across all jobs"
+#| fig-alt: "Grouped bar chart of 2025 average annual pay by industry for Fauquier and three benchmark counties. Loudoun pays the most in every industry shown, at about $87,000 across all jobs against $68,000 in Fauquier. Fauquier ranks second on all jobs, health care, and retail, and third on local government. Retail trade is the lowest-paying sector in every county."
 
 ind_lvls <- c("All jobs", "Health care", "Local government", "Retail trade")
 wages <- bind_rows(
@@ -455,12 +478,13 @@ wages <- bind_rows(
 
 ggplot(wages, aes(industry, pay, fill = area)) +
   geom_col(position = "dodge", width = 0.78) +
-  scale_y_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"), expand = expansion(c(0, 0.05))) +
-  scale_fill_manual(values = c("Fauquier" = blue, "Culpeper" = coral,
-                               "Prince William" = green, "Loudoun" = yellow)) +
+  scale_y_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"), limits = c(0, 100000),
+                     expand = expansion(c(0, 0.05))) +
+  scale_fill_manual(values = c("Fauquier" = blue, "Culpeper" = "grey85",
+                               "Prince William" = "grey70", "Loudoun" = "grey50")) +
   labs(
-    title = "Fauquier's wage base sits below its high-wage neighbors",
-    subtitle = "Average annual pay by industry, 2025 — <span style='color:#445ca9'>**Fauquier**</span> vs benchmark counties",
+    title = "Only Loudoun outpays Fauquier across all jobs",
+    subtitle = "Average annual pay by industry, 2025: <span style='color:#445ca9'>**Fauquier**</span> vs benchmark counties",
     caption = qcew_cap("2025"), x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
@@ -546,7 +570,7 @@ Average annual wages in Fauquier rose `r pct(fq$wage_pct)` over the same period,
 ```{r}
 #| label: tbl-q-area
 #| tbl-cap: "Fauquier's jobs edged up while its wages rose faster than any neighbor's"
-#| fig-alt: "Table comparing jobs and annualized average wages in 2026 Q1 with 2025 Q1 for Fauquier, Culpeper, Prince William, Loudoun, and Virginia. Fauquier jobs rose 0.7 percent and wages 8.5 percent, the largest wage increase of the five areas."
+#| tbl-alt: "Table comparing jobs and annualized average wages in 2026 Q1 with 2025 Q1 for Fauquier, Culpeper, Prince William, Loudoun, and Virginia. Fauquier jobs rose 0.7 percent and wages 8.5 percent, the largest wage increase of the five areas."
 
 chg_cell <- \(x, txt) cell_spec(txt, color = if_else(x >= 0, blue, coral), escape = FALSE)
 
@@ -566,7 +590,7 @@ q_area |>
   footnote(
     general = tbl_note(paste0(
       qcew_cap(paste(q_old, "and", q_new), annual = FALSE),
-      " Annual wage is the average weekly wage times 52. Figures are for a single quarter, ",
+      "<br>**Notes:** Annual wage is the average weekly wage times 52. Figures are for a single quarter, ",
       "are preliminary, and are not comparable to the annual pay averages above."
     )),
     general_title = "", footnote_as_chunk = TRUE, escape = FALSE
@@ -576,7 +600,7 @@ q_area |>
 ```{r}
 #| label: tbl-q-sector
 #| tbl-cap: "Construction added jobs in Fauquier while health care lost them"
-#| fig-alt: "Table of the five private-sector industries in Fauquier with the largest job changes between 2025 Q1 and 2026 Q1. Construction gained about 330 jobs; health care lost about 170, followed by retail trade, accommodation and food services, with a small gain in finance and insurance."
+#| tbl-alt: "Table of the five private-sector industries in Fauquier with the largest job changes between 2025 Q1 and 2026 Q1. Construction gained about 330 jobs; health care lost about 170, followed by retail trade, accommodation and food services, with a small gain in finance and insurance."
 
 q_sector |>
   slice_max(abs(jobs_chg), n = 5) |>
@@ -594,7 +618,7 @@ q_sector |>
   footnote(
     general = tbl_note(paste0(
       qcew_cap(paste(q_old, "and", q_new), annual = FALSE),
-      " Private ownership only; sectors with suppressed cells are omitted. ",
+      "<br>**Notes:** Private ownership only. Sectors with suppressed cells are omitted. ",
       "Annual wage is the average weekly wage times 52."
     )),
     general_title = "", footnote_as_chunk = TRUE, escape = FALSE
@@ -607,8 +631,8 @@ It's widely recognized that those who live in Fauquier do not work in Fauquier, 
 
 ```{r}
 #| label: fig-commute-out
-#| fig-cap: "Most working residents commute out — many to Fairfax and Prince William"
-#| fig-alt: "Horizontal bar chart of the top counties where Fauquier residents work outside the county. Fairfax leads with about 8,200 workers, followed by Prince William at 5,400 and Loudoun at 3,000, then smaller flows to Manassas, Arlington, and Culpeper."
+#| fig-cap: "Fairfax and Prince William draw the most Fauquier out-commuters"
+#| fig-alt: "Horizontal bar chart of the top counties where Fauquier residents work outside the county. Fairfax leads with about 8,200 workers, followed by Prince William at 5,400 and Loudoun at 3,000, then smaller flows of about 600 to 1,200 workers each to Manassas, Arlington, Culpeper, Stafford, and Alexandria."
 
 xwalk <- fips_codes |>
   transmute(fips = paste0(state_code, county_code),
@@ -625,7 +649,7 @@ ggplot(out, aes(workers, county)) +
   geom_text(aes(label = label_comma()(workers)), hjust = -0.15, size = 3, color = "grey25") +
   scale_x_continuous(labels = label_comma(), expand = expansion(c(0, 0.14))) +
   labs(
-    title = "Most working residents commute out — many to Fairfax and Prince William",
+    title = "Fairfax and Prince William draw the most Fauquier out-commuters",
     subtitle = "Top destinations for employed Fauquier residents working outside the county, 2023",
     caption = lodes_cap(2023), x = NULL, y = NULL
   ) +
@@ -645,7 +669,7 @@ Long commutes are a regional exurban trait: Culpeper has about 37% of its commut
 ```{r}
 #| label: fig-traveltime
 #| fig-cap: "More than a third of Fauquier commuters travel 45 minutes or more"
-#| fig-alt: "Horizontal bar chart of the share of workers commuting 45 minutes or more. Bealeton and Culpeper are highest near 38-39%, Fauquier at 37%, Prince William 36%, Warrenton 31%, Loudoun 24%, and Virginia lowest at 18%."
+#| fig-alt: "Horizontal bar chart of the share of workers commuting 45 minutes or more. Bealeton is highest at 39%, followed by Culpeper and Fauquier at 37%, Prince William at 36%, Warrenton at 31%, Loudoun at 24%, and Virginia lowest at 18%. Fauquier is shown in blue and the two towns in coral."
 
 tt <- wf$b08303 |>
   mutate(tot = estimate[variable == "B08303_001"], .by = GEOID) |>
@@ -658,17 +682,18 @@ tt <- wf$b08303 |>
                            GEOID == "51153" ~ "Prince William", GEOID == "51107" ~ "Loudoun",
                            GEOID == "5183136" ~ "Warrenton", GEOID == "5105336" ~ "Bealeton",
                            GEOID == virginia ~ "Virginia"),
-         is_fauq = GEOID == fauquier,
+         grp = case_when(GEOID == fauquier ~ "Fauquier",
+                         GEOID %in% unname(towns) ~ "Town", .default = "Other"),
          place = fct_reorder(place, share))
 
-ggplot(tt, aes(share, place, fill = is_fauq)) +
+ggplot(tt, aes(share, place, fill = grp)) +
   geom_col(width = 0.72) +
   geom_text(aes(label = label_percent(accuracy = 1)(share)), hjust = -0.15, size = 3, color = "grey25") +
   scale_x_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.12))) +
-  scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "grey75"), guide = "none") +
+  scale_fill_manual(values = c(Fauquier = blue, Town = coral, Other = "grey75"), guide = "none") +
   labs(
     title = "More than a third of Fauquier commuters travel 45 minutes or more",
-    subtitle = "Share of workers with a commute of 45+ minutes, 2024 — Fauquier (blue), benchmarks, towns, Virginia",
+    subtitle = "Share of workers commuting 45+ minutes, 2024: <span style='color:#445ca9'>**Fauquier**</span> and <span style='color:#e76f52'>**study towns**</span>",
     caption = acs_cap("B08303"), x = NULL, y = NULL
   ) +
   theme_hda(flip_gridlines = TRUE)

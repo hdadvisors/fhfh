@@ -48,6 +48,11 @@ renv::restore()
   `qcew_cap()`, `dec_cap()`, `pep_cap()`, `bps_cap()`, `lodes_cap()`, `cpi_cap()`,
   `costar_cap()`, `fmr_cap(year)`, `nhpd_cap()`, `pmms_cap()`, `compplan_cap(chapter, page)`,
   `ami_cap(year)`, `pit_cap()`, `vdoe_cap()`, `wc_cap(release)`.
+- **Captions and titles:** one bold `**Source:**` line per figure/table, or `**Sources:** A, 2025. B, 2020–2025.`
+  on one line when combining sources (write it by hand; pasting helpers together yields several "Source:"
+  labels). Extra context goes on a new line as `<br>**Note:**` / `<br>**Notes:**`; `cpi_cap()` is Note text.
+  Plot titles (and matching `fig-cap`) avoid commas, semicolons, and em-dash joins; long subtitles break
+  with `<br>`, not `str_wrap()`. Fauquier = blue, study towns = coral, benchmarks/Virginia = grey.
 - **Vintage variables** (`_common.R`): `mls_through` (latest MLS snapshot date) and `costar_through`
   (latest CoStar quarter) are read from the rds files; `mls_cap(year_range, through = TRUE)` and
   `costar_cap()` append them to captions. Pass `through = FALSE` for charts that stop at a full year.

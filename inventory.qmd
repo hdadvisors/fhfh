@@ -69,7 +69,7 @@ Fauquier County is a large, predominantly rural jurisdiction between the Piedmon
 
 ```{r}
 #| label: fig-studyarea
-#| fig-cap: "Two small places anchor a large, rural county"
+#| fig-cap: "Two small places anchor a large rural county"
 #| fig-alt: "Map of Fauquier County, Virginia shaded blue among its three benchmark neighbors — Loudoun, Prince William, and Culpeper counties, shown faint grey. The Town of Warrenton near the county's center and Bealeton to the south are marked in gold and labeled."
 #| fig-asp: 1.2
 
@@ -95,15 +95,15 @@ ggplot() +
   scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "grey88"), guide = "none") +
   coord_sf(datum = NA) +
   labs(
-    title = "Two small places anchor a large, rural county",
+    title = "Two small places anchor a large rural county",
     subtitle = "Fauquier County (blue), the two study places (gold), and its benchmark neighbors",
-    caption = "Source: U.S. Census Bureau TIGER/Line, 2023."
+    caption = "**Source:** U.S. Census Bureau TIGER/Line, 2023."
   ) +
   theme_void(base_family = "Lato") +
   theme(
     plot.title = element_text(face = "bold", size = 15),
     plot.subtitle = element_text(size = 11, color = "grey35"),
-    plot.caption = element_text(size = 9, color = "grey45", hjust = 0),
+    plot.caption = ggtext::element_markdown(size = 9, color = "grey45", hjust = 0),
     plot.title.position   = "plot",
     plot.caption.position = "plot"
   )
@@ -138,7 +138,7 @@ Single-family detached homes represent 85.1% of Fauquier's housing stock. About 
 
 ```{r}
 #| label: fig-structure
-#| fig-cap: "Fauquier County much more suburban than rest of Virginia"
+#| fig-cap: "Fauquier County's housing is far more single-family than Virginia's"
 #| fig-alt: "Horizontal 100% stacked bar chart of housing units by structure type for Fauquier County, Warrenton, Bealeton, and Virginia. Single-family detached homes make up about 85% of Fauquier's stock versus 61% statewide; the towns carry more multifamily units."
 
 struct <- stock$b25024 |>
@@ -161,7 +161,7 @@ ggplot(struct, aes(x = share, y = geo, fill = cat, alpha = geo_type)) +
   ) +
   scale_fill_hda() +
   labs(
-    title = "Fauquier County much more suburban than rest of Virginia",
+    title = "Fauquier County's housing is far more single-family than Virginia's",
     subtitle = "Share of all housing units by structure type",
     caption = acs_cap("B25024"), fill = NULL
   ) +
@@ -181,8 +181,8 @@ With smaller places, and therefore lower populations for the ACS to precisely si
 
 ```{r}
 #| label: tbl-town-structure
-#| tbl-cap: "Town housing units by structure type, with reliability (counts, not rates)"
-#| fig-alt: "Table of housing-unit counts by structure type for Warrenton and Bealeton, each cell tagged High or Medium reliability. Only single-family detached counts survive the reliability screen in both towns (roughly 2,100 in Warrenton and 1,100 in Bealeton); most attached, multifamily, and manufactured-housing cells carry a coefficient of variation above 30% and are suppressed."
+#| tbl-cap: "Town housing unit counts by structure type and reliability"
+#| fig-alt: "Table of housing-unit counts by structure type for Warrenton and Bealeton, each shown count tagged High or Medium reliability. Single-family detached is the only High-reliability row (2,096 in Warrenton and 1,110 in Bealeton). Four of the 12 cells are suppressed for a coefficient of variation above 30%: the mobile-home cells in both towns and two Bealeton multifamily cells (2–4 and 20+ units)."
 
 town_struct <- stock$b25024 |>
   filter(geo_type == "place", variable != "B25024_001") |>
@@ -209,7 +209,7 @@ town_struct |>
   footnote(
     general = tbl_note(paste0(
       acs_cap("B25024"),
-      " Cells with a coefficient of variation above 30% (Low reliability) are suppressed (—).",
+      "<br>**Note:** Cells with a coefficient of variation above 30% (Low reliability) are suppressed (—).",
       " High = CV ≤ 15%, Medium = CV 15–30%."
     )),
     general_title = "", footnote_as_chunk = TRUE, escape = FALSE
@@ -234,7 +234,7 @@ Warrenton's median year built matches Fauquier (1987), but Bealeton's stock is m
 
 ```{r}
 #| label: fig-yearbuilt
-#| fig-cap: "Owner-occupied homes skew newer; rental stock is older"
+#| fig-cap: "Owner-occupied homes skew newer than the rental stock"
 #| fig-alt: "Grouped bar chart of the share of occupied homes by decade built, split by tenure, for Fauquier County. Owner-occupied homes peak in the 1980s–1990s and 2000s; renter-occupied homes are concentrated before 1960 and in the 1980s–1990s, skewing older overall."
 
 era_lvls <- c("Before 1960", "1960–1979", "1980–1999", "2000–2009", "2010 or later")
@@ -261,14 +261,14 @@ ggplot(yb, aes(x = era, y = share, fill = tenure)) +
   geom_col(position = "dodge", width = 0.75) +
   geom_text(
     aes(label = label_percent(accuracy = 1)(share)),
-    position = position_dodge(width = 0.72),
+    position = position_dodge(width = 0.75),
     vjust = 2.5, size = 3, color = "white"
   ) +
   scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.05))) +
   scale_fill_manual(values = c(Owner = blue, Renter = coral)) +
   labs(
-    title = "Owner-occupied homes skew newer; the rental stock is older",
-    subtitle = "Share of homes by decade built — <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span> occupied",
+    title = "Owner-occupied homes skew newer than the rental stock",
+    subtitle = "Share of homes by year built: <span style='color:#445ca9'>**owner**</span> vs <span style='color:#e76f52'>**renter**</span> occupied",
     caption = acs_cap("B25036"), x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -317,7 +317,7 @@ ggplot(trend, aes(year, owner_share, color = geo_type)) +
   labs(
     title = "Warrenton's homeownership rate consistently trails the county and Bealeton",
     subtitle = "Owner-occupied share of all households",
-    caption = "**Source:** U.S. Census Bureau, American Community Survey 5-year estimates, Table B25003."
+    caption = "**Source:** U.S. Census Bureau, 2009–2013 through 2020–2024 American Community Survey 5-year estimates, Table B25003."
   ) +
   theme_hda() +
   theme(legend.position = "none")
@@ -424,7 +424,7 @@ New construction in the County sold for a higher median price in 2025 (~`r label
 
 ```{r}
 #| label: fig-newresale
-#| fig-cap: "New homes are larger and pricier than resales — but on smaller lots"
+#| fig-cap: "New homes are larger and pricier than resales but sit on smaller lots"
 #| fig-alt: !expr 'paste0("Three-panel bar chart comparing 2025 median price, size, and lot area of new-construction versus resale home sales in Fauquier County. New homes have a higher median price (about ", label_dollar(accuracy = 1000)(nv("median_price", "New construction")), " vs ", label_dollar(accuracy = 1000)(nv("median_price", "Resale")), ") and are larger (about ", label_comma()(nv("median_sqft", "New construction")), " vs ", label_comma()(nv("median_sqft", "Resale")), " square feet), but sit on much smaller lots (about ", nv("median_acres", "New construction"), " vs ", nv("median_acres", "Resale"), " acre).")'
 #| fig-asp: 0.5
 
@@ -451,9 +451,11 @@ ggplot(nvr, aes(x = construction, y = value, fill = construction)) +
   scale_fill_manual(values = c("New construction" = blue, "Resale" = green)) +
   scale_y_continuous(expand = expansion(c(0, 0.18))) +
   labs(
-    title = "New homes are larger and pricier than resales — but on smaller lots",
+    title = "New homes are larger and pricier than resales but sit on smaller lots",
     subtitle = "Median attributes of <span style='color:#445ca9'>**new-construction**</span> vs <span style='color:#8baeaa'>**resale**</span> sales in Fauquier County",
-    caption = mls_cap(paste(label_comma()(sum(nvr25$n)), "total sales from 2025"), through = FALSE), x = NULL, y = NULL
+    caption = paste0(mls_cap("2025", through = FALSE),
+                     "<br>**Note:** Based on ", label_comma()(sum(nvr25$n)), " closed sales in 2025."),
+    x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +

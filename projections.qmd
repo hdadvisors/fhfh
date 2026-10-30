@@ -25,6 +25,13 @@ green  <- hda_pal[2]
 yellow <- hda_pal[3]
 coral  <- hda_pal[4]
 
+
+# Source strings (hand-built so each caption carries exactly one bold label)
+src_wc  <- "University of Virginia Weldon Cooper Center for Public Service, Virginia Population Projections, 2025 release."
+src_pep <- "U.S.\u00a0Census Bureau, Population Estimates Program, Vintage 2025."
+src_bps <- "U.S.\u00a0Census Bureau, Building Permits Survey, 2020–2025 annual."
+src_acs <- "U.S.\u00a0Census Bureau, American Community Survey 5-year estimates, 2020–2024."
+
 # --- Inline scalars for bullet text ----------------------------------------
 
 asm       <- wcoop$assumptions
@@ -167,8 +174,8 @@ pop_proj <- pc |>
   mutate(kind = "Projection") |>
   bind_rows(pop_est) |>
   mutate(
-    geo  = factor(if_else(geoid == fauquier, "Fauquier County", "Warrenton town"),
-                  levels = c("Fauquier County", "Warrenton town")),
+    geo  = factor(if_else(geoid == fauquier, "Fauquier County", "Town of Warrenton"),
+                  levels = c("Fauquier County", "Town of Warrenton")),
     year = factor(year)
   )
 
@@ -182,8 +189,8 @@ ggplot(pop_proj, aes(year, population, fill = kind)) +
   labs(
     title = "Fauquier is projected to reach about 93,000 residents by 2050",
     subtitle = "Total population, Fauquier County and the Town of Warrenton<br><span style='color:#9aa9cf'>**Census estimates**</span> (2020, 2025) and <span style='color:#445ca9'>**projections**</span> (2030–2050)",
-    caption = paste0(pep_cap(2025), "<br>", wc_cap(), "<br>",
-                     "Weldon Cooper projects county and large-town totals; Bealeton (a census-designated place) is not projected separately."),
+    caption = paste0("**Sources:** ", src_pep, " ", src_wc,
+                     "<br>**Note:** Weldon Cooper does not project Bealeton (a census-designated place) separately."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -219,7 +226,7 @@ ends <- hh_long |> filter(year == 2050)
 
 ggplot(hh_long, aes(year, hh, group = method)) +
   geom_line(data = ~ filter(.x, method == "headship"),
-            color = "grey65", linewidth = 0.8, linetype = "22") +
+            color = "#8c8c8c", linewidth = 0.8, linetype = "22") +
   geom_line(data = ~ filter(.x, method == "avg-size"),
             color = blue, linewidth = 1.2) +
   geom_point(data = ~ filter(.x, method == "avg-size"),
@@ -228,7 +235,7 @@ ggplot(hh_long, aes(year, hh, group = method)) +
             aes(label = label_comma()(hh)), color = blue,
             hjust = 0, nudge_x = 0.6, size = 3, fontface = "bold") +
   geom_text(data = filter(ends, method == "headship"),
-            aes(label = label_comma()(hh)), color = "grey55",
+            aes(label = label_comma()(hh)), color = "#8c8c8c",
             hjust = 0, nudge_x = 0.6, vjust = 1.6, size = 2.7) +
   scale_x_continuous(breaks = c(base_year, 2030, 2035, 2040, 2045, 2050),
                      expand = expansion(c(0.02, 0.14))) +
@@ -236,9 +243,10 @@ ggplot(hh_long, aes(year, hh, group = method)) +
   coord_cartesian(clip = "off") +
   labs(
     title = "The county is projected to add roughly 6,800 households by 2050",
-    subtitle = "Projected total households — <span style='color:#445ca9'>**average household size**</span> vs <span style='color:#8c8c8c'>**constant headship**</span>",
-    caption = paste0(wc_cap(),
-                     " Households from Weldon Cooper population applied to the 2020–2024 ACS average household size (2.78); the headship series holds the 2024 householder rate constant."),
+    subtitle = "Projected total households by <span style='color:#445ca9'>**average household size**</span> and <span style='color:#8c8c8c'>**constant headship**</span>",
+    caption = paste0("**Sources:** ", src_wc, " U.S.\u00a0Census Bureau, American Community Survey 5-year estimates, Table B25010, 2020–2024.",
+                     "<br>**Notes:** Households are Weldon Cooper population divided by the 2020–2024 ACS average household size (", size_2024,
+                     "). The headship series holds the 2024 householder rate constant."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -275,12 +283,12 @@ prod_plot <- prod |>
                           labels = c("Through 2030", "Through 2040", "Through 2050")))
 
 ggplot(prod_plot, aes(horizon, units_per_year_avgsize)) +
-  geom_col(fill = blue, width = 0.6) +
   geom_hline(yintercept = bps_pace, color = coral, linewidth = 0.9, linetype = "22") +
-  geom_text(aes(label = round(units_per_year_avgsize)),
-            vjust = -0.5, size = 3, color = "grey25") +
   geom_hline(yintercept = bps_2025, color = coral, linewidth = 0.6, linetype = "13") +
-  annotate("text", x = 0.6, y = bps_pace, label = paste0("2020–25 permit pace (", round(bps_pace), "/yr)"),
+  geom_col(fill = blue, width = 0.6) +
+  geom_text(aes(label = round(units_per_year_avgsize)),
+            vjust = 1.6, size = 3.2, color = "white", fontface = "bold") +
+  annotate("text", x = 0.6, y = bps_pace, label = paste0("2020–2025 permit pace (", round(bps_pace), "/yr)"),
            color = coral, size = 2.7, hjust = 0, vjust = -0.5) +
   annotate("text", x = 0.6, y = bps_2025, label = paste0("2025 permits (", bps_2025, ")"),
            color = coral, size = 2.7, hjust = 0, vjust = -0.5) +
@@ -288,8 +296,9 @@ ggplot(prod_plot, aes(horizon, units_per_year_avgsize)) +
   labs(
     title = "Recent building has roughly kept pace with projected household growth",
     subtitle = "New units needed per year vs the recent <span style='color:#e76f52'>**building-permit pace**</span> and the 2025 total, by horizon",
-    caption = paste0(wc_cap(), "<br>", bps_cap(), "<br>",
-                     "Need = projected household growth plus a 3% vacancy allowance, annualized over each horizon. Permit pace is the 2020–2025 Building Permits Survey average."),
+    caption = paste0("**Sources:** ", src_wc, " ", src_bps,
+                     "<br>**Notes:** Need is projected household growth plus a ", label_percent(accuracy = 1)(asm$vacancy_allowance),
+                     " vacancy allowance, annualized over each horizon. Permit pace is the 2020–2025 annual average."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -309,24 +318,29 @@ The estimate for the baseline need for units is only as firm as its household-si
 #| fig-alt: !expr 'paste0("Column chart of the annual new-housing-units needed through 2050 under three average-household-size assumptions, holding the projected 2050 population fixed at 93,171. If household size holds at 2.78 (the county''s actual current average), need is about 269 units per year. If it declines modestly to 2.70, need rises to about 309. If it continues down to 2.60, need reaches about 361. A dashed reference line marks the 2020–2025 building-permit pace of ", round(bps_pace), " per year, essentially level with the size-holds scenario. The Greater Piedmont regional study''s estimate of 307 per year falls between the first two bars, inside the band.")'
 
 ggplot(hhsize_scen, aes(scen, units_yr, fill = headline)) +
-  geom_col(width = 0.6) +
   geom_hline(yintercept = bps_pace, color = coral, linewidth = 0.9, linetype = "22") +
-  geom_text(aes(label = paste0(round(units_yr), "/yr")),
-            vjust = -1.6, size = 3.1, color = "grey25", fontface = "bold") +
-  geom_text(aes(label = paste0("+", label_comma()(round(new_hh)), " HH")),
-            vjust = -0.4, size = 2.6, color = "grey40") +
-  annotate("text", x = 0.55, y = bps_pace, label = paste0("2020–25 permit pace (", round(bps_pace), "/yr)"),
-           color = coral, size = 2.7, hjust = 0, vjust = 1.6) +
-  annotate("point", x = 2, y = gp_pace, color = "grey25", size = 1.8) +
-  annotate("text", x = 2, y = gp_pace, label = "Greater Piedmont study (307/yr)",
-           color = "grey25", size = 2.6, hjust = 0.5, vjust = 2) +
+  geom_col(width = 0.5) +
+  geom_label(aes(label = paste0(round(units_yr), "/yr")),
+             vjust = -1.5, size = 3.1, color = "grey25", fontface = "bold", fill = "white",
+             linewidth = 0, label.padding = unit(0.12, "lines")) +
+  geom_label(aes(label = paste0("+", label_comma()(round(new_hh)), " HH")),
+             vjust = -0.3, size = 2.6, color = "grey40", fill = "white",
+             linewidth = 0, label.padding = unit(0.12, "lines")) +
+  annotate("segment", x = 1.75, xend = 2.3, y = gp_pace, yend = gp_pace,
+           color = "grey25", linewidth = 1) +
+  annotate("text", x = 2.33, y = gp_pace, label = paste0("Greater Piedmont\nstudy ", gp_pace, "/yr"),
+           color = "grey25", size = 2.3, hjust = 0, vjust = -0.15, lineheight = 0.9) +
   scale_fill_manual(values = c(`TRUE` = blue, `FALSE` = "#9aa9cf"), guide = "none") +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.16))) +
   labs(
     title = "Household-size assumptions put annual need between 270 and 360 units",
-    subtitle = "New units needed per year, varying only <span style='color:#445ca9'>**average household size**</span>",
-    caption = paste0(wc_cap(),
-                     " Population held at the Weldon Cooper 2050 projection (93,171); households = population ÷ assumed average size; need = household growth plus a 3% vacancy allowance, annualized over 26 years. The 2.78 scenario is the county's actual 2020–2024 ACS average."),
+    subtitle = paste0("New units needed per year, varying only <span style='color:#445ca9'>**average household size**</span><br>",
+                      "Dashed line is the <span style='color:#e76f52'>**2020–2025 permit pace**</span> (", round(bps_pace), "/yr)"),
+    caption = paste0("**Sources:** ", src_wc, " ", src_acs, " ", src_bps,
+                     "<br>**Notes:** Population is held at the Weldon Cooper 2050 projection (", label_comma()(fq_2050),
+                     "). Households equal population divided by assumed average size. Need is household growth plus a ",
+                     label_percent(accuracy = 1)(asm$vacancy_allowance), " vacancy allowance, annualized over ", horizon_yrs,
+                     " years. The ", asm$avg_hh_size, " scenario is the county's actual 2020–2024 average."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -392,14 +406,16 @@ ggplot(ladder_long, aes(rung, value, fill = component)) +
   labs(
     title = "The 'units needed' total depends on how widely you define need",
     subtitle = "Cumulative units through 2050 as the definition of need widens",
-    caption = paste0(wc_cap(), " ",
-                     "Rental deficit: HDAdvisors gap analysis (affordability-gaps chapter), affordable-and-available shortfall below 80% AMI. ",
-                     "Ownership backlog: one-third of the sub-80%-AMI ownership shortfall, a conservative buildable share (assumption). ",
-                     "Replacement: 0.25%/yr of the 28,621-unit stock over 26 years (assumption — no demolition data; stock median year built is 1987)."),
+    caption = paste0("**Sources:** ", src_wc, " HDAdvisors affordability gap analysis. ", src_acs,
+                     "<br>**Notes:** Rental deficit is the affordable-and-available shortfall below 80% AMI. ",
+                     "Ownership backlog is one-third of the sub-80% AMI ownership shortfall, a conservative buildable share (assumption). ",
+                     "Replacement is 0.25% a year of the ", label_comma()(total_units), "-unit stock over ", horizon_yrs,
+                     " years (assumption, since no demolition data exists)."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
+  guides(fill = guide_legend(reverse = TRUE)) +
   theme(legend.position = "right")
 ```
 
@@ -422,8 +438,8 @@ The 65-and-older population climbs from `r label_comma()(s65_2030)` in 2030 to `
 
 ```{r}
 #| label: fig-senior-projection
-#| fig-cap: "The senior population surges through 2040, then plateaus near 18,200"
-#| fig-alt: "Line chart of projected senior population in Fauquier County for 2030, 2040, and 2050. The 65-and-older line rises from about 17,200 in 2030 to 18,200 in 2040 and holds near 18,200 in 2050. The 75-and-older line rises more steeply from about 7,400 to 9,900 and holds near 9,800 — so the older, higher-need group grows fastest and becomes a larger share of all seniors."
+#| fig-cap: "Residents 75 and older grow by a third through 2040 before leveling off"
+#| fig-alt: "Line chart of projected senior population in Fauquier County for 2030, 2040, and 2050. The 65-and-older line rises from about 17,200 in 2030 to 18,200 in 2040 and holds near 18,200 in 2050. The 75-and-older line rises more steeply from about 7,400 to 9,900 and holds near 9,800, so the older, higher-need group grows fastest and becomes a larger share of all seniors."
 
 sr_long <- sr |>
   pivot_longer(c(senior_65plus, senior_75plus), names_to = "grp", values_to = "pop") |>
@@ -440,7 +456,7 @@ ggplot(sr_long, aes(year, pop, color = grp, group = grp)) +
   scale_y_continuous(labels = label_comma(), limits = c(0, NA),
                      expand = expansion(c(0, 0.12))) +
   labs(
-    title = "The senior population surges through 2040, then plateaus near 18,200",
+    title = "Residents 75 and older grow by a third through 2040 before leveling off",
     subtitle = "Projected population <span style='color:#445ca9'>**65 and older**</span> and <span style='color:#e76f52'>**75 and older**</span>, Fauquier County",
     caption = wc_cap(),
     x = NULL, y = NULL
@@ -458,8 +474,8 @@ Following the county's current tenure and income mix, the projected `r label_com
 
 ```{r}
 #| label: tbl-needs-allocation
-#| tbl-cap: "Projected need spans every income band — but the existing gap is deepest at the bottom"
-#| fig-alt: "Table allocating the projected growth of about 6,795 households by 2050 across tenure and AMI income band. Homeowner rows (five bands from 30% AMI to over 100% AMI) account for about 5,267 units of forward need, concentrated in the over-100% AMI band (3,566). Renter rows (four bands) account for about 1,528. Each row also shows the current surplus or deficit of affordable units carried forward from the affordability-gaps chapter, which is far larger than the forward need in the lower bands."
+#| tbl-cap: "Existing affordability gaps exceed projected new need in nearly every income band"
+#| tbl-alt: "Table allocating the projected growth of about 6,795 households by 2050 across tenure and AMI income band. Homeowner rows (five bands from 30% AMI to over 100% AMI) account for about 5,267 units of forward need, concentrated in the over-100% AMI band (3,566). Renter rows (four bands) account for about 1,528. Each row also shows the current surplus or deficit of affordable units carried forward from the affordability-gaps chapter, which is far larger than the forward need in the lower bands."
 
 band_order <- c("≤30% AMI" = 1, "30-50% AMI" = 2, "50-80% AMI" = 3,
                 "80-100% AMI" = 4, ">100% AMI" = 5, ">80% AMI" = 6)
@@ -503,11 +519,10 @@ na_disp |>
   pack_rows("Renter", n_owner + 1, n_owner + n_renter) |>
   footnote(
     general = tbl_note(paste0(
-      wc_cap(),
-      " Current household distribution: HUD CHAS 2018–2022. Existing affordable-unit gap: HDAdvisors gap analysis (affordability-gaps chapter). ",
-      "Forward need allocates the projected +", label_comma()(total_need),
-      "-household growth to 2050 by each cell's current share of households; it sums to +",
-      label_comma()(total_need), ". The current gap is joined by tenure — homeowner bands from the ownership gap, renter bands from the rental gap. ",
+      "**Sources:** ", src_wc, " U.S.\u00a0Department of Housing and Urban Development, CHAS, 2018–2022. HDAdvisors affordability gap analysis.",
+      "<br>**Notes:** Forward need allocates the projected +", label_comma()(total_need),
+      "-household growth to 2050 by each cell's current share of households, and it sums to +",
+      label_comma()(total_need), ". The current gap is joined by tenure, with homeowner bands from the ownership gap and renter bands from the rental gap. ",
       "Renter 80–100% and >100% AMI are combined into \">80% AMI\" because the rental-gap frame uses a coarser top band than the ownership-gap frame; see the Data & Methodology appendix."
     )),
     general_title = "", footnote_as_chunk = TRUE, escape = FALSE

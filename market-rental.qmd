@@ -167,19 +167,20 @@ f1 <- b3 |>
   )
 
 ggplot(f1, aes(share, geo)) +
-  geom_col(aes(fill = geo == "Warrenton"), width = 0.68) +
+  geom_col(aes(fill = geo), width = 0.68) +
   geom_text(aes(label = paste0(label_percent(accuracy = 1)(share),
-                               "  (", format(round(renter), big.mark = ","), " HH",
+                               "  (", label_comma()(round(renter)), " HH",
                                if_else(reliability == "Medium", "*", ""), ")")),
             hjust = -0.05, size = 3.2, color = "grey20") +
-  scale_fill_manual(values = c(`TRUE` = coral, `FALSE` = blue), guide = "none") +
+  scale_fill_manual(values = c(`Fauquier County` = blue, Warrenton = coral, Bealeton = coral,
+                               Virginia = "grey70"), guide = "none") +
   scale_x_continuous(labels = label_percent(accuracy = 1),
                      expand = expansion(c(0, 0.22)), limits = c(0, 0.45)) +
   labs(
     title = "Warrenton is the county's clearest concentration of renters",
     subtitle = "Renter share of occupied households, 2024 (renter-household counts labeled)",
     caption = paste0(acs_cap("B25003"),
-                     " *Bealeton renter count is Medium reliability (CV 15–30%)."),
+                     "<br>**Note:** *Bealeton renter count has Medium reliability (CV 15–30%)."),
     x = NULL, y = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
@@ -199,15 +200,15 @@ Bealeton's renter count is small and carries Medium reliability, so it is read a
 
 ```{r}
 #| label: fig-rent-trend
-#| fig-cap: "Every measure of rent has climbed, and broker-placed leases run highest"
-#| fig-alt: !expr 'paste0("Line chart of Fauquier County rents in current dollars. The ACS median gross rent rises from about ", label_dollar()(rent_13), " in 2013 to ", label_dollar()(rent_24), " in 2024. CoStar asking rents, quarterly from 2016, climb at market-rate apartments to about ", label_dollar()(round(cs_tv("Market", "asking_rent_avg"))), " and at affordable (rent-restricted or subsidized) apartments to about ", label_dollar()(round(cs_tv("Affordable", "asking_rent_avg"))), ". The MLS median closed lease, mostly single-family homes and townhouses, runs highest, rising from ", label_dollar()(ly(2022, "median")), " in 2022 to ", label_dollar()(ly(max(lease_yr$year), "median")), " in 2026 to date. Town points for Warrenton and Bealeton sit near the county ACS line.")'
+#| fig-cap: "Every measure of rent has climbed and broker-placed leases run highest"
+#| fig-alt: !expr 'paste0("Line chart of Fauquier County rents in current dollars. The ACS median gross rent rises from about ", label_dollar()(rent_13), " in 2013 to ", label_dollar()(rent_24), " in 2024. CoStar asking rents, quarterly from 2016, climb at market-rate apartments to about ", label_dollar()(round(cs_tv("Market", "asking_rent_avg"))), " and at affordable (rent-restricted or subsidized) apartments to about ", label_dollar()(round(cs_tv("Affordable", "asking_rent_avg"))), ". The MLS median closed lease, mostly single-family homes and townhouses, runs highest, rising from ", label_dollar()(ly(2022, "median")), " in 2022 to ", label_dollar()(ly(max(lease_yr$year), "median")), " in 2026 to date. Grey points mark the 2024 ACS medians for Warrenton and Bealeton, both near the county ACS value.")'
 
 county_rent <- costs$trend_rent |>
   filter(GEOID == fauquier) |>
   transmute(date = make_date(year, 7L, 1L), rent = estimate, series = "ACS median gross rent")
 
 town_rent <- costs$trend_rent |>
-  filter(geo_type == "place") |>
+  filter(geo_type == "place", year == 2024) |>
   flag_reliability() |>
   mutate(rent = if_else(reliability == "Low", NA_real_, estimate),
          town = geo_label(GEOID, geo_type),
@@ -228,17 +229,21 @@ ggplot(mapping = aes(date, rent, color = series)) +
   geom_line(data = costar_rent, linewidth = 0.9) +
   geom_line(data = mls_rent, linewidth = 0.9) +
   geom_point(data = mls_rent, size = 1.8) +
-  geom_point(data = town_rent, aes(group = town), color = "grey45", size = 1.4) +
-  geom_text(data = filter(town_rent, year == 2024), aes(label = town),
-            color = "grey40", hjust = 0, nudge_x = 60, size = 2.9) +
+  geom_point(data = town_rent, aes(group = town), color = "grey45", size = 1.8) +
+  geom_text(data = town_rent, aes(label = town, y = if_else(town == "Bealeton", rent, rent - 80)),
+            color = "grey40", hjust = 0, nudge_x = 45, size = 2.9) +
   scale_color_manual(values = rent_cols, guide = "none") +
   scale_y_continuous(labels = label_dollar(), expand = expansion(c(0.03, 0.06))) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y",
+  scale_x_date(breaks = make_date(seq(2014, 2026, 2), 1, 1), date_labels = "%Y",
                expand = expansion(c(0.02, 0.14))) +
   labs(
-    title = "Every measure of rent has climbed, and broker-placed leases run highest",
-    subtitle = "Monthly rent, current dollars — <span style='color:#445ca9'>**ACS median gross rent**</span> (grey points = towns)<br>CoStar asking rent at <span style='color:#8baeaa'>**market-rate**</span> and <span style='color:#e9ab3f'>**affordable**</span> apartments; <span style='color:#e76f52'>**MLS closed-lease median**</span>",
-    caption = paste0(acs_cap("B25064"), "<br>", costar_cap(), "<br>", mls_cap("2022–2026, 2026 year to date")),
+    title = "Every measure of rent has climbed and broker-placed leases run highest",
+    subtitle = "Monthly rent in current dollars. <span style='color:#445ca9'>**ACS median gross rent**</span> with 2024 town medians in <span style='color:#737373'>**grey**</span><br>CoStar asking rent at <span style='color:#8baeaa'>**market-rate**</span> and <span style='color:#e9ab3f'>**affordable**</span> apartments and <span style='color:#e76f52'>**MLS closed-lease median**</span>",
+    caption = paste0("**Sources:** U.S. Census Bureau, 2009–2013 through 2020–2024 American Community Survey 5-year estimates, Table B25064. ",
+                     "CoStar multifamily market data, quarterly through ", costar_through, ". ",
+                     "Bright MLS closed leases, 2022–2026 (data through ", mls_through, ").",
+                     "<br>**Notes:** Grey points are 2024 ACS town medians for Warrenton and Bealeton. ",
+                     "The 2026 MLS value is a year-to-date median."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -260,7 +265,7 @@ Town rents track the county: Warrenton and Bealeton median 2024 rent (High relia
 ```{r}
 #| label: fig-rent-distribution
 #| fig-cap: "Most rentals now price at $1,500 or more"
-#| fig-alt: "Grouped bar chart of the gross rent distribution for cash-rent renters in Fauquier County, Warrenton, and Bealeton across six rent bands. The $1,500–$1,999 band is the largest in the county at roughly a quarter of renters, and shares rise sharply above $1,000; bands under $1,000 are thin. Town bars with too few sample cases are omitted."
+#| fig-alt: "Grouped bar chart of the gross rent distribution for cash-rent renters across six rent bands, 2020–2024. Fauquier County shares are spread across the bands: the $1,500–1,999 band is the largest at about 25%, followed by $1,000–1,249 and $2,000–2,499 at roughly 19% each, and the three bands at $1,500 or more together hold about 55% of renters. Only two Warrenton bands are reliable enough to plot, $1,000–1,249 at about 26% and $1,500–1,999 at about 19%. Bealeton has no reliable bands and is omitted."
 
 band_lvls <- c("<$1,000", "$1,000–1,249", "$1,250–1,499", "$1,500–1,999",
                "$2,000–2,499", "$2,500+")
@@ -296,18 +301,20 @@ rd <- costs$B25063 |>
 
 ggplot(rd, aes(band, share, fill = geo)) +
   geom_col(position = position_dodge(preserve = "single"), width = 0.72) +
-  scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.05))) +
-  scale_fill_manual(values = c(`Fauquier County` = blue, Warrenton = green, Bealeton = yellow)) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), limits = c(0, 0.3),
+                     expand = expansion(c(0, 0.02))) +
+  scale_fill_manual(values = c(`Fauquier County` = blue, Warrenton = coral, Bealeton = coral),
+                    guide = "none") +
   labs(
     title = "Most rentals now price at $1,500 or more",
-    subtitle = "Distribution of gross rent among cash-rent renters, 2024",
+    subtitle = "Share of cash-rent renters by gross rent, 2020–2024<br><span style='color:#445ca9'>**Fauquier County**</span> and <span style='color:#e76f52'>**Warrenton**</span>",
     caption = paste0(acs_cap("B25063"),
-                     " Town bands with a coefficient of variation above 30% are omitted (small samples)."),
+                     "<br>**Notes:** Town bands with CV above 30% are omitted as unreliable, leaving two Warrenton bands and none for Bealeton."),
     x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
   add_zero_line("y") +
-  theme(legend.position = "top", axis.text.x = element_text(size = 8))
+  theme(plot.subtitle = element_markdown(), axis.text.x = element_text(size = 8))
 ```
 
 The modal rent band in the county is $1,500–1,999 and represents about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="$1,500–1,999"])` of county cash-rent renters. Combined with the bands above it, most renters now pay $1,500 or more. Under $1,000 monthly rentals are scarce, representing only about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="<$1,000"])` of the county's renters, underscoring how little of the stock is affordable to lower-income households.
@@ -342,17 +349,19 @@ cs_rent <- cs_t |>
 ggplot(cs_rent, aes(date, asking_rent_avg, color = rent_type)) +
   geom_line(linewidth = 1) +
   geom_text(data = slice_max(cs_rent, date, by = rent_type),
-            aes(label = paste0(rent_type, "\n", label_dollar()(round(asking_rent_avg)))),
-            hjust = -0.1, size = 3, fontface = "bold", lineheight = 0.9) +
+            aes(label = paste0(if_else(rent_type == "Market", "Market-rate", "Affordable"),
+                               "\n", label_dollar()(round(asking_rent_avg)))),
+            hjust = 0, nudge_x = 70, size = 3, fontface = "bold", lineheight = 0.9) +
   scale_color_manual(values = c(Market = green, Affordable = yellow), guide = "none") +
   scale_y_continuous(labels = label_dollar(), limits = c(0, NA), expand = expansion(c(0, 0.08))) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y", expand = expansion(c(0.02, 0.14))) +
+  scale_x_date(breaks = make_date(seq(2016, 2026, 2), 1, 1), date_labels = "%Y",
+               expand = expansion(c(0.02, 0.14))) +
   labs(
     title = "Apartment rents keep rising at market-rate and affordable properties",
     subtitle = paste0("Average monthly asking rent per unit, current dollars<br><span style='color:#8baeaa'>**Market-rate**</span> (",
                       cs_tv("Market", "total_units"), " units) and <span style='color:#e9ab3f'>**affordable**</span> (",
                       cs_tv("Affordable", "total_units"), " units) CoStar-tracked properties"),
-    caption = paste0(costar_cap(), "<br>Affordable = rent-restricted, subsidized or mixed-income properties per CoStar."),
+    caption = paste0(costar_cap(), "<br>**Note:** Affordable means rent-restricted, subsidized or mixed-income properties per CoStar."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -368,29 +377,30 @@ Asking rents at the market-rate properties averaged about $`r format(round(cs_tv
 
 ```{r}
 #| label: fig-costar-vacancy
-#| fig-cap: "Apartment vacancy has edged up, driven by affordable properties"
-#| fig-alt: !expr 'paste0("Line chart of quarterly CoStar vacancy rates, Fauquier County, 2016 through ", costar_through, ". The overall rate falls from about 5% to near 1% around 2019–2021, then rises to about ", label_percent(accuracy = 0.1, scale = 1)(cs_vac_latest), " in the latest quarter. Affordable properties drive the increase, reaching about ", label_percent(accuracy = 0.1, scale = 1)(cs_tv("Affordable", "vacancy_rate")), ", while market-rate properties stay near ", label_percent(accuracy = 0.1, scale = 1)(cs_tv("Market", "vacancy_rate")), ".")'
+#| fig-cap: "Apartment vacancy has edged up at affordable properties"
+#| fig-alt: !expr 'paste0("Line chart of quarterly CoStar vacancy rates, Fauquier County, 2016 through ", costar_through, ". The overall rate starts near 5% in early 2016, swings as high as about 9% later that year, averages about ", label_percent(accuracy = 0.1, scale = 1)(cs_vac_early), " in 2019–2021, and then rises to about ", label_percent(accuracy = 0.1, scale = 1)(cs_vac_latest), " in the latest quarter. Affordable properties drive the recent increase, reaching about ", label_percent(accuracy = 0.1, scale = 1)(cs_tv("Affordable", "vacancy_rate")), ", while market-rate properties stay near ", label_percent(accuracy = 0.1, scale = 1)(cs_tv("Market", "vacancy_rate")), ".")'
 
 cs_vac <- bind_rows(
   cs_q |> transmute(year, qtr, series = "All tracked", vacancy_rate),
-  cs_t |> transmute(year, qtr, series = rent_type, vacancy_rate)
+  cs_t |> transmute(year, qtr, series = if_else(rent_type == "Market", "Market-rate", rent_type), vacancy_rate)
 ) |>
   filter(!is.na(vacancy_rate)) |>
   mutate(date = make_date(year, (qtr - 1) * 3 + 1, 1L),
-         series = factor(series, levels = c("All tracked", "Market", "Affordable")))
+         series = factor(series, levels = c("All tracked", "Market-rate", "Affordable")))
 
 ggplot(cs_vac, aes(date, vacancy_rate, color = series, linewidth = series)) +
   geom_line() +
   geom_text(data = slice_max(cs_vac, date, by = series),
             aes(label = series), hjust = -0.1, size = 3, fontface = "bold") +
-  scale_color_manual(values = c(`All tracked` = coral, Market = green, Affordable = yellow), guide = "none") +
-  scale_linewidth_manual(values = c(`All tracked` = 1.2, Market = 0.7, Affordable = 0.7), guide = "none") +
+  scale_color_manual(values = c(`All tracked` = blue, `Market-rate` = green, Affordable = yellow), guide = "none") +
+  scale_linewidth_manual(values = c(`All tracked` = 1.2, `Market-rate` = 0.7, Affordable = 0.7), guide = "none") +
   scale_y_continuous(labels = label_percent(scale = 1, accuracy = 1), limits = c(0, NA),
                      breaks = seq(0, 12, 2), expand = expansion(c(0, 0.08))) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y", expand = expansion(c(0.02, 0.14))) +
+  scale_x_date(breaks = make_date(seq(2016, 2026, 2), 1, 1), date_labels = "%Y",
+               expand = expansion(c(0.02, 0.14))) +
   labs(
-    title = "Apartment vacancy has edged up, driven by affordable properties",
-    subtitle = "Unit-weighted vacancy rate, CoStar-tracked apartments<br><span style='color:#e76f52'>**All tracked**</span>, <span style='color:#8baeaa'>**market-rate**</span>, and <span style='color:#e9ab3f'>**affordable**</span> properties",
+    title = "Apartment vacancy has edged up at affordable properties",
+    subtitle = "Unit-weighted vacancy rate, CoStar-tracked apartments<br><span style='color:#445ca9'>**All tracked**</span>, <span style='color:#8baeaa'>**market-rate**</span>, and <span style='color:#e9ab3f'>**affordable**</span> properties",
     caption = costar_cap(), x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -404,7 +414,7 @@ Fauquier's professional rental market remains tight, though slack has crept in. 
 
 ```{r}
 #| label: fig-rental-structure
-#| fig-cap: "Most of Fauquier's rental stock is single-family homes, not apartments"
+#| fig-cap: "Most of Fauquier's rental stock is single-family homes rather than apartments"
 #| fig-alt: "Horizontal bar chart of Fauquier County's renter-occupied housing units by structure type. Single-family detached homes are the largest share at about 57% of rentals, followed by 20-plus-unit buildings and 5-to-19-unit buildings; single-family detached and attached together make up roughly two-thirds of the rental stock."
 
 rs <- r_struct |>
@@ -418,7 +428,7 @@ ggplot(rs, aes(share, cat)) +
   scale_x_continuous(labels = label_percent(accuracy = 1),
                      expand = expansion(c(0, 0.12))) +
   labs(
-    title = "Most of Fauquier's rental stock is single-family homes, not apartments",
+    title = "Most of Fauquier's rental stock is single-family homes rather than apartments",
     subtitle = "Share of renter-occupied units by structure type, Fauquier County, 2020–2024",
     caption = acs_cap("B25032"),
     x = NULL, y = NULL
@@ -438,7 +448,7 @@ Purpose-built apartments (5+ units) are only about `r label_percent(accuracy=1)(
 ```{r}
 #| label: fig-fmr
 #| fig-cap: "Metro Fair Market Rents run well above what Fauquier renters actually pay"
-#| fig-alt: "Dot-and-range chart comparing rents by bedroom size in Fauquier County. For one- through four-bedroom units, the HUD metro-area Fair Market Rent sits far above the ACS actual median gross rent; the Small Area FMR range across the three town ZIP codes falls between the two but still above the local median. The gap is largest for one- and two-bedroom units."
+#| fig-alt: !expr 'paste0("Dot-and-range chart comparing rents by bedroom size in Fauquier County, FY2026. For one- through four-bedroom units, the HUD metro-area Fair Market Rent sits far above the ACS actual median gross rent, for example ", label_dollar()(fmr_2br), " against ", label_dollar()(acs_2br), " for two bedrooms. The Small Area FMR range across the three ZIP codes starts above the ACS median at every size and its top end reaches or exceeds the metro FMR. The gap between metro FMR and ACS rent is largest for three- and four-bedroom units, at about ", label_dollar()(round((fmr$fmr$fmr_3br - costs$B25031$estimate[costs$B25031$GEOID == fauquier & costs$B25031$variable == "B25031_005"]) / 10) * 10), " and ", label_dollar()(round((fmr$fmr$fmr_4br - costs$B25031$estimate[costs$B25031$GEOID == fauquier & costs$B25031$variable == "B25031_006"]) / 10) * 10), ".")'
 
 br_map <- tibble(
   bedrooms = factor(c("1BR", "2BR", "3BR", "4BR"), levels = c("1BR", "2BR", "3BR", "4BR")),
@@ -463,14 +473,14 @@ ggplot(f6, aes(bedrooms)) +
   geom_linerange(aes(ymin = lo, ymax = hi), color = green, linewidth = 6, alpha = 0.5) +
   geom_point(aes(y = fmr, color = "Metro FMR"), size = 3.4) +
   geom_point(aes(y = acs, color = "ACS actual median"), size = 3.4) +
-  geom_text(aes(y = fmr, label = label_dollar()(fmr)), vjust = -1, size = 2.8, color = coral) +
-  geom_text(aes(y = acs, label = label_dollar()(acs)), vjust = 1.9, size = 2.8, color = blue) +
+  geom_text(aes(y = fmr, label = label_dollar()(fmr)), hjust = 0, nudge_x = 0.12, size = 2.8, color = coral) +
+  geom_text(aes(y = acs, label = label_dollar()(acs)), hjust = 0, nudge_x = 0.12, size = 2.8, color = blue) +
   scale_color_manual(values = c("Metro FMR" = coral, "ACS actual median" = blue), name = NULL) +
   scale_y_continuous(labels = label_dollar(), expand = expansion(c(0.05, 0.12))) +
   labs(
     title = "Metro Fair Market Rents run well above what Fauquier renters actually pay",
-    subtitle = "By bedroom size — <span style='color:#e76f52'>**HUD metro FMR**</span>, <span style='color:#445ca9'>**ACS actual median rent**</span>, and the <span style='color:#8baeaa'>**Small Area FMR range**</span> across town ZIPs, FY2026",
-    caption = paste0(fmr_cap(), " ", acs_cap("B25031")),
+    subtitle = "Monthly rent by bedroom size, FY2026<br><span style='color:#e76f52'>**HUD metro FMR**</span>, <span style='color:#445ca9'>**ACS median rent**</span>, and <span style='color:#8baeaa'>**Small Area FMR range**</span> across town ZIPs",
+    caption = "**Sources:** HUD Fair Market Rents and Small Area FMRs, FY2026. U.S. Census Bureau, 2020–2024 American Community Survey 5-year estimates, Table B25031.",
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -492,8 +502,8 @@ An interviewee noted that metro-based Fair Market Rents give voucher holders gen
 
 ```{r}
 #| label: tbl-nhpd
-#| tbl-cap: "Federally assisted rental properties, sorted by earliest subsidy expiration"
-#| fig-alt: "Table of the county's 13 federally assisted rental properties with their town, total and assisted unit counts, subsidy programs, and earliest subsidy expiration. The 874 assisted units are concentrated in and around Warrenton and dominated by Low-Income Housing Tax Credit deals; expirations begin in January 2027 and 8 of the 13 properties have a subsidy lapsing by 2036."
+#| tbl-cap: "Federally assisted rental properties sorted by earliest subsidy expiration"
+#| tbl-alt: !expr 'paste0("Table of the county’s ", nhpd_props, " federally assisted rental properties with their town, total and assisted unit counts, subsidy programs, and earliest subsidy expiration. The ", format(nhpd_assist, big.mark = ","), " assisted units are concentrated in and around Warrenton and dominated by Low-Income Housing Tax Credit deals. Expirations begin in ", format(nhpd_soonest, "%B %Y"), " and ", nhpd_10yr, " of the ", nhpd_props, " properties have a subsidy lapsing by 2036.")'
 
 prog_by_prop <- nhpd$programs |>
   distinct(nhpd_id, program_name) |>
@@ -504,7 +514,8 @@ nhpd_tbl <- nhpd$properties |>
   left_join(prog_by_prop, by = "nhpd_id") |>
   arrange(earliest_expiration) |>
   transmute(
-    Property = str_to_title(property_name),
+    Property = str_to_title(property_name) |>
+      str_replace_all(c("\\bIi\\b" = "II", "\\bIii\\b" = "III", " At The " = " at The ")),
     City = city,
     Units = total_units,
     `Assisted units` = total_assisted_units,
@@ -517,7 +528,7 @@ nhpd_tbl |>
   kable_styling(c("condensed", "striped"), full_width = FALSE) |>
   footnote(
     general = tbl_note(paste0(nhpd_cap(),
-                     " Assisted-unit counts may exceed total units where a property carries overlapping subsidies. ",
+                     "<br>**Notes:** Assisted-unit counts may exceed total units where a property carries overlapping subsidies. ",
                      "Programs list active subsidy types per property.")),
     general_title = "", footnote_as_chunk = TRUE, escape = FALSE
   )

@@ -32,6 +32,8 @@ geo_label <- function(code, geo_type = NA) case_when(
 
 # AMI income-band factor (short ordered labels; CHAS T7/T8 already use these strings)
 band_lvls <- c("≤30% AMI", "30-50% AMI", "50-80% AMI", "80-100% AMI", ">100% AMI")
+# Display-only en dashes (band values stay hyphenated: scope_ladder() matches on them)
+band_en <- \(x) str_replace(x, "(\\d)-(\\d)", "\\1–\\2")
 
 # --- Inline scalars for bullet text ----------------------------------------
 
@@ -111,8 +113,8 @@ For affordability, it is typical to use the "Area Median Income" (AMI) benchmark
 
 ```{r}
 #| label: tbl-ami
-#| tbl-cap: "Fauquier's income limits are set by the high-cost Washington, D.C. metro area"
-#| fig-alt: "Table of HUD income limits for Fauquier County by AMI level (30%, 50%, 80%, 100%, 120%) and household size from 1 to 8 persons. Dollar limits rise with household size and with AMI level; the 80% limit is close to the 50% limit because it is capped to the national median, while the jump from 80% to 100% is large."
+#| tbl-cap: "Fauquier's income limits are set by the high-cost D.C. metro area"
+#| tbl-alt: "Table of HUD income limits for Fauquier County by AMI level (30%, 50%, 80%, 100%, 120%) and household size from 1 to 8 persons. Dollar limits rise with household size and with AMI level. The 80% limit is capped to the national median, so the step from 80% to 100% AMI is far larger than the steps before it."
 
 ami_wide <- hud_ami$ami |>
   mutate(
@@ -120,7 +122,7 @@ ami_wide <- hud_ami$ami |>
                    labels = c("30% AMI","50% AMI","80% AMI","100% AMI","120% AMI")),
     hh = str_remove(hh_size, "-person")
   ) |>
-  select(level, hh, income) |>
+  transmute(level, hh, income = label_dollar()(income)) |>
   pivot_wider(names_from = hh, values_from = income) |>
   arrange(level)
 
@@ -132,7 +134,7 @@ ami_wide |>
   footnote(
     general = tbl_note(paste0(
       ami_cap(),
-      " Limits for the ", hud_ami$area_name,
+      "<br>**Notes:** Limits for the ", hud_ami$area_name,
       " (published median family income ", label_dollar()(mfi), "). ",
       hud_ami$cap_note, "."
     )),
@@ -160,8 +162,8 @@ ab_tbl <- gaps$afford_by_band |>
   transmute(
     Band = band,
     `Household income` = label_dollar()(income),
-    `Max affordable rent` = label_dollar()(max_rent),
-    `Max affordable purchase price` = label_dollar()(max_price)
+    `Max affordable rent` = label_dollar()(round(max_rent, -1)),
+    `Max affordable purchase price` = label_dollar()(round(max_price, -3))
   )
 
 asm <- gaps$assumptions
@@ -170,8 +172,9 @@ ab_tbl |>
   kable_styling(c("condensed", "striped"), full_width = FALSE) |>
   footnote(
     general = tbl_note(paste0(
-      "**Source:** HDAdvisors affordability calculation. ",
-      "Rent affordability at 30% of gross income. Purchase price assumes a ",
+      "**Sources:** HUD Section 8 Income Limits, FY2026. Freddie Mac Primary Mortgage Market Survey, ",
+      format(asm$rate_pull_date, "%B %Y"), ". HDAdvisors affordability calculation.",
+      "<br>**Notes:** Rent is affordable at 30% of gross income. Rents are rounded to $10 and purchase prices to $1,000. Purchase price assumes a ",
       label_percent(accuracy = 0.01)(asm$mortgage_rate), " 30-year fixed rate, ",
       label_percent(accuracy = 1)(asm$down_payment), " down, a ",
       label_percent(accuracy = 1)(asm$front_end_ratio), " front-end ratio, and ",
@@ -206,8 +209,8 @@ Overall, Warrenton carries a higher renter share across every income band, consi
 
 ```{r}
 #| label: fig-hh-band-tenure
-#| fig-cap: "Renters cluster at the lowest incomes; owners dominate the top bands"
-#| fig-alt: "Stacked bar chart of households by AMI income band and tenure for Fauquier County, Warrenton, and Bealeton. In the county, renters make up a large share of households in the two lowest income bands but a small share above 80% AMI, where owners dominate. Warrenton has a higher renter share across bands; Bealeton's town cells are small and footnoted for reliability."
+#| fig-cap: "Renters cluster at the lowest incomes while owners dominate the top bands"
+#| fig-alt: "Stacked bar chart of households by AMI income band and tenure for Fauquier County, Warrenton, and Bealeton. In the county, renters make up a large share of households in the two lowest income bands but a small share above 80% AMI, where owners dominate. Warrenton has a higher renter share across bands. Bealeton's town cells are small and should be read as counts."
 
 hh_bt <- chas$t7 |>
   summarize(estimate = sum(estimate), moe = sqrt(sum(moe^2)),
@@ -226,12 +229,13 @@ ggplot(hh_bt, aes(band, estimate, fill = tenure)) +
   geom_col(width = 0.72) +
   facet_wrap(~ geo, scales = "free_y") +
   scale_fill_manual(values = c(Renter = coral, Owner = blue)) +
+  scale_x_discrete(labels = band_en) +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.05))) +
   labs(
-    title = "Renters cluster at the lowest incomes; owners dominate the top bands",
-    subtitle = "Households by income band and tenure — <span style='color:#e76f52'>**renters**</span> vs <span style='color:#445ca9'>**owners**</span>",
+    title = "Renters cluster at the lowest incomes while owners dominate the top bands",
+    subtitle = "Households by income band: <span style='color:#e76f52'>**renters**</span> vs <span style='color:#445ca9'>**owners**</span>",
     caption = paste0(chas_cap("T7"),
-                     " Town cells reflect small samples; read as counts, not precise rates."),
+                     "<br>**Note:** Town cells reflect small samples. Read them as counts, not precise rates."),
     x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
@@ -258,8 +262,8 @@ Luckily, burden has edged down recently, not up. Since 2013 renter cost burden h
 
 ```{r}
 #| label: fig-burden-trend
-#| fig-cap: "Cost burden has eased since 2013, but renters remain far more burdened"
-#| fig-alt: "Line chart of the share of cost-burdened households in Fauquier County from 2013 to 2024, split by tenure, with 2024 town points. The renter burden line declines gently from about 44% to 40%, staying well above the owner line, which falls from about 29% to 22%. In 2024, Warrenton and Bealeton renter points sit above the county renter line at roughly 55% and 59%."
+#| fig-cap: "Cost burden has eased since 2013 but renters remain far more burdened"
+#| fig-alt: "Line chart of the share of cost-burdened households in Fauquier County at four data years (2013, 2017, 2021 and 2024), split by tenure, with 2024 town points. The renter burden line declines gently from about 44% to 40%, staying well above the owner line, which falls from about 29% to 22%. In 2024, Warrenton and Bealeton renter points sit above the county renter line at roughly 55% and 59%, while the two towns' owner points sit near the county owner line at about 19% and 27%."
 
 trend_c <- bt_c |>
   mutate(date = make_date(year, 7L, 1L),
@@ -286,17 +290,17 @@ ggplot() +
   scale_color_manual(values = c(Renter = coral, Owner = blue), guide = "none") +
   scale_y_continuous(labels = label_percent(accuracy = 1),
                      limits = c(0, NA), expand = expansion(c(0, 0.08))) +
-  scale_x_date(date_breaks = "3 years", date_labels = "%Y",
+  scale_x_date(breaks = make_date(c(2013, 2017, 2021, 2024), 7L, 1L), date_labels = "%Y",
                expand = expansion(c(0.02, 0.18))) +
   labs(
-    title = "Cost burden has eased since 2013, but renters remain far more burdened",
-    subtitle = "Share of cost-burdened households — <span style='color:#e76f52'>**renters**</span> vs <span style='color:#445ca9'>**owners**</span>; open points = 2024 towns",
+    title = "Cost burden has eased since 2013 but renters remain far more burdened",
+    subtitle = "Share of cost-burdened households: <span style='color:#e76f52'>**renters**</span> vs <span style='color:#445ca9'>**owners**</span> (open points are 2024 towns)",
     caption = paste0(
-      acs_cap("B25070"), " ", acs_cap("B25091"),
-      " Burden excludes households whose income-to-cost ratio is not computed (~700 renters), ",
-      "so ACS burden exceeds the CHAS estimate (renter ",
-      label_percent(accuracy = 0.1)(chas_rent), "); see Data & Methodology. ",
-      "*2024 town cell is Medium reliability (CV 15-30%)."
+      "**Source:** U.S. Census Bureau, American Community Survey 5-year estimates, Tables B25070 and B25091, 2013–2024.",
+      "<br>**Notes:** Excludes households whose income-to-cost ratio is not computed (about 700 renters).<br>",
+      "ACS burden therefore exceeds the CHAS estimate (renters ",
+      label_percent(accuracy = 0.1)(chas_rent), "). See Data & Methodology. ",
+      "\\*Medium reliability (CV 15–30%)."
     ),
     x = NULL, y = NULL
   ) +
@@ -320,7 +324,7 @@ Burden collapses onto the bottom of the income ladder. At lower than 30% AMI, th
 ```{r}
 #| label: fig-burden-band
 #| fig-cap: "Cost burden is overwhelmingly a low-income problem"
-#| fig-alt: "Stacked bar chart of cost burden by AMI income band and tenure for Fauquier County, faceted into renter and owner panels. At 30% AMI and below, the large majority of both renters and owners are cost-burdened, most of them severely; the burdened share falls sharply as income rises, and above 80% AMI almost no households are burdened. Renters are more burdened than owners within every band."
+#| fig-alt: "Stacked bar chart of cost burden by AMI income band and tenure for Fauquier County, faceted into renter and owner panels. At 30% AMI and below, the large majority of both renters (about 73%) and owners (about 87%) are cost-burdened, most of them severely. The burdened share falls sharply as income rises, and above 100% AMI fewer than 6% of households in either tenure are burdened. Owners are as burdened as renters or more so in most bands, and renters are more burdened only at 30–50% AMI."
 
 t8_band <- chas$t8 |>
   filter(geo_code == fauquier, cost_burden != "No or negative income") |>
@@ -328,8 +332,8 @@ t8_band <- chas$t8 |>
             .by = c(household_income, tenure, cost_burden)) |>
   mutate(
     band = factor(household_income, levels = band_lvls),
-    tenure = factor(if_else(tenure == "Homeowner", "Owner", "Renter"),
-                    levels = c("Renter", "Owner")),
+    tenure = factor(if_else(tenure == "Homeowner", "Owners", "Renters"),
+                    levels = c("Renters", "Owners")),
     cost_burden = factor(cost_burden,
                          levels = c("Severely cost-burdened", "Cost-burdened", "Not cost-burdened"))
   ) |>
@@ -339,6 +343,7 @@ ggplot(t8_band, aes(band, share, fill = cost_burden)) +
   geom_col(width = 0.74) +
   facet_wrap(~ tenure) +
   scale_fill_manual(values = cb_pal) +
+  scale_x_discrete(labels = band_en) +
   scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.03))) +
   labs(
     title = "Cost burden is overwhelmingly a low-income problem",
@@ -363,8 +368,8 @@ The deepest shortfall in rentals is among the lowest income bands. The county ha
 
 ```{r}
 #| label: fig-rental-gap
-#| fig-cap: "The county is short about 625 rentals affordable to its lowest-income renters"
-#| fig-alt: "Diverging horizontal bar chart of the surplus or deficit of affordable and available rental units by AMI band in Fauquier County. Every band shows a deficit. The largest single-band shortfall relative to renter households is at 30% AMI and below (about negative 625 units); the deficit widens further in aggregate above 80% AMI."
+#| fig-cap: !expr 'paste0("The county is short about ", format(abs(rg_deficit_30), big.mark = ","), " rentals affordable to its lowest-income renters")'
+#| fig-alt: !expr 'paste0("Diverging horizontal bar chart of the surplus or deficit of affordable and available rental units by AMI band in Fauquier County. Every band shows a deficit. The deepest shortfall relative to renter households is at 30% AMI and below (about ", format(rg_deficit_30, big.mark = ","), " units against ", format(rg$renter_hh[rg$band == "≤30% AMI"], big.mark = ","), " renter households). The largest absolute deficit, about ", format(abs(rg$surplus_deficit[rg$band == ">80% AMI"]), big.mark = ","), " units, is in the combined >80% AMI band.")'
 
 rg_plot <- gaps$rental_gap |>
   mutate(band = factor(band, levels = rev(c("≤30% AMI","30-50% AMI","50-80% AMI",">80% AMI"))))
@@ -374,15 +379,17 @@ ggplot(rg_plot, aes(surplus_deficit, band)) +
   geom_text(aes(label = label_comma()(surplus_deficit),
                 hjust = if_else(surplus_deficit < 0, 1.1, -0.1)),
             size = 3.2, color = "grey20") +
+  scale_y_discrete(labels = band_en) +
   scale_x_continuous(labels = label_comma(),
                      expand = expansion(c(0.16, 0.08))) +
   labs(
-    title = "The county is short about 625 rentals affordable to its lowest-income renters",
-    subtitle = "Affordable and available rental units minus renter households, by income band, Fauquier County",
+    title = paste0("The county is short about ", format(abs(rg_deficit_30), big.mark = ","),
+                   " rentals affordable to its lowest-income renters"),
+    subtitle = "Affordable and available rentals minus renter households by income band",
     caption = paste0(chas_cap("T14B/T15C"),
-                     " Affordable-and-available reflects units both priced for and occupied at or below the band. ",
+                     "<br>**Notes:** Affordable-and-available units are both priced for and occupied at or below the band.<br>",
                      "The >80% AMI band combines the 100% and 120% AMI groups."),
-    x = "Surplus / deficit (units)", y = NULL
+    x = NULL, y = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +
   add_zero_line("x")
@@ -417,15 +424,18 @@ og_plot <- gaps$ownership_gap |>
 
 ggplot(og_plot, aes(band, n, fill = measure)) +
   geom_col(position = position_dodge(width = 0.72), width = 0.66) +
-  geom_text(aes(label = label_comma()(n)),
+  geom_text(aes(label = label_comma()(n),
+                fontface = if_else(measure == "Listings affordable", "bold", "plain")),
             position = position_dodge(width = 0.72), vjust = -0.4, size = 2.8, color = "grey25") +
   scale_fill_manual(values = c(`Listings affordable` = coral, `Owner households` = blue)) +
-  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.1))) +
+  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.16))) +
   labs(
     title = paste0("Only ", og_below_100, " of ", og_total_listings, " active listings are affordable below 100% AMI"),
     subtitle = "<span style='color:#e76f52'>**Active for-sale listings**</span> affordable in each price range vs <span style='color:#445ca9'>**owner households**</span> in the band",
-    caption = paste0("**Source:** Bright MLS active for-sale listings, ", mls_through, " snapshot.",
-                     " Listings placed in the AMI price range they fall within; affordability per the assumptions in the income-band table."),
+    caption = paste0("**Sources:** Bright MLS active for-sale listings, ", mls_through, " snapshot. ",
+                     "HUD CHAS, 2018–2022, Table T7.",
+                     "<br>**Notes:** Each listing is placed in the AMI price range it falls within. ",
+                     "Price ranges follow the assumptions in Table 5.2."),
     x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
@@ -446,7 +456,7 @@ The data bear out that workers cannot afford to both work and live here, most cl
 
 ```{r}
 #| label: fig-wages-costs
-#| fig-cap: "The average wage clears the rent — but most named sectors, and every path to buying, fall short"
+#| fig-cap: "The average wage covers rent but no wage path reaches homeownership"
 #| fig-alt: !expr 'paste0("Lollipop chart of average annual wages for major Fauquier employment sectors, shown for a single earner and a two-earner household, against two reference lines: the income needed to afford the median rent (about ", label_dollar()(inc_rent), ") and the income needed to buy the median home (about ", label_dollar()(inc_buy), "). The all-jobs average wage of ", label_dollar()(wage_all), " narrowly clears the rent line, but Health Care (", label_dollar()(wage_health), "), Local Government (", label_dollar()(wage_gov), "), and especially Retail Trade (", label_dollar()(wage_retail), ") all fall short of it. No single-earner wage reaches the purchase line; even a two-earner all-jobs household (", label_dollar()(wage_all * 2), ") falls well short of the income needed to buy.")'
 
 wc_plot <- gaps$wages_costs |>
@@ -466,18 +476,18 @@ ggplot(wc_plot, aes(wage, category)) +
   annotate("text", x = inc_rent, y = 4.9, label = "Income needed\nto rent",
            color = green, size = 2.7, hjust = 1.08, vjust = 1, lineheight = 0.9) +
   annotate("text", x = inc_buy, y = 4.9, label = "Income needed\nto buy",
-           color = "#c98f22", size = 2.7, hjust = 1.08, vjust = 1, lineheight = 0.9) +
+           color = yellow, fontface = "bold", size = 2.7, hjust = 1.08, vjust = 1, lineheight = 0.9) +
   scale_color_manual(values = c(`One earner` = coral, `Two earners` = blue)) +
-  scale_y_discrete(expand = expansion(add = c(0.6, 1.2))) +
+  scale_y_discrete(labels = str_to_sentence, expand = expansion(add = c(0.6, 1.2))) +
   scale_x_continuous(labels = label_dollar(scale = 1e-3, suffix = "k"),
                      expand = expansion(c(0.02, 0.08)),
                      limits = c(0, NA)) +
   coord_cartesian(clip = "off") +
   labs(
-    title = "The average wage clears the rent — but most named sectors, and every path to buying, fall short",
-    subtitle = "Average annual wage by sector — <span style='color:#e76f52'>**one earner**</span> vs <span style='color:#445ca9'>**two earners**</span> — against income needed to <span style='color:#8baeaa'>**rent**</span> and <span style='color:#c98f22'>**buy**</span>",
-    caption = paste0(qcew_cap(),
-                     " Income-needed figures from the affordability assumptions in the income-band table; rent anchored to the ACS median gross rent (see note above)."),
+    title = "The average wage covers rent but no wage path reaches homeownership",
+    subtitle = "Average annual wage by sector: <span style='color:#e76f52'>**one earner**</span> vs <span style='color:#445ca9'>**two earners**</span><br>Dashed lines show the income needed to <span style='color:#8baeaa'>**rent**</span> and to <span style='color:#e9ab3f'>**buy**</span>",
+    caption = paste0(qcew_cap("2025"),
+                     "<br>**Notes:** Income needed follows the assumptions in Table 5.2, with rent anchored to the ACS median gross rent."),
     x = NULL, y = NULL
   ) +
   theme_hda(flip_gridlines = TRUE) +

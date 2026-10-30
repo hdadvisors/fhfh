@@ -164,7 +164,7 @@ Living alone in later life raises housing vulnerability concerns: there is only 
 ```{r}
 #| label: fig-senior-alone
 #| fig-cap: "Older adults are nearly twice as likely to live alone"
-#| fig-alt: "Bar chart comparing the share of one-person households among Fauquier households with a resident age 65 and over versus households with no one 65 and over. About 32 percent of senior households are one-person households, compared with about 17 percent of non-senior households — older adults are close to twice as likely to live alone."
+#| fig-alt: "Bar chart comparing the share of one-person households among Fauquier households with a resident age 65 and over versus households with no one 65 and over. About 32 percent of senior households are one-person households, compared with about 17 percent of non-senior households, so older adults are close to twice as likely to live alone."
 
 alone_df <- tibble(
   grp   = factor(c("Households with\nsomeone 65+", "Households with\nno one 65+"),
@@ -183,7 +183,7 @@ ggplot(alone_df, aes(grp, share, fill = grp)) +
                      limits = c(0, 0.4), expand = expansion(c(0, 0.05))) +
   labs(
     title = "Older adults are nearly twice as likely to live alone",
-    subtitle = "One-person-household share by presence of a resident age 65+, Fauquier County",
+    subtitle = "Share of households with one person, by whether a resident is 65 or older, Fauquier County",
     caption = acs_cap("B11007"),
     x = NULL, y = NULL
   ) +
@@ -204,14 +204,14 @@ About `r label_percent(accuracy = 1)(sr_own_sh)` of the county's senior househol
 ```{r}
 #| label: fig-senior-tenure
 #| fig-cap: "Senior households are overwhelmingly homeowners"
-#| fig-alt: "Grouped bar chart of householders age 65 and over by tenure — owner versus renter — for Fauquier County and Warrenton. In the county, roughly five of six senior householders own their homes (about 6,400 owners versus 1,200 renters); Warrenton has a larger senior-renter share. Bealeton's cells are suppressed for low reliability and appear as an empty category."
+#| fig-alt: "Grouped bar chart of householders age 65 and over by tenure, owner versus renter, for Fauquier County and Warrenton. In the county, roughly five of six senior householders own their homes (about 6,400 owners versus 1,200 renters). Warrenton has a larger senior-renter share, about 485 renters versus 774 owners. Bealeton is omitted because its estimates are too unreliable to plot."
 
 sr_ten_plot <- sr_ten |>
-  mutate(est_p = if_else(reliability == "Low", NA_real_, estimate),
-         lbl = if_else(is.na(est_p), "",
-                       paste0(label_comma()(est_p), if_else(reliability == "Medium", "*", ""))))
+  filter(geo != "Bealeton") |>
+  mutate(geo = fct_drop(geo),
+         lbl = paste0(label_comma()(estimate), if_else(reliability == "Medium", "*", "")))
 
-ggplot(sr_ten_plot, aes(geo, est_p, fill = tenure)) +
+ggplot(sr_ten_plot, aes(geo, estimate, fill = tenure)) +
   geom_col(position = position_dodge(width = 0.72), width = 0.66) +
   geom_text(aes(label = lbl),
             position = position_dodge(width = 0.72), vjust = -0.4,
@@ -220,9 +220,10 @@ ggplot(sr_ten_plot, aes(geo, est_p, fill = tenure)) +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
   labs(
     title = "Senior households are overwhelmingly homeowners",
-    subtitle = "Householders age 65+ by tenure — <span style='color:#445ca9'>**owners**</span> vs <span style='color:#e76f52'>**renters**</span>",
+    subtitle = "Householders age 65+ by tenure: <span style='color:#445ca9'>**owners**</span> vs <span style='color:#e76f52'>**renters**</span>",
     caption = paste0(acs_cap("B25007"),
-                     " *Medium reliability (CV 15–30%). Bealeton cells suppressed (CV > 30%)."),
+                     "<br>**Notes:** \\*Medium reliability (CV 15–30%). ",
+                     "Bealeton omitted because its estimates are too unreliable to plot (CV > 30%)."),
     x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
@@ -243,19 +244,26 @@ Senior renters carry the heavier cost-burden: about `r label_percent(accuracy = 
 ```{r}
 #| label: fig-senior-burden
 #| fig-cap: "Two in five senior renters are cost-burdened"
-#| fig-alt: "Stacked bar chart of cost-burden status among Fauquier County elderly households, split into owner and renter columns. About 41 percent of senior renters are cost-burdened or severely cost-burdened, versus about 26 percent of senior owners — the burdened share is markedly higher for renters."
+#| fig-alt: "Stacked bar chart of cost-burden status among Fauquier County elderly households, split into owner and renter columns. About 41 percent of senior renters are cost-burdened or severely cost-burdened, versus about 26 percent of senior owners, so the burdened share is markedly higher for renters."
 
 eld_c <- eld_share |> filter(geo_code == fauquier)
+eld_tot <- eld_c |>
+  filter(cost_burden != "Not cost-burdened") |>
+  summarize(share = sum(share), .by = tenure)
 
 ggplot(eld_c, aes(tenure, share, fill = cost_burden)) +
   geom_col(width = 0.58) +
+  geom_text(data = eld_tot, inherit.aes = FALSE,
+            mapping = aes(tenure, 1, label = paste0(label_percent(accuracy = 1)(share), " burdened")),
+            vjust = -0.5, size = 3, fontface = "bold", color = "grey25") +
   scale_fill_manual(values = cb_pal) +
-  scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.03))) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), expand = expansion(c(0, 0.08))) +
   labs(
     title = "Two in five senior renters are cost-burdened",
     subtitle = "Cost-burden status among elderly households, by tenure, Fauquier County",
     caption = paste0(chas_cap("T7"),
-                     " Elderly = households with a member age 62 or older."),
+                     "<br>**Note:** Elderly means households with a member age 62 or older. ",
+                     "Burdened = cost-burdened plus severely cost-burdened."),
     x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +
@@ -269,23 +277,23 @@ The towns show the same renter-heavier pattern. Senior renters in both Warrenton
 
 ## People with disabilities
 
-About `r label_percent(accuracy = 1)(dis_share_c)` of the county population, or `r label_comma()(dis_tot_c)` county residents, report living with a disability, but the prevalence is highly dependent on age. Disability is minimally experienced among children, then rises sharply among those aged 65 and older. Roughly `r label_percent(accuracy = 1)(dis_75_sh)` of residents aged 75 and over report having a disability, the same cohort projected to grow most by 2050 (@fig-senior-alone).
+About `r label_percent(accuracy = 1)(dis_share_c)` of the county population, or `r label_comma()(dis_tot_c)` county residents, report living with a disability, but the prevalence is highly dependent on age. Disability is minimally experienced among children, then rises sharply among those aged 65 and older. Roughly `r label_percent(accuracy = 1)(dis_75_sh)` of residents aged 75 and over report having a disability, the same cohort projected to grow most by 2050 (@fig-senior-projection).
 
 The overlap of disability, advanced age, and homeownership (@fig-senior-tenure) is a direct hook for home-repair and accessibility-retrofit programs, accommodating and preserving households that own but cannot easily adapt or maintain their homes. Additionally, land use permitting cottage style units, or moderately dense entry level homes, could eventually serve both seniors and young people returning to work in Fauquier.
 
 ```{r}
 #| label: fig-disability-age
-#| fig-cap: "Disability rises steeply with age, reaching two in five of those 75 and over"
-#| fig-alt: "Bar chart of the share of Fauquier County residents reporting a disability, by age band from under 5 to 75 and over. The share is very low for children and young adults, rises through the 35-to-64 band, and climbs sharply among older adults — reaching roughly a fifth of the 65-to-74 group and about 40 percent of those 75 and over."
+#| fig-cap: "Disability reaches two in five residents age 75 and over"
+#| fig-alt: "Bar chart of the share of Fauquier County residents reporting a disability, by age band from under 5 to 75 and over. The share is very low for children and young adults, rises through the 35-to-64 band, and climbs sharply among older adults, reaching roughly a fifth of the 65-to-74 group and about 40 percent of those 75 and over. Under-5 is below 1 percent."
 
 ggplot(dis_c, aes(age, share)) +
   geom_col(fill = blue, width = 0.72) +
-  geom_text(aes(label = label_percent(accuracy = 1)(share)),
+  geom_text(aes(label = if_else(share < 0.005, "<1%", label_percent(accuracy = 1)(share))),
             vjust = -0.4, size = 3, color = "grey25") +
   scale_y_continuous(labels = label_percent(accuracy = 1),
                      limits = c(0, NA), expand = expansion(c(0, 0.08))) +
   labs(
-    title = "Disability rises steeply with age, reaching two in five of those 75 and over",
+    title = "Disability reaches two in five residents age 75 and over",
     subtitle = "Share of residents reporting a disability, by age, Fauquier County",
     caption = acs_cap("B18101"),
     x = NULL, y = NULL
@@ -318,11 +326,11 @@ ggplot(comp_df, aes(type, n, fill = grp)) +
   geom_col(width = 0.62) +
   geom_text(aes(label = label_comma()(n)),
             vjust = -0.4, size = 3, color = "grey25") +
-  scale_fill_manual(values = c(`Married-couple` = "grey70", `Single parent` = coral)) +
+  scale_fill_manual(values = c(`Married-couple` = "#999999", `Single parent` = coral)) +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
   labs(
     title = "One in five families with children is headed by a single parent",
-    subtitle = "Families with children by type — <span style='color:#e76f52'>**single-parent**</span> vs <span style='color:#8a8a8a'>**married-couple**</span>, Fauquier County",
+    subtitle = "Fauquier County families with children: <span style='color:#e76f52'>**single-parent**</span> vs <span style='color:#999999'>**married-couple**</span>",
     caption = acs_cap("B11003"),
     x = NULL, y = NULL, fill = NULL
   ) +
@@ -341,8 +349,8 @@ With roughly `r label_comma()(n_female)` female-householder families county-wide
 
 ```{r}
 #| label: fig-family-poverty
-#| fig-cap: "Single-mother families are far likelier to live in poverty"
-#| fig-alt: "Bar chart of the share of families below the poverty level in Fauquier County by family type: all families, married-couple families, and female-householder families. The poverty rate for female-householder families is several times that of married-couple families and well above the all-families rate."
+#| fig-cap: "Female-householder families are far likelier to live in poverty"
+#| fig-alt: "Bar chart of the share of families below the poverty level in Fauquier County by family type: all families, married-couple families, and female-householder families. The poverty rate for female-householder families is about 10 percent, roughly three times the 3.4 percent rate for married-couple families and twice the 4.9 percent all-families rate. Only the female-householder bar is highlighted."
 
 pov_df <- tibble(
   type  = factor(c("All families", "Married-couple\nfamilies", "Female-householder\nfamilies"),
@@ -354,11 +362,11 @@ ggplot(pov_df, aes(type, rate, fill = type)) +
   geom_col(width = 0.62) +
   geom_text(aes(label = label_percent(accuracy = 0.1)(rate)),
             vjust = -0.4, size = 3, color = "grey25") +
-  scale_fill_manual(values = c("grey70", blue, coral)) +
-  scale_y_continuous(labels = label_percent(accuracy = 1),
-                     limits = c(0, NA), expand = expansion(c(0, 0.1))) +
+  scale_fill_manual(values = c("grey70", "grey70", coral)) +
+  scale_y_continuous(labels = label_percent(accuracy = 1), breaks = seq(0, 0.12, 0.02),
+                     limits = c(0, 0.12), expand = expansion(c(0, 0))) +
   labs(
-    title = "Single-mother families are far likelier to live in poverty",
+    title = "Female-householder families are far likelier to live in poverty",
     subtitle = "Families below the poverty level, by family type, Fauquier County",
     caption = acs_cap("S1702"),
     x = NULL, y = NULL
@@ -385,26 +393,33 @@ The regional PIT count climbed from 146 people in 2018 to a peak near 280 in 202
 
 ```{r}
 #| label: fig-pit-trend
-#| fig-cap: "Regional homelessness rose through the early 2020s, then fell sharply in 2025"
-#| fig-alt: "Column chart of the number of people counted in the five-county Foothills Housing Network Point-in-Time count each January from 2018 to 2025. Counts rise from about 146 in 2018 to a peak near 280 in 2022, hold around 275 through 2024, then drop to 191 in 2025. An annotation marks that Fauquier accounted for 96 of the 191 people counted region-wide in 2025."
+#| fig-cap: "Regional homelessness rose through the early 2020s then fell in 2025"
+#| fig-alt: "Column chart of the number of people counted in the five-county Foothills Housing Network Point-in-Time count each January from 2018 to 2025. Counts rise from about 146 in 2018 to a peak near 280 in 2022, hold around 275 through 2024, then drop to 191 in 2025. In 2025 the bar is stacked: a blue segment labeled 96 shows the people counted in Fauquier, and a grey segment above it shows the rest of the region, for the 191 total."
 
-pit_df <- pit$trend |> mutate(is25 = year == 2025)
+pit_df <- pit$trend |>
+  mutate(fauq = if_else(year == 2025, pit_fauq_2025, 0),
+         rest = individuals - fauq) |>
+  pivot_longer(c(rest, fauq), names_to = "part", values_to = "n") |>
+  mutate(part = factor(part, levels = c("rest", "fauq")))
 
-ggplot(pit_df, aes(factor(year), individuals)) +
-  geom_col(aes(fill = is25), width = 0.7) +
-  geom_text(aes(label = individuals), vjust = -0.4, size = 3, color = "grey25") +
-  annotate("text", x = 8, y = pit_2025, hjust = 1.05, vjust = -1.4, size = 2.7,
-           color = "grey30", label = paste0("Fauquier:\n", pit_fauq_2025, " of ", pit_2025)) +
-  scale_fill_manual(values = c(`FALSE` = "grey70", `TRUE` = blue), guide = "none") +
+ggplot(pit_df, aes(factor(year), n, fill = part)) +
+  geom_col(width = 0.7) +
+  geom_text(data = pit$trend, aes(factor(year), individuals, label = individuals),
+            inherit.aes = FALSE, vjust = -0.4, size = 3, color = "grey25") +
+  annotate("text", x = 8, y = pit_fauq_2025 / 2, size = 3, color = "white",
+           fontface = "bold", label = pit_fauq_2025) +
+  scale_fill_manual(values = c(rest = "grey70", fauq = blue), guide = "none") +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.14))) +
   labs(
-    title = "Regional homelessness rose through the early 2020s, then fell sharply in 2025",
-    subtitle = "January Point-in-Time count, five-county Foothills Housing Network region",
-    caption = pit_cap(),
+    title = "Regional homelessness rose through the early 2020s then fell in 2025",
+    subtitle = "January Point-in-Time count, five-county Foothills Housing Network region<br>2025 split: <span style='color:#445ca9'>**Fauquier**</span> vs rest of region",
+    caption = paste0(pit_cap(),
+                     "<br>**Note:** Counts cover the five-county region, not Fauquier alone, and are single-night tallies."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
-  add_zero_line("y")
+  add_zero_line("y") +
+  theme(plot.subtitle = element_markdown())
 ```
 
 In 2025, Fauquier accounted for `r pit_fauq_2025` of the `r pit_2025` unhoused people region-wide or `r label_percent(accuracy = 1)(pit_fauq_sh)` of the regional homelessness population. This is the largest single-county share, though the county-level split exists only for 2025.
@@ -417,14 +432,15 @@ McKinney-Vento numbers fell from `r vdoe_first` in the 2020–21 school year to 
 ```{r}
 #| label: fig-vdoe-mv
 #| fig-cap: "Housing-unstable students in Fauquier schools have fallen by half since 2020–21"
-#| fig-alt: "Column chart of the number of McKinney-Vento (housing-unstable) students identified in Fauquier County Public Schools by school year from 2020-21 to 2024-25. The count declines steadily from 191 students to 92 — a drop of roughly half over five years."
+#| fig-alt: "Column chart of the number of McKinney-Vento (housing-unstable) students identified in Fauquier County Public Schools by school year from 2020-21 to 2024-25. The count declines steadily from 191 students to 92, a drop of roughly half over five years."
 
 vdoe_df <- vdoe$fauquier |>
   mutate(school_year = factor(school_year, levels = school_year))
 
 ggplot(vdoe_df, aes(school_year, students)) +
-  geom_col(fill = green, width = 0.68) +
+  geom_col(fill = blue, width = 0.68) +
   geom_text(aes(label = students), vjust = -0.4, size = 3, color = "grey25") +
+  scale_x_discrete(labels = \(x) str_replace(x, "-", "–")) +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
   labs(
     title = "Housing-unstable students in Fauquier schools have fallen by half since 2020–21",
@@ -446,8 +462,8 @@ These inadequacies affect households differently, but are certainly more managea
 
 ```{r}
 #| label: fig-housing-quality
-#| fig-cap: "Inadequate-housing counts are small but real — a direct home-repair hook"
-#| fig-alt: "Bar chart of the number of Fauquier County housing units with each of three quality problems: incomplete plumbing facilities, incomplete kitchen facilities, and overcrowding (more than one occupant per room). Each count is in the low hundreds, with incomplete kitchens and overcrowding somewhat more common than incomplete plumbing."
+#| fig-cap: "Inadequate housing counts are small but real"
+#| fig-alt: "Bar chart of the number of Fauquier County housing units with each of three quality problems: incomplete plumbing facilities, incomplete kitchen facilities, and overcrowding (more than one occupant per room). Counts are about 125 units with incomplete plumbing, 395 with incomplete kitchens, and 400 overcrowded, so kitchens and overcrowding are each about three times as common as incomplete plumbing."
 
 quality_df <- tibble(
   measure = factor(c("Incomplete\nplumbing", "Incomplete\nkitchen", "Overcrowded\n(>1 per room)"),
@@ -460,11 +476,11 @@ ggplot(quality_df, aes(measure, n)) +
   geom_text(aes(label = label_comma()(n)), vjust = -0.4, size = 3, color = "grey25") +
   scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
   labs(
-    title = "Inadequate-housing counts are small but real — a direct home-repair hook",
-    subtitle = "Occupied housing units with each condition, Fauquier County",
-    caption = paste0("**Source:** U.S. Census Bureau, 2020-2024 American Community Survey ",
-                     "5-year estimates, Tables B25047, B25051, B25014. ",
-                     "Counts are small; reported as counts, not rates."),
+    title = "Inadequate housing counts are small but real",
+    subtitle = "Units lacking plumbing or a kitchen plus overcrowded occupied units, Fauquier County",
+    caption = paste0("**Source:** U.S. Census Bureau, 2020–2024 American Community Survey ",
+                     "5-year estimates, Tables B25047, B25051, B25014.",
+                     "<br>**Note:** Counts are small and reported as counts, not rates."),
     x = NULL, y = NULL
   ) +
   theme_hda() +
@@ -501,13 +517,14 @@ ggplot(mh_df, aes(tenure, n, fill = tenure)) +
   geom_col(width = 0.58) +
   geom_text(aes(label = label_comma()(n)), vjust = -0.4, size = 3, color = "grey25") +
   scale_fill_manual(values = c(`Owner-occupied` = blue, `Renter-occupied` = coral)) +
-  scale_y_continuous(labels = label_comma(), expand = expansion(c(0, 0.12))) +
+  scale_y_continuous(labels = label_comma(), breaks = seq(0, 450, 150),
+                     limits = c(0, 500), expand = expansion(c(0, 0))) +
   labs(
     title = "Manufactured homes are few but overwhelmingly owner-occupied",
     subtitle = "Occupied manufactured (mobile) homes by tenure, Fauquier County",
-    caption = paste0("**Source:** U.S. Census Bureau, 2020-2024 American Community Survey ",
-                     "5-year estimates, Tables B25024, B25032. ",
-                     "Counts are small; reported as counts, not rates."),
+    caption = paste0("**Source:** U.S. Census Bureau, 2020–2024 American Community Survey ",
+                     "5-year estimates, Tables B25024, B25032.",
+                     "<br>**Note:** Counts are small and reported as counts, not rates."),
     x = NULL, y = NULL, fill = NULL
   ) +
   theme_hda() +

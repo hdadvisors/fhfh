@@ -28,11 +28,13 @@ v_vdoe  <- read_rds("data/vdoe.rds")
 pmms_last <- v_fred$pmms_monthly |> filter(!is.na(mortgage_rate_30yr)) |> slice_max(date, n = 1)
 cpi_last  <- max(v_fred$cpi$year[!is.na(v_fred$cpi$cpi_less_shelter)])
 qcew_q    <- v_qcew$quarterly |> distinct(year, qtr) |> arrange(year) |> mutate(l = paste0(year, " Q", qtr)) |> pull(l)
+mls_d8    <- as.Date(mls_through, "%m/%d/%Y")
+mls_long  <- paste0(format(mls_d8, "%B "), as.integer(format(mls_d8, "%d")), format(mls_d8, ", %Y"))
 
 tribble(
   ~Source, ~`Used for`, ~`Coverage in this report`,
   "Bright MLS (transaction exports, monthly summaries, active listings)", "Sales, prices, supply, leases, listing snapshots",
-    paste0("Sales 2022 to ", mls_through, " (2016–2021 from GP/VAR); active listings as of ", mls_through),
+    paste0("Sales 2022 to ", mls_long, " (2016–2021 from GP/VAR); active listings as of ", mls_long),
   "CoStar", "Apartment rents, vacancy, property inventory",
     paste0("2016 Q1 to ", costar_through),
   "Census Building Permits Survey", "Residential permits",

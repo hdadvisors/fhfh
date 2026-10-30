@@ -19,6 +19,17 @@ library(formattable)
 library(hdatools)
 library(ggtext)
 
+# hdatools::theme_hda() captions are element_markdown, which never wraps, so a long
+# Sources + Notes caption clips at the right edge. Swap in a wrapping textbox with the same styling.
+theme_hda <- function(...) {
+  th  <- hdatools::theme_hda(...)
+  cap <- th$plot.caption
+  th + theme(plot.caption = ggtext::element_textbox_simple(
+    family = cap$family, size = cap$size, colour = cap$colour,
+    lineheight = cap$lineheight, margin = cap$margin, hjust = 0, vjust = 0
+  ))
+}
+
 # Color palettes
 
 hda_pal <- c(
@@ -47,7 +58,7 @@ town_zips  <- list(warrenton = c("20186", "20187"), bealeton = "22712")
 
 # Caption helpers (PLAN.md §3)
 
-acs_cap <- function(table, year = "2020-2024") {
+acs_cap <- function(table, year = "2020–2024") {
   paste0(
     "**Source:** U.S. Census Bureau, ",
     year,
@@ -57,7 +68,7 @@ acs_cap <- function(table, year = "2020-2024") {
   )
 }
 
-chas_cap <- function(table, year = "2018-2022") {
+chas_cap <- function(table, year = "2018–2022") {
   paste0(
     "**Source:** HUD Comprehensive Housing Affordability Strategy (CHAS), ",
     year,
@@ -75,8 +86,8 @@ costar_through <- readr::read_rds("data/costar.rds")$quarterly |>
   dplyr::mutate(lbl = paste(year, paste0("Q", qtr))) |>
   dplyr::pull(lbl)
 
-mls_cap <- function(year_range = NULL, through = TRUE) {
-  base <- "**Source:** Bright MLS closed sales data"
+mls_cap <- function(year_range = NULL, through = TRUE, type = "closed sales data") {
+  base <- paste("**Source:** Bright MLS", type)
   if (!is.null(year_range)) base <- paste0(base, ", ", year_range)
   if (through) base <- paste0(base, " (data through ", mls_through, ")")
   paste0(base, ".")
@@ -104,8 +115,9 @@ lodes_cap <- function(year = 2022)
   paste0("**Source:** U.S. Census Bureau, LEHD Origin-Destination Employment Statistics (LODES), ",
          year, ".")
 
+# Note text, not a source line: use after "<br>**Note:** ".
 cpi_cap <- function()
-  "Inflation-adjusted to the latest period using BLS CPI-U via FRED."
+  "Real values use BLS CPI-U less shelter via FRED."
 
 costar_cap <- function()
   paste0("**Source:** CoStar multifamily market data, quarterly, through ", costar_through, ".")
@@ -124,20 +136,22 @@ compplan_cap <- function(chapter, page)
   paste0("**Source:** Fauquier County Comprehensive Plan, ", chapter, ", p. ", page, ".")
 
 ami_cap <- function(year = "FY2026")
-  paste0("**Source:** HUD Section 8 Income Limits, ", year,
-         "; 100/120% AMI derived from published MFI.")
+  paste0("**Source:** HUD Section 8 Income Limits, ", year, ".")
 
 pit_cap <- function()
-  paste0("**Source:** Foothills Housing Network Point-in-Time Count ",
-         "(5-county FHN region; single-night counts).")
+  "**Source:** Foothills Housing Network Point-in-Time Count, 2018–2025."
 
 vdoe_cap <- function()
   paste0("**Source:** VDOE Project HOPE-Virginia, McKinney-Vento ",
-         "homeless student counts.")
+         "homeless student counts, 2020–21 to 2024–25.")
 
-wc_cap <- function(release = 2024)
+wc_cap <- function(release = 2025)
   paste0("**Source:** University of Virginia Weldon Cooper Center for Public Service, ",
          "Virginia Population Projections, ", release, " release.")
+
+# Caption convention: one bold "**Source:**" line, or "**Sources:** A, yr. B, yr." when combining
+# sources (write it by hand rather than pasting helpers together). Extra context goes on a new
+# line: "<br>**Note:** ..." / "<br>**Notes:** ...".
 
 # The caption helpers above emit markdown bold, which ggtext renders in ggplot captions but
 # kableExtra::footnote() passes through literally. Convert before using one in a table footnote
