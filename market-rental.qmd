@@ -160,7 +160,7 @@ ggplot(f1, aes(share, geo)) +
   add_zero_line("x")
 ```
 
-Fauquier is overwhelmingly an ownership county: only about `r label_percent(accuracy = 1)(rshare_county)` of households rent. For context, `r label_percent(accuracy = 1)(rshare_va)` of Virginia's households are renters. Realtors, employers, and local government interviewees highlighted this, as well. Folks come to Fauquier to buy, and there is a limited rental market.
+Fauquier is overwhelmingly an ownership county: only about `r label_percent(accuracy = 1)(rshare_county)` of households rent. For context, `r label_percent(accuracy = 1)(rshare_va)` of Virginia's households are renters. Folks come to Fauquier to buy, and there is a limited rental market.
 
 Warrenton is the exception: roughly `r label_percent(accuracy = 1)(rshare_warr)` of the town's `r format(round(b3$estimate[b3$GEOID=="5183136" & str_ends(b3$variable,"001")]), big.mark=",")` households rent, nearly double the county rate. Warrenton represents the county's principal rental submarket. Bealeton, on the other hand, tracks with the county at about `r label_percent(accuracy = 1)(rshare_beal)` of its households renting.
 
@@ -220,7 +220,11 @@ ggplot() +
 
 The county's median gross rent, meaning all housing costs including lease rent and utilities, rose from $`r format(rent_13, big.mark=",")` in 2013 to $`r format(rent_24, big.mark=",")` in 2024, adding `r label_percent(accuracy=1)(rent_growth_nom)` in nominal, and +`r label_percent(accuracy=1)(rent_growth_real)` in real terms. Renters have lost ground even after inflation.
 
-In spring 2026, an interviewee shared that, "Only about 2 of 19 available rentals were priced under $1,700." CoStar professional asking rents, near $`r format(round(cs_rent_adj), big.mark=",")` (adjusted, `r costar_through`), sit `r if (cs_rent_adj < rent_24) "just below" else "at or just above"` the ACS median of $`r format(rent_24, big.mark=",")`. This is consistent with a small stock of professionally managed apartments pricing in line with the broader rental pool, while the broker-leased houses and townhouses that dominate MLS rentals price well above it. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
+CoStar professional asking rents, near $`r format(round(cs_rent_adj), big.mark=",")` (adjusted, `r costar_through`), sit `r if (cs_rent_adj < rent_24) "just below" else "at or just above"` the ACS median of $`r format(rent_24, big.mark=",")`. This is consistent with a small stock of professionally managed apartments pricing in line with the broader rental pool, while the broker-leased houses and townhouses that dominate MLS rentals price well above it. This report uses the ACS median gross rent as its affordability benchmark (@sec-gaps), since it covers the full rental universe, while CoStar tracks only professionally-managed apartment communities.
+
+::: {.callout-note title="What we heard"}
+In spring 2026, an interviewee shared that "Only about 2 of 19 available rentals were priced under $1,700."
+:::
 
 Town rents track the county: Warrenton and Bealeton median 2024 rent (High reliability) sits roughly within $50 to $200 of the county figure.
 
@@ -281,11 +285,15 @@ ggplot(rd, aes(band, share, fill = geo)) +
 
 The modal rent band in the county is $1,500–1,999 and represents about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="$1,500–1,999"])` of county cash-rent renters. Combined with the bands above it, most renters now pay $1,500 or more. Under $1,000 monthly rentals are scarce, representing only about `r label_percent(accuracy=1)(rd$share[rd$GEOID==fauquier & rd$band=="<$1,000"])` of the county's renters, underscoring how little of the stock is affordable to lower-income households.
 
+::: {.callout-note title="What we heard"}
+Realtors in particular recognized the challenges renters face, noting that the MLS median rent sits at $2,450: "It's an outrageously expensive market." Rental quality was a consistent topic as well, with interviewees reporting that quality is rarely reflected in the price.
+:::
+
 In 2025, the MLS recorded that only `r rent_u1700` of `r rent_n_2025` closed leases were under $1,700, about `r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`. These data identify a median county lease of $`r format(rent_median, big.mark=",")` monthly, consistent with the Greater Piedmont REALTOR's March 2026 study. This leaves a somewhat larger affordable share than the single snapshot of available rentals suggested, but the story is the same: sub-$1,700 rentals are scarce, and most of the rental market prices well above that (@fig-rent-distribution, @fig-rent-trend). The MLS median runs well above the county's ACS median gross rent ($`r format(rent_24, big.mark=",")`) because MLS only captures leases placed through a broker, which skew toward larger single-family homes and townhouses (the bulk of this study's rental stock) rather than the smaller apartment units that lease in-house and never reach MLS.
 
 ::: {.callout-note}
 ## What is listed for rent now
-As of `r ar_asof`, the MLS shows **`r ar_n` active rental listings** with a median asking rent of **$`r format(ar_med, big.mark=",")`**, well above the 2025 closed-lease median of $`r format(rent_median, big.mark=",")` and the $`r format(rent_med_2026, big.mark=",")` median across `r rent_n_2026` leases closed so far in 2026 (through `r rent_thru`). Only `r ar_u1700` listings (`r label_percent(accuracy=0.1)(ar_u1700/ar_n)`) ask under $1,700, fewer in share than the 2025 closed leases (`r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`) and consistent with the interview report that very few available rentals price below that line. Asking rents run above closed leases and this is a small single-day snapshot, so read it as directional rather than as a market-wide rent.
+As of `r ar_asof`, the MLS shows **`r ar_n` active rental listings** with a median asking rent of **$`r format(ar_med, big.mark=",")`**, well above the 2025 closed-lease median of $`r format(rent_median, big.mark=",")` and the $`r format(rent_med_2026, big.mark=",")` median across `r rent_n_2026` leases closed so far in 2026 (through `r rent_thru`). Only `r ar_u1700` listings (`r label_percent(accuracy=0.1)(ar_u1700/ar_n)`) ask under $1,700, fewer in share than the 2025 closed leases (`r label_percent(accuracy=1)(rent_u1700/rent_n_2025)`). Asking rents run above closed leases and this is a small single-day snapshot, so read it as directional rather than as a market-wide rent.
 :::
 
 ::: {.callout-warning}
@@ -415,7 +423,11 @@ Because Fauquier is folded into the high-cost Washington, D.C. metro FMR area, t
 
 Small Area FMRs (SAFMRs) pull the benchmark towards what locals actually experience, described as a high cost and scarce rental environment. SAFMRs still land above the ACS median rent at every bedroom size, with the Warrenton and Bealeton 2BR SAFMR ranges from $`r format(min(fmr$safmr$safmr_2br), big.mark=",")` to $`r format(max(fmr$safmr$safmr_2br), big.mark=",")`, with Bealeton (22712) at the lowest.
 
-The practical implication in the differences in FMR and ACS rents is ultimately favorable for voucher holders, with generous payment standards, something an interviewee pointed out, as well. However, this means FMRs overstate the going asking rental market and can be a poor gauge of local affordability. The ACS medians (@fig-rent-trend) are the better yardstick for rooting rents into local reality.
+The practical implication in the differences in FMR and ACS rents is ultimately favorable for voucher holders, with generous payment standards. However, this means FMRs overstate the going asking rental market and can be a poor gauge of local affordability. The ACS medians (@fig-rent-trend) are the better yardstick for rooting rents into local reality.
+
+::: {.callout-note title="What we heard"}
+An interviewee noted that metro-based Fair Market Rents give voucher holders generous payment standards relative to what local rents actually are.
+:::
 
 ## Assisted inventory & preservation risk
 

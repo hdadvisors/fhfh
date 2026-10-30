@@ -175,7 +175,9 @@ ab_tbl |>
 
 For context, a 50% AMI household can only afford about `r label_dollar()(afford50_rent)` in housing costs, which falls within the modal rent band between $1,500 and $1,999 and is slightly above the ACS median gross rent of `r label_dollar()(med_rent)`. It is below the `r label_dollar()(mls_rent)` median MLS closed lease, which skews toward larger broker-listed homes. This household could buy a home of roughly `r label_dollar()(afford50_price)`, a fraction of the `r label_dollar()(med_price)` median sale price, and widely unavailable throughout the county.
 
-With questions about quality surrounding the age of apartments throughout the county, as well as limited availability of units, finding a rental with space for a family that does not exceed `r label_dollar()(afford50_rent)` would be a challenge.
+::: {.callout-note title="What we heard"}
+Interviewees raised questions about the quality of aging apartments across the county, along with limited availability. Finding a family-sized rental that does not exceed `r label_dollar()(afford50_rent)` would be a challenge, and pairing quality with affordability was described as "winning the lottery."
+:::
 
 Greater affordability rises steeply with increased household income: only at 100–120% AMI does the affordable purchase price clear a quarter-million dollars. Even an affordable purchase price for a household at 120% AMI is `r label_dollar()(ab$max_price[ab$band=="ami120"])`, short of the county median sales price at `r label_dollar()(med_price)`.
 
@@ -293,7 +295,7 @@ ggplot() +
   theme(plot.subtitle = element_markdown())
 ```
 
-Both towns run hotter than the county on renter cost-burden: 55% of Warrenton's renters and almost 59% of Bealeton's renters are cost burdened. These data sit well above the county line (2024) and affirm interview suspicions surrounding rental affordability.
+Both towns run hotter than the county on renter cost-burden: 55% of Warrenton's renters and almost 59% of Bealeton's renters are cost burdened. These data sit well above the county line (2024).
 
 ::: {.callout-tip}
 ## Town spotlight — Warrenton and Bealeton carry the county's highest renter burden
@@ -377,15 +379,19 @@ ggplot(rg_plot, aes(surplus_deficit, band)) +
   add_zero_line("x")
 ```
 
-All income bands run a deficit of rental units for a net shortfall of roughly `r format(abs(rg_deficit_tot), big.mark = ",")` units across the county. As a result, higher-income renters occupy units that would otherwise be affordable to lower-income households, a competition-down-the-ladder dynamic, reflecting renter realities shared in interviews. Those renting need to be quick and involved in the word of mouth market to get a decent apartment.
+All income bands run a deficit of rental units for a net shortfall of roughly `r format(abs(rg_deficit_tot), big.mark = ",")` units across the county. As a result, higher-income renters occupy units that would otherwise be affordable to lower-income households, a competition-down-the-ladder dynamic.
+
+::: {.callout-note title="What we heard"}
+Interviewees described renting in Fauquier as a "gamble": renters need to be quick and involved in the word-of-mouth market to get a decent apartment.
+:::
 
 The gap is a supply problem, not a targeting problem: even where units are nominally affordable, they are already occupied with higher income households. This leaves the lowest-income renters with the fewest options. <!-- VERIFY (Amelie comment): "I think we contradict ourselves later" -- re: supply problem vs. targeting problem -->
 
 ## The ownership gap: almost nothing for sale below 100% AMI
 
-Below the 100% AMI price ceiling, there is almost nothing for sale: just `r og_below_100` of `r format(og_total_listings, big.mark = ",")` active listings (`r og_asof` snapshot), effectively excluding low to moderate-income buyers. For lower income bands, `r og_lower_txt` active listings are affordable across the 30%, 50%, 80%, and 100% AMI bands. Realtors interviewed stated that they cannot take on clients seeking homes for $250,000 and less, because they know these households will not find success in Fauquier.
+Below the 100% AMI price ceiling, there is almost nothing for sale: just `r og_below_100` of `r format(og_total_listings, big.mark = ",")` active listings (`r og_asof` snapshot), effectively excluding low to moderate-income buyers. For lower income bands, `r og_lower_txt` active listings are affordable across the 30%, 50%, 80%, and 100% AMI bands.
 
-The overwhelming majority of listings, `r og_top_band` of `r format(og_total_listings, big.mark = ",")`, are priced only within reach of the 120% AMI band or above, mirroring the median-price gap in @tbl-afford-band. Owner-household counts far exceed affordable listings in every income band below the highest wealth households, so first-time and lower-income buyers face a market with essentially no entry point. Sales are ultimately most successful when seeking out higher priced properties.
+The overwhelming majority of listings, `r og_top_band` of `r format(og_total_listings, big.mark = ",")`, are priced only within reach of the 120% AMI band or above, mirroring the median-price gap in @tbl-afford-band. Owner-household counts far exceed affordable listings in every income band below the highest wealth households, so first-time and lower-income buyers face a market with essentially no entry point.
 
 ```{r}
 #| label: fig-ownership-gap
@@ -417,12 +423,15 @@ ggplot(og_plot, aes(band, n, fill = measure)) +
         axis.text.x = element_text(size = 8))
 ```
 
+::: {.callout-note title="What we heard"}
+Realtors interviewed said they cannot take on clients seeking homes at $250,000 or less, because they know these households will not find success in Fauquier. The buyers who do are dual-income, high-earning households.
+:::
 
 ## The bottom line: wages don't reach the cost of housing
 
 The all-jobs average wage (`r label_dollar()(wage_all)` annually) narrowly covers the county's median rent (`r label_dollar()(inc_rent)` needed), a margin of about `r label_dollar()(wage_all - inc_rent)`, or roughly 5%. That headline flips, though, once you look sector by sector: Health Care (`r label_dollar()(wage_health)`), Local Government (`r label_dollar()(wage_gov)`), and especially Retail Trade (`r label_dollar()(wage_retail)` yearly) all pay below the `r label_dollar()(inc_rent)` needed. This could lead to greater cost burden for households working in Retail Trade or even the Local Government, or contribute to in and out migration and daily commuting patterns for local workers.
 
-As interviewees reminded us frequently, "Workers cannot afford to both work and live here." Several interview participants shared that they cannot even afford to live in Fauquier despite working there. The data bear this out most clearly for buying and for the lower-wage sectors: even a two-earner household of two average local jobs (`r label_dollar()(wage_all*2)`) falls well short of the `r label_dollar()(inc_buy)` needed to buy the median priced home. Ownership, not rental, is where the wage-to-cost gap is structural and unavoidable.
+The data bear out that workers cannot afford to both work and live here, most clearly for buying and for the lower-wage sectors: even a two-earner household of two average local jobs (`r label_dollar()(wage_all*2)`) falls well short of the `r label_dollar()(inc_buy)` needed to buy the median priced home. Ownership, not rental, is where the wage-to-cost gap is structural and unavoidable.
 
 ```{r}
 #| label: fig-wages-costs
@@ -465,4 +474,8 @@ ggplot(wc_plot, aes(wage, category)) +
   theme(legend.position = "none", plot.subtitle = element_markdown())
 ```
 
-The message is ultimately structural and systemic: the county's wage base and its housing costs have decoupled. Dual-income working households are priced out of the ownership market, while the lowest-wage sectors are priced out of the market entirely - both rentals and ownership opportunities. The wage to housing cost gap is not just a perception, despite it being a consistent theme throughout interviews. This gap of wages and housing costs has become a defining structural feature of Fauquier's housing market.
+The message is ultimately structural and systemic: the county's wage base and its housing costs have decoupled. Dual-income working households are priced out of the ownership market, while the lowest-wage sectors are priced out of the market entirely - both rentals and ownership opportunities. The wage to housing cost gap is not just a perception. This gap of wages and housing costs has become a defining structural feature of Fauquier's housing market.
+
+::: {.callout-note title="What we heard"}
+Interviewees repeatedly emphasized that "Workers cannot afford to both work and live here." Several interviewees shared that they cannot even afford to live in Fauquier despite working there.
+:::

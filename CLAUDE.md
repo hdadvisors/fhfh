@@ -60,6 +60,13 @@ renv::restore()
   (which expects a `*_cv` column on a 0–1 scale and mislabels every town cell "Low"). Bealeton floor:
   prefer counts over rates, suppress CV>30% cells, footnote Medium cells in the margin.
 
+## Interview material
+
+Stakeholder-interview findings go in inline callouts, not body prose:
+`::: {.callout-note title="What we heard"}` placed after the related paragraph or figure.
+Paraphrase, unattributed ("Interviewees said…"), with only short verbatim quotes. Body text
+stays data-only. Use inline R for any figure that exists in the data.
+
 ## Windows R rule
 
 **Never run R inline.** Write a temp script, run via `Rscript` from the project root. Temp and

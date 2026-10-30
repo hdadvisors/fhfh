@@ -286,7 +286,7 @@ ggplot(prod_plot, aes(horizon, units_per_year_avgsize)) +
   add_zero_line("y")
 ```
 
-Keeping pace with the baseline count is admirable but not the same as meeting need, though. The affordability gaps (@fig-rental-gap, @fig-ownership-gap) and interviews show the recent product mix has skewed towards the top of the market. The forward challenge is in composition that can meet the diverse needs of those described in @tbl-needs-allocation.
+Keeping pace with the baseline count is admirable but not the same as meeting need, though. The affordability gaps (@fig-rental-gap, @fig-ownership-gap) show the recent product mix has skewed towards the top of the market. The forward challenge is in composition that can meet the diverse needs of those described in @tbl-needs-allocation.
 
 ## How much does the answer swing? One assumption sets the range
 
@@ -507,7 +507,15 @@ Forward growth is not the binding constraint at the bottom — the existing gap 
 
 Because the allocation holds today's income distribution constant, it describes where demand will arise, not where it is affordable. Read alongside the current gaps (@fig-rental-gap, @fig-ownership-gap), it frames the forward task as delivering units at price points the recent market (@sec-market-ownership) has not.
 
-For those that said, "Aging in place and downsizing seniors and returning young people have no options," the county must add about `r round(need_yr_2050)` units per year to keep pace with household formation. By addressing seniors' needs, with accessible and low maintenance housing options, young folks returning will be competing for the same units. Without addressing this gap in options across the household spectrum, the supply in the county will continue to increase but only widens the housing and affordability gap.
+::: {.callout-note title="What we heard"}
+Interviewees put the problem plainly: "Aging in place and downsizing seniors and returning young people have no options."
+:::
+
+The county must add about `r round(need_yr_2050)` units per year to keep pace with household formation. By addressing seniors' needs, with accessible and low maintenance housing options, young folks returning will be competing for the same units. Without addressing this gap in options across the household spectrum, the supply in the county will continue to increase but only widens the housing and affordability gap.
+
+::: {.callout-note title="What we heard"}
+Interviewees recognized that limited supply and developable land shift the tax share onto remaining homeowners and businesses. That narrowed tax base strains school maintenance, infrastructure upkeep, and the remaining service districts where housing development is actually permitted. They described county infrastructure as already under pressure and almost at capacity, yet deeply needed to expand housing and business opportunities. Some stakeholders asked whether the aggressive pace of conservation has outrun its course, and wanted to allow *some* modest, moderated growth.
+:::
 
 ::: {.callout-tip}
 ## Town spotlight — Warrenton grows with the county; Bealeton is folded into the county total

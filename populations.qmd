@@ -157,7 +157,7 @@ mh_rent_c  <- stk$b25032 |> filter(GEOID == fauquier, variable == "B25032_022") 
 
 ## Older adults: a growing, largely aging-in-place population
 
-Interviews identified wage and housing gaps especially for the county's young and aging population. There's a perception that neither the young can return to Fauquier, nor can seniors age in place effectively. Of the county's `r label_comma()(sr_hh)` households with a resident aged 65 or older, about `r label_percent(accuracy = 1)(sr_alone_sh)` (or `r label_comma()(sr_alone)` households) live alone, compared to the `r label_percent(accuracy = 1)(ns_alone_sh)` of one-person households with younger individuals.
+Of the county's `r label_comma()(sr_hh)` households with a resident aged 65 or older, about `r label_percent(accuracy = 1)(sr_alone_sh)` (or `r label_comma()(sr_alone)` households) live alone, compared to the `r label_percent(accuracy = 1)(ns_alone_sh)` of one-person households with younger individuals.
 
 Living alone in later life raises housing vulnerability concerns: there is only a single fixed income to cover rising costs and maintenance, let alone possible medical attention. Additionally, with a fixed income, there often aren't additional funds available to be able to downsize, especially with the effectively non-existent entry level market.
 
@@ -192,7 +192,11 @@ ggplot(alone_df, aes(grp, share, fill = grp)) +
   theme(legend.position = "none")
 ```
 
-This aging and single population is set to grow throughout the years. By 2050, the Weldon Cooper Center projects that there will be roughly `r label_comma()(wc_65_2050)` residents aged 65 and over, and `r label_comma()(wc_75_2050)` aged 75 and up (@sec-projections). This demographic, both the highest age and need group, is the fastest expanding in Fauquier, and has implications for the future of housing that interviewees have already picked up on.
+This aging and single population is set to grow throughout the years. By 2050, the Weldon Cooper Center projects that there will be roughly `r label_comma()(wc_65_2050)` residents aged 65 and over, and `r label_comma()(wc_75_2050)` aged 75 and up (@sec-projections). This demographic, both the highest age and need group, is the fastest expanding in Fauquier and has implications for the future of housing.
+
+::: {.callout-note title="What we heard"}
+Interviewees saw wage and housing gaps for both the county's young and aging residents: young people cannot return, and seniors cannot age in place effectively. They described the fast-growing senior population as a "silver tsunami" and have already picked up on its implications for housing.
+:::
 
 About `r label_percent(accuracy = 1)(sr_own_sh)` of the county's senior householders own their homes. Aging in place overwhelmingly means aging in an owned single-family house, meaning also taking on the maintenance, rising taxes, and accessibility burdens to be able to stay.
 
